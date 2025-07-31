@@ -1,0 +1,206 @@
+<form [formGroup]="payerForm">
+  <div class="row">
+    <div class="col-xl-5 col-md-6">
+      <div class="row"> 
+        <div class="col-12">
+          <mat-label class="text-label">{{ 'payer-form.name.title' | translate }} {{(!disabledForm ? 'payer-form.required' : '' ) | translate}}</mat-label>
+          <mat-form-field floatLabel="never" color="accent" class="field-uppercase">
+            <input
+              type="text"
+              matInput
+              appMaxLength
+              cMaxLength="80"
+              (change)="changeInsuredName()"
+              formControlName="name"
+              placeholder="{{ 'payer-form.name.placeholder' | translate }}"
+              (keydown.enter)="$event.preventDefault()"
+              [errorStateMatcher]="matcher"
+            />
+            <span [style.visibility]="disabledForm ? 'hidden' : 'visible'" matSuffix class="tool-tip button-info-format">
+              <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="insuredName.toogle($event)" class="button-info-format"> -->
+              <span class="app-icon-info" (click)="insuredName.toogle($event)" *ngIf="this.payerForm.controls['name'].status !=='DISABLED'"></span>
+              <app-tooltip #insuredName [content]="'policy-info.insuredName-tooltip'"></app-tooltip>
+            </span>
+            <mat-error *ngIf="payerForm.get('name') as name">
+              <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+              <span class="app-warning-icon"></span>
+              <ng-container *ngIf="name.errors !== null">
+                <span class="warning-mes" *ngIf="name.errors?.['required']">
+                  {{ 'payer-form.name.require' | translate }}
+                </span>
+                <span class="warning-mes" *ngIf="name.errors?.['pattern']">{{
+                  'payer-form.name.invalid' | translate
+                }}</span>
+              </ng-container>
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="col-12">
+          <mat-label class="text-label">{{ 'payer-form.gender.title' | translate }} {{(!disabledForm ? 'payer-form.required' : '' ) | translate}}</mat-label>
+          <mat-form-field floatLabel="never" color="accent">
+            <mat-select #genderTypes
+              placeholder="{{ 'payer-form.gender.placeholder' | translate }}"
+              formControlName="gender"
+              (selectionChange)="genderTypes.close()"
+              (openedChange)="openedChange($event)"
+            >
+              <ng-container *ngFor="let option of gender">
+                <mat-option value="{{ option.value }}">{{ option.name | translate }}</mat-option>
+              </ng-container>
+            </mat-select>
+            <span matSuffix [style.visibility]="disabledForm ? 'hidden' : 'visible'">
+              <!-- <img matSuffix src="assets/images/expand_more.svg" alt="" srcset="" class="expand-more">
+              <img matSuffix src="assets/images/expand_less.svg" alt="" srcset="" class="expand-less"> -->
+              <span matSuffix class="app-expand-more" *ngIf="this.payerForm.controls['gender'].status !=='DISABLED'"></span>
+              <span matSuffix class="app-expand-less" *ngIf="this.payerForm.controls['gender'].status !=='DISABLED'"></span>
+            </span>
+            <mat-error *ngIf="payerForm.get('gender') as gender">
+              <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+              <span class="app-warning-icon"></span>
+              <ng-container *ngIf="gender.errors !== null">
+                <span class="warning-mes" *ngIf="gender.errors['required']">{{
+                  'payer-form.gender.require' | translate
+                }}</span>
+              </ng-container>
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="col-12">
+          <div id="insuredDobDt">
+            <mat-label class="text-label">{{ 'payer-form.dob.title' | translate }} {{(!disabledForm ? 'payer-form.required' : '' ) | translate}}</mat-label>
+            <mat-form-field floatLabel="never">
+              <input
+                matInput
+                #insuredDobDt
+                bsDatepicker
+                [container]="'#insuredDobDt'"
+                [bsConfig]="{ dateInputFormat: 'DD/MM/YYYY' }"
+                [minDate]="minDOB"
+                [maxDate]="maxDOB"
+                (bsValueChange)="bsValueChange($event, insuredDobDt)"
+                (input)="insuredDobDt.dataset['date'] = insuredDobDt.value"
+                (onShown)="onDpShown()"
+                (focusout)="handleFocusOutDOB($event)"
+                formControlName="dateOfBirth"
+                appMaxLength
+                cMaxLength="10"
+                placeholder="{{ 'payer-form.dob.placeholder' | translate }}"
+              />
+              <!-- <mat-datepicker #picker></mat-datepicker> -->
+              <span [style.visibility]="disabledForm ? 'hidden' : 'visible'" matSuffix class="tool-tip button-info-format">
+                <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="insuredDob.toogle($event)" class="button-info-format"> -->
+                <span class="app-icon-info" (click)="insuredDob.toogle($event)" *ngIf="this.payerForm.controls['dateOfBirth'].status !=='DISABLED'"></span>
+                <app-tooltip #insuredDob [content]="'policy-info.insuredDob-tooltip'"></app-tooltip>
+              </span>
+              <mat-error *ngIf="payerForm.get('dateOfBirth') as dateOfBirth">
+                <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+                <span class="app-warning-icon"></span>
+                <ng-container *ngIf="dateOfBirth.errors !== null">
+                  <div class="warning-mes">
+                    <span *ngIf="dateOfBirth.errors['required']">{{
+                      'payer-form.dob.require' | translate
+                    }}</span>
+                    <span *ngIf="dateOfBirth.errors?.['pattern'] || (dateOfBirth.errors?.['bsDate'] && dateOfBirth.errors?.['bsDate'].minDate)">{{
+                      'payer-form.dob.invalid' | translate
+                    }}</span>
+                    <span *ngIf="dateOfBirth.errors?.['ageCheck'] || (dateOfBirth.errors?.['bsDate'] && dateOfBirth.errors?.['bsDate'].maxDate)">{{
+                      'payer-form.dob.invalid-age' | translate
+                    }}</span>
+                  </div>
+                </ng-container>
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-5 col-md-6">
+      <div class="row">
+        <div class="col-12">
+          <mat-label class="text-label">{{ 'payer-form.email.title' | translate }} {{(!disabledForm ? 'payer-form.required' : '' ) | translate}}</mat-label>
+          <mat-form-field floatLabel="never" color="accent">
+            <input
+              matInput
+              formControlName="email"
+              placeholder="{{ 'payer-form.email.placeholder' | translate }}"
+              appMaxLength
+              cMaxLength="60"
+              [errorStateMatcher]="matcher"
+            />
+            <mat-error *ngIf="payerForm.get('email') as email">
+              <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+              <span matSuffix class="app-warning-icon" *ngIf="this.payerForm.controls['email'].status !=='DISABLED'"></span>
+              <ng-container *ngIf="email.errors !== null">
+                <div class="warning-mes">
+                  <span *ngIf="email.errors['required']">{{
+                    'payer-form.email.require' | translate
+                  }}</span>
+                  <span *ngIf="email.errors?.['pattern']">{{
+                    'payer-form.email.invalid' | translate
+                  }}</span>
+                </div>
+              </ng-container>
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="col-12">
+          <mat-label class="text-label">{{ 'payer-form.identity-type.title' | translate }} {{(!disabledForm ? 'payer-form.required' : '' ) | translate}}</mat-label>
+          <mat-form-field floatLabel="never" color="accent">
+            <mat-select #identityTypes
+              placeholder="{{ 'payer-form.identity-type.placeholder' | translate }}"
+              formControlName="identityType"
+              (selectionChange)="onIdentityTypeChange($event.value); identityTypes.close()"
+              (openedChange)="openedChange($event)"
+            >
+              <ng-container *ngFor="let option of identityType">
+                <mat-option value="{{ option.value }}">{{ option.name | translate }}</mat-option>
+              </ng-container>
+            </mat-select>
+            <span matSuffix [style.visibility]="disabledForm ? 'hidden' : 'visible'">
+              <!-- <img matSuffix src="assets/images/expand_more.svg" alt="" srcset="" class="expand-more">
+              <img matSuffix src="assets/images/expand_less.svg" alt="" srcset="" class="expand-less"> -->
+              <span matSuffix class="app-expand-more" *ngIf="payerForm.controls['identityType'].status !=='DISABLED'"></span>
+              <span matSuffix class="app-expand-less" *ngIf="payerForm.controls['identityType'].status !=='DISABLED'"></span>
+            </span>
+            <mat-error *ngIf="payerForm.get('indentityType') as indentityType">
+              <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+              <span class="app-warning-icon"></span>
+              <ng-container *ngIf="indentityType.errors !== null">
+                <span class="warning-mes" *ngIf="indentityType.errors['required']">{{
+                  'payer-form.identity-type.require' | translate
+                }}</span>
+              </ng-container>
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="col-12">
+          <mat-label class="text-label">{{ 'payer-form.identity-number.title' | translate }} {{(!disabledForm ? 'payer-form.required' : '' ) | translate}}</mat-label>
+          <mat-form-field floatLabel="never" color="accent">
+            <input
+              matInput
+              formControlName="identityNumber"
+              placeholder="{{ 'payer-form.identity-number.placeholder' | translate }}"
+              appMaxLength
+              cMaxLength="{{ identityNumberMaxLength }}"
+              [errorStateMatcher]="matcher"
+            />
+            <mat-error *ngIf="payerForm.get('identityNumber') as identityNumber">
+              <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+              <span matSuffix class="app-warning-icon"></span>
+              <ng-container *ngIf="identityNumber.errors !== null">
+                <div class="warning-mes">
+                  <span *ngIf="identityNumber.errors['required']">{{
+                    'payer-form.identity-number.require' | translate
+                  }}</span>
+                  <span *ngIf="identityNumber.errors?.['pattern']">{{
+                    'payer-form.identity-number.invalid' | translate
+                  }}</span>
+                </div>
+              </ng-container>
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

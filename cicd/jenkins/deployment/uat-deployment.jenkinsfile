@@ -1,0 +1,23 @@
+pipelineAngularJSAksCI([
+    // pipelineRepository: the external -cicd parameter repository
+    pipelineRepository: "ssh://git@git.ap.manulife.com:8080/VNPAY/quanlysx.git",
+ 
+    // pipelineRepoBranches: branch of the external -cicd parameter repo
+    pipelineRepoBranches: [[name:"develop"]],
+  
+    // the directory under which the external -cicd repo will be cloned to
+    // this sits under the pipeline workspace inside of the Jenkins slave
+    pipelinePropertiesFolder: "pipeline",
+ 
+    // path of common-ci.properties in jenkins workspace
+    commonPropertiesFileName: "pipeline/cicd/jenkins/deployment/common-deployment.properties",
+ 
+    // path of properties in jenkins workspace
+    propertiesFileName: "pipeline/cicd/jenkins/deployment/uat-deployment.properties",
+    
+    // target nodejs version
+    nodeVersion: "16.13.0",
+	
+	// ignore list for fortify scanning
+	fortifyScanIgnoreList: "**/coverage/**/*:**/node_modules/**/*:**/dist/**/*:**/src/**/*.spec.ts:**/e2e/**/*:**/tests/*:**/cicd/**/*:karma.conf.js:**/tmp/**/*:**/src/scripts/**/*:**/src/assets/newrelic/**/*"
+])

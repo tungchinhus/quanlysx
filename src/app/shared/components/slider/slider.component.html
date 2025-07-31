@@ -1,0 +1,19 @@
+<div class="slider-component" #sliderComponent>
+  <ng-container *ngIf="canRender">
+    <owl-carousel-o [options]="customOptions" (translated)="handleTranslated($event)">
+      <ng-container *ngFor="let slide of slidesStore">
+        <ng-template carouselSlide [width]="width" [id]="slide.id">
+          <div class="slider-img-container">
+            <img class="desktop-carousel" fetchpriority="low" fxHide fxShow.gt-md [src]="slide.src" [alt]="slide.alt">
+            <!-- <img fxShow fxHide.lt-md fxHide.gt-md [src]="slide.srcMD" [alt]="slide.alt">
+            <img fxHide fxShow.sm [src]="slide.srcSM" [alt]="slide.alt"> -->
+            <img class="mobile-carousel" fetchpriority="low" fxHide fxShow.xs [src]="slide.srcXS" [alt]="slide.alt">
+            <div class="slider-content-container">
+              <app-slider-content [data]="slide.data"></app-slider-content>
+            </div>
+          </div>
+        </ng-template>
+      </ng-container>
+    </owl-carousel-o>
+  </ng-container>
+</div>

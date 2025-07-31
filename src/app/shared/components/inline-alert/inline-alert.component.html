@@ -1,0 +1,27 @@
+<div class="inline-alert" *ngIf="isShow">
+    <div class="icon {{ type }}">
+        <ng-container *ngIf="type === 'warning'">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <mask id="mask0_7700_70302" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="0" y="1" width="20"
+                    height="17">
+                    <path
+                        d="M19.0159 9.291C19.0145 8.53841 18.7886 7.80334 18.3671 7.17984C17.9457 6.55634 17.3477 6.07277 16.6499 5.791V1.5L7.57289 5.583H0.983887V13.008H2.31189L4.18989 17.833H9.17689L7.35289 13.008H7.57289L16.6499 17.083V12.792C17.3481 12.5105 17.9464 12.0269 18.3679 11.4031C18.7895 10.7793 19.0151 10.0439 19.0159 9.291ZM2.65289 7.252H6.68789V11.339H2.65289V7.252ZM5.34489 16.164L4.11689 13.008H5.56789L6.76089 16.164H5.34489ZM14.9809 14.5L8.35689 11.531V7.06L14.9809 4.083V14.5ZM16.6499 10.858V7.725C16.8702 7.92198 17.0464 8.16324 17.1671 8.43301C17.2878 8.70277 17.3502 8.99497 17.3502 9.2905C17.3502 9.58603 17.2878 9.87823 17.1671 10.148C17.0464 10.4178 16.8702 10.659 16.6499 10.856V10.858Z"
+                        fill="white" />
+                </mask>
+                <g mask="url(#mask0_7700_70302)">
+                    <rect width="20" height="20" fill="white" />
+                </g>
+            </svg>
+        </ng-container>
+    </div>
+    <div class="alert-content">
+        <div class="content">
+            <div>
+                <ng-content></ng-content>
+            </div>
+        </div>
+        <div class="close" *ngIf="closeButton">
+            <span class="material-symbols-outlined cursor-pointer" (click)="onClose()">close</span>
+        </div>
+    </div>
+</div>

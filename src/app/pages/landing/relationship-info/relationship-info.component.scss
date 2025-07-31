@@ -1,0 +1,116 @@
+.relation-container {
+  margin-left: calc(0.5 * var(--bs-gutter-x));
+  margin-right: calc(0.5 * var(--bs-gutter-x));
+  .relation-label {
+    margin-top: 20px;
+    margin-bottom: 11px;
+    margin-left: calc(-0.5 * var(--bs-gutter-x));
+  }
+  .relation-body {
+    background-color: #fafafa;
+    .body-content {
+      height: 72px;
+      padding-top: 24px;
+      mat-form-field {
+        max-width: 317px;
+        @media (max-width: 767px) {
+          max-width: 100%;
+        }
+      }
+      .policy-number {
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 26px;
+        color: var(--cds-text-main);
+      }
+      @media (max-width: 767px) {
+        background-color: var(--cds-bg-section);
+        margin-top: -13px;
+      }
+    }
+  }
+}
+
+.relation-header {
+  .header-content {
+    padding-top: 24px;
+    padding-bottom: 24px;
+    background-color: var(--cds-bg-section);
+    height: 70px;
+    .text-label {
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 22px;
+      color: var(--cds-text-main);
+    }
+    @media (max-width: 767px) {
+      padding-top: 0;
+      padding-bottom: 0;
+      display: flex;
+    }
+  }
+  .body-content {
+    height: 72px;
+    padding-top: 24px;
+    mat-form-field {
+      max-width: 317px;
+    }
+    .policy-number {
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 26px;
+      color: var(--cds-text-main);
+    }
+    @media (max-width: 767px) {
+      padding-top: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+  @media (max-width: 767px) {
+    padding-left: 13px;
+    padding-right: 13px;
+    background-color: var(--cds-bg-section);
+  }
+}
+
+.button-container {
+  margin-top: 40px;
+}
+.text-label {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: var(--cds-text-label);
+  mix-blend-mode: normal;
+}
+.pd-0 {
+  padding: 0;
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .border-bottom-format{
+    position: relative;
+    padding-left: 13px;
+    padding-right: 13px;
+    padding-block: 15px;
+    background-color: var(--cds-bg-section);
+    &::after {
+        background-color: #EDEDED;
+        content: '';
+        position: absolute;
+        left: 25px;
+        right: 25px;
+        bottom: 0;
+        height: 1px;
+    }
+  }
+  .border-row-1 {
+    border: 1px solid rgba(237, 237, 237, 1);
+  }
+}

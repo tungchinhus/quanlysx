@@ -1,0 +1,8 @@
+environment:
+  envName: 'prddr'
+  production: true
+  apiUrl: 'https://api.emmprd.asia.manulife.com'
+  appBaseHref: '/quanlysx/'
+  TOKEN_REQUEST_URL: '/token'
+  ACCESS_TOKEN_REQUEST_URL: 'https://api.emmprd.asia.manulife.com/ext/vn-payment-bff-token-service/v1/frontend/token'
+  redirectUrls: [{ source: 'CWS', url: 'https://hopdongcuatoi.manulife.com.vn' }]

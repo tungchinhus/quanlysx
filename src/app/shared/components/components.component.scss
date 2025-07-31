@@ -1,0 +1,24 @@
+.component-page {
+    margin-top: 80px;
+    padding: 0 10px;
+    .component-item {
+        margin-bottom: 40px;
+    }
+    .buttons {
+        button {
+            margin-right: 10px;
+        }
+        .tertiary-buttons {
+            .buttons {
+                // background-color: #5E6073;
+                padding: 10px;
+            }
+        }
+    }
+    .expansion-panel {
+        .expansion-panel-example {
+            padding: 10px;
+            background-color: #fff;
+        }
+    }
+}

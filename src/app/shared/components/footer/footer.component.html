@@ -1,0 +1,44 @@
+<div class="footer-container">
+    <div class="policy-container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="left-item">
+                    <div class="item">
+                        <a href="https://www.manulife.com.vn/vi/manulife-vietnam/dieu-khoan-su-dung.html">{{'footer.term' | translate}}</a>
+                    </div>
+                    <div class="item">
+                        <a href="https://www.manulife.com.vn/vi/manulife-vietnam/chinh-sach-bao-mat-thong-tin.html">{{'footer.privacy' | translate}}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="right-item">
+                    <div class="item quick-link" (click)="showQuickLink = !showQuickLink">
+                        <a>{{'footer.quick-link' | translate}}</a>
+                        <span *ngIf="!showQuickLink" class="app-expand-more"></span>
+                        <span *ngIf="showQuickLink" class="app-expand-less"></span>
+                        <!-- <img *ngIf="!showQuickLink" matSuffix src="assets/images/expand_more_white.svg" alt="" srcset="">
+                        <img *ngIf="showQuickLink" matSuffix src="assets/images/expand_less_white.svg" alt="" srcset=""> -->
+                    </div>
+                    <div class="item" [ngClass]="{'show': showQuickLink}">
+                        <a href="https://www.manulife.com.vn/vi/ve-chung-toi/ve-manulife.html">{{'footer.about-us' | translate}}</a>
+                    </div>
+                    <div class="item" [ngClass]="{'show': showQuickLink}">
+                        <a href="https://boithuongbaohiem.manulife.com.vn/">{{'footer.eClaims' | translate}}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="copyright-container">
+        <div class="row">
+            <div class="col-md-6">
+                <img class="manu-logo" src="assets/images/thibidi-logo-white.svg" alt="THIBIDI Logo">
+            </div>
+            <div class="col-md-6">
+                <p class="copyright" [innerHTML]="'footer.copyright' | translate"></p>
+            </div>
+        </div>
+    </div>
+</div>
+  

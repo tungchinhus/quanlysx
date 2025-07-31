@@ -1,0 +1,45 @@
+<div class="payer-info-page">
+  <div class="search-form">
+      <app-heading-page
+        title="{{ 'payer-info.payment-ensure-fee' | translate }}"
+        subtitle="{{ 'payer-info.payment-info' | translate }}" ></app-heading-page>
+      <div class="row item total-amount">
+        <div class="col-md-8 total">{{'payer-info.payment-amount' | translate}}</div>
+        <div class="col-md-3 value"><span class="numb">{{totalAmount | formatCurrency}}</span>VND</div>
+      </div>
+      <div>
+        <div><p class="page-title mt-5">{{'payer-info.title' | translate}}</p></div>
+        <div class="row">
+          <div class="col-xl-10 col-md-12">
+            <app-inline-alert [closeButton]="false" *ngIf="isDisplayRelationship">
+              {{ 'relationship-info.alert-message' | translate }}
+            </app-inline-alert>
+          </div>
+          <app-relationship-info 
+          [policyInfo]="policyInfo"
+          (selectedRelationship)="onSelectRelationship($event)"
+          [disabledForm] = "isdisabledForm"
+          >
+          </app-relationship-info>
+        </div>
+        <div class="row mt-4">
+          <app-payer-form 
+          (payerInfoChange)="onPayerInfoChange($event)"
+          (isFormValid)="onPayerFormValid($event)"
+          [payerInfo] = "payerInfo"
+          [disabledForm] = "isdisabledForm"
+          [cwsCheck] = "isCWS"
+          [cwsIdType] = "cwsIdType"
+          >
+          </app-payer-form>
+        </div>
+        <div class="row button-container">
+          <div class="buttons">
+            <button mat-flat-button color="primary" class="small button-full" (click)="next()" [disabled]="!isFormValid">
+              {{ 'button.submit' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>

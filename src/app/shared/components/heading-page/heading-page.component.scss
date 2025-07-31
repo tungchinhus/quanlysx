@@ -1,0 +1,46 @@
+.heading {
+  // display: flex;
+  // flex-direction: column;
+  // gap: 4px;
+  // text-align: left;
+
+  .title {
+
+    font-style: normal;
+    font-weight: 300;
+    font-size: 48px;
+    line-height: 58px;
+    margin-bottom: 45px;
+    /* or 121% */
+
+    /* Dark Navy (#282B3E) */
+    color: #282B3E;
+    @media screen and (max-width: 767px) {
+      font-size: 30px;
+      line-height: 36px;
+      margin-bottom: 40px;
+      margin-top: 50px;
+    }
+  }
+
+  .subtitle {
+    /* Medical & hospitalis */
+
+    // position: absolute;
+
+    font-style: normal;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 42px;
+    margin-bottom: 0px;
+    /* or 131% */
+
+    /* Dark Navy (#282B3E) */
+    color: #282B3E;
+    @media screen and (max-width: 767px) {
+      font-size: 22px;
+      line-height: 28px;
+    }
+
+  }
+}

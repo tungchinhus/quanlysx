@@ -1,0 +1,6 @@
+{
+    "/ext/vn-online-payment-bff": {
+      "target": "https://sea-emt-dev-api.ap.manulife.com",
+      "secure": false
+    }
+}

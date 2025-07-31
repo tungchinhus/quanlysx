@@ -1,0 +1,14 @@
+<div class="slider-content-component">
+    <div class="title">
+        <p *ngFor="let title of data?.titles">{{title | translate}}</p>
+    </div>
+    <div class="description">
+        <p *ngFor="let des of data?.descriptions">{{des | translate}}</p>
+    </div>
+    <div *ngIf="data?.url && data?.url?.length" class="learn-more">
+        <a class="learn-more-click {{data.customClass}}" href="{{data.url}}" tabindex="-1">
+            <img src="assets/icons/learn-more-icon.png?format=webp" alt="">
+            <span>{{'learn-more' | translate}}</span>
+        </a>
+    </div>
+</div>  

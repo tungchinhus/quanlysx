@@ -1,0 +1,31 @@
+.app-tooltip {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: -5px;
+    max-width: 300px;
+    // white-space: pre-line;
+    background-color: var(--cds-color-dark-navy);
+    color: #ffffff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-family: var(--cds-font-family);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 16px;
+    display: none;
+    opacity: 0;
+    cursor: text;
+    &.show {
+        display: block;
+    }
+    // &::before {
+    //     content: "";
+    //     display: block;
+    //     position: absolute;
+    //     bottom: calc(100% - 1px);
+    //     right: 6px;
+    //     border-style: solid;
+    //     border-color: transparent transparent var(--cds-color-dark-navy) transparent;
+    //     border-width: 8px;
+    // }
+}

@@ -1,0 +1,15 @@
+.login-container {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+
+  .login-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    i {
+      font-size: 20px;
+    }
+  }
+} 

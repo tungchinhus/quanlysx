@@ -1,0 +1,25 @@
+[{
+  "dueDate": "2023-02-10T14:20:02",
+  "policyNumber": "2891237891",
+  "ownerName": "Nguyễn Văn A",
+  "premiumType": "Phí bảo hiểm hợp đồng mới",
+  "payAmount": 20000000
+}, {
+  "dueDate": "2023-02-10T14:20:02",
+  "policyNumber": "2731237900",
+  "ownerName": "Nguyễn Văn A",
+  "premiumType": "Phí bảo hiểm định kỳ",
+  "payAmount": 20000000
+}, {
+  "dueDate": "2023-02-10T14:20:02",
+  "policyNumber": "2731237900",
+  "ownerName": "Nguyễn Văn A",
+  "premiumType": "Phí bảo hiểm định kỳ",
+  "payAmount": 20000000
+}, {
+  "dueDate": "2023-02-10T14:20:02",
+  "policyNumber": "2731237900",
+  "ownerName": "Nguyễn Văn A",
+  "premiumType": "Phí bảo hiểm định kỳ",
+  "payAmount": 20000000
+}]

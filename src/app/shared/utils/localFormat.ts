@@ -1,0 +1,17 @@
+export const LOCALE_FORMAT = {
+  PHONE_NUMBER_PREFIX_VI: '+84',
+  PHONE_NUMBER_PREFIX_US: '+1',
+  PHONE_NUMBER_LENGTH_MAX: 10,
+  PHONE_NUMBER_LENGTH_MIN: 10,
+  REGION_US: 'us',
+  REGION_VI: 'vi',
+  LOCALE_EN_GB: 'en-GB'
+};
+export const DATE_FORMAT = {
+  YYYY_DD_MM: 'YYYY-MM-DD',
+  MM_DD_YYYY: 'MM/DD/YYYY',
+  LIMIT_YEAR: 1800,
+  MMM_DD_YYYY: 'MMM DD, YYYY',
+  DD_MM_YYYY: 'DD/MM/YYYY',
+  dd_MM_yyyy: 'dd/MM/yyyy'
+}

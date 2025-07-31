@@ -1,0 +1,43 @@
+<mat-toolbar mat-dialog-title class="dialog-header">
+  <h2 class="dialog-title-text">{{ data.title }}</h2>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="onCancel()">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <p>{{ data.message }}</p>
+
+  <ng-container *ngIf="data.showProcessUsers">
+    <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px;">
+      <mat-label>{{ data.process1Label }}</mat-label>
+      <mat-select [(ngModel)]="selectedUser1" name="userSelect1">
+        <mat-option *ngFor="let user of data.users" [value]="user">
+          {{ user }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px;">
+      <mat-label>{{ data.process2Label }}</mat-label>
+      <mat-select [(ngModel)]="selectedUser2" name="userSelect2">
+        <mat-option *ngFor="let user of data.users" [value]="user">
+          {{ user }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-container>
+
+  <mat-form-field *ngIf="data.showUserSelect && !data.showProcessUsers" appearance="outline" style="width: 100%; margin-top: 16px;">
+    <mat-label>Chọn người thực hiện</mat-label>
+    <mat-select [(ngModel)]="selectedUser" name="userSelect">
+      <mat-option *ngFor="let user of data.users" [value]="user">
+        {{ user }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Hủy</button>
+  <button mat-raised-button color="primary" (click)="onConfirm()" [disabled]="isConfirmButtonDisabled()">Xác nhận</button>
+</div>

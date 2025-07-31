@@ -1,0 +1,6 @@
+<div *ngIf="this.loadingService.getLoadingState()" class="loading-indicator">
+  <div class="loading-content">
+    <mat-spinner class="buffer-spinner" mode="determinate" value="100"></mat-spinner>
+    <mat-spinner mode="indeterminate"></mat-spinner>
+  </div>
+</div>

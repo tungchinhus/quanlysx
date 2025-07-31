@@ -1,0 +1,127 @@
+# Default values for release.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+# Default replica count is should be at least 2 for HA if autoscaling is disabled
+replicaCount: 1
+
+appName: quanlysx
+version: v1
+appSystem: VN-ONLINE-PAYMENT
+revisionHistoryLimit: '2'
+appVersion: 1.0.0
+gitCommit: XXXXX
+
+# Define release label
+env: sit
+release: 1.0.0
+tier: frontend
+country: VNM
+budev: ato
+bu: IT
+track: core
+costcenter: 7105
+pxxdata: pii
+
+container:
+  args: []
+  env:
+    - name: NEW_RELIC_APP_NAME
+      value: 'quanlysx-sea-emm-sit'
+    - name: NEW_RELIC_LICENSE_KEY
+      value: '68d93d382301e2155f7f67097ad65dcd6db76cde'
+    - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+      value: 'true'
+
+  ports:
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  livenessProbe:
+    failureThreshold: 3
+    tcpSocket: null
+    httpGet:
+      path: /
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 180
+    periodSeconds: 20
+    successThreshold: 1
+    timeoutSeconds: 5
+  readinessProbe:
+    failureThreshold: 3
+    tcpSocket: null
+    httpGet:
+      path: /
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 180
+    periodSeconds: 20
+    successThreshold: 1
+    timeoutSeconds: 10
+
+resources:
+  limits:
+    cpu: '1.5'
+    memory: '2Gi'
+  requests:
+    cpu: '0.5'
+    memory: '1Gi'
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+virtualService:
+  hosts:
+    - quanlysx.ns-vnm-bank-system
+  gatewayName: istio-system/istio-ingressgateway
+  https:
+    - httpName: quanlysx
+      uri:
+        prefix: /
+      rewrite:
+        uri: /quanlysx/
+      destinations:
+        - targetSubset: v1
+          weight: 100
+      timeout: 300s
+      retries:
+        attempts: 0
+        perTryTimeout: 300s
+        retryOn: 5xx
+
+destinationRule:
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 30
+        maxRequestsPerConnection: 100
+    outlierDetection:
+      consecutiveGatewayErrors: 3
+      consecutive5xxErrors: 3
+      interval: 600ms
+      baseEjectionTime: 5000ms
+      maxEjectionPercent: 100
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+ingress:
+  enabled: false
+
+# FIXME: This should be removed in future.
+# But we are just keeping it to satisfy the dependency as per 1.0.1 Release
+autoscaling:
+  enabled: false
+
+hpa:
+  enabled: false
+  maxReplicas: 1
+  cpu: 80
+  memory: 80

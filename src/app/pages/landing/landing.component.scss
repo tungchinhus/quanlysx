@@ -1,0 +1,316 @@
+.step {
+    min-height: 415px;
+}
+@media (min-width: 768px) {
+    .landing-page {
+        .step {
+            margin: 40px;
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .landing-page {
+        .step {
+            margin: 20px;
+        }
+    }
+}
+
+// THIBIDI Landing Component Styles
+
+// Products Grid
+.thibidi-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+// Services Grid
+.thibidi-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.thibidi-service-item {
+  text-align: center;
+  padding: 32px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  
+  .thibidi-service-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+  }
+  
+  h3 {
+    margin-bottom: 12px;
+  }
+  
+  p {
+    color: var(--cds-color-text-inactive);
+  }
+}
+
+// Contact Grid
+.thibidi-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 48px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.thibidi-contact-info {
+  .thibidi-contact-item {
+    margin-bottom: 24px;
+    
+    strong {
+      display: block;
+      color: var(--cds-color-jh-blue);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    p {
+      margin: 0;
+      color: var(--cds-color-dark-navy);
+    }
+  }
+}
+
+// Form Styles
+.thibidi-form-group {
+  margin-bottom: 24px;
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--cds-color-dark-navy);
+  }
+}
+
+.thibidi-input,
+.thibidi-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--cds-color-border);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--cds-color-jh-blue);
+    box-shadow: 0 0 0 3px rgba(0, 0, 193, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--cds-color-text-placeholder);
+  }
+}
+
+.thibidi-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .thibidi-products-grid,
+  .thibidi-services-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .thibidi-service-item {
+    padding: 24px 16px;
+  }
+}
+
+// Tablet-specific optimizations (768px - 1024px)
+@media (min-width: 768px) and (max-width: 1024px) {
+  .thibidi-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+  }
+  
+  .thibidi-services-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+  }
+  
+  .thibidi-service-item {
+    padding: 28px 20px;
+    
+    .thibidi-service-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    
+    h3 {
+      font-size: 1.25rem;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      font-size: 0.9rem;
+    }
+  }
+  
+  .thibidi-contact-grid {
+    gap: 40px;
+    margin-top: 40px;
+  }
+  
+  .thibidi-contact-info {
+    .thibidi-contact-item {
+      margin-bottom: 20px;
+      
+      strong {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+      }
+      
+      p {
+        font-size: 0.9rem;
+      }
+    }
+  }
+  
+  .thibidi-form-group {
+    margin-bottom: 20px;
+    
+    label {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+  }
+  
+  .thibidi-input,
+  .thibidi-textarea {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+  
+  .thibidi-textarea {
+    min-height: 100px;
+  }
+}
+
+// Large tablet optimizations (1025px - 1366px)
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .thibidi-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  
+  .thibidi-services-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+  
+  .thibidi-service-item {
+    padding: 30px 22px;
+  }
+}
+
+// Landscape orientation for tablets
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .thibidi-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .thibidi-services-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  
+  .thibidi-service-item {
+    padding: 24px 16px;
+    
+    .thibidi-service-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    
+    h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    
+    p {
+      font-size: 0.85rem;
+    }
+  }
+  
+  .thibidi-contact-grid {
+    gap: 32px;
+  }
+}
+
+// Portrait orientation for tablets
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .thibidi-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+  
+  .thibidi-services-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+  
+  .thibidi-service-item {
+    padding: 32px 24px;
+    
+    .thibidi-service-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+  }
+}
+
+// Touch device optimizations
+@media (hover: none) and (pointer: coarse) {
+  .thibidi-service-item:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .thibidi-input,
+  .thibidi-textarea {
+    padding: 14px 16px; // Larger touch targets
+  }
+  
+  .thibidi-btn {
+    min-height: 48px; // Larger touch targets
+  }
+}
+
+// High DPI display optimizations
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .thibidi-service-icon {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

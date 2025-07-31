@@ -1,0 +1,51 @@
+::ng-deep .mat-tooltip-panel-below {
+    .mat-tooltip.mat-tooltip-show {
+      overflow: visible;
+      border-radius: 0;
+      font-size: 13px;
+      line-height: 16px;
+      font-weight: 400;
+      padding: 16px;
+      &::before {
+        content: '';
+        display: block;
+        position: absolute;
+        bottom: 100%;
+        border-style: solid;
+        border-color: transparent transparent var(--cds-color-dark-navy) transparent;
+        border-width: 8px;
+        left: calc(90% - 4px);
+      }
+    }
+}
+
+::ng-deep .mat-tooltip {
+    background: var(--cds-color-dark-navy);
+    position: relative;
+    right: calc(40% - 8px);
+}
+
+::ng-deep .mat-input-element:disabled {
+    color: var(--cds-text-main) !important;
+    &::part(div) {
+        color: var(--cds-text-main) !important;
+    }
+}
+
+::ng-deep .mat-select-disabled .mat-select-value {
+    color: var(--cds-text-main);
+}
+
+.text-label {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+}
+.field-uppercase {
+    input {
+        text-transform: uppercase;
+        &::placeholder {
+            text-transform: initial;
+        }
+    }
+}

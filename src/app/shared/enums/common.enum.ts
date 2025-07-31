@@ -1,0 +1,14 @@
+export enum TYPE_MESSAGE {
+  ERROR = 'error',
+  SUCCESS = 'success'
+}
+export enum ERROR_CODE {
+  UNAUTHORIZED = 401
+}
+export enum PAYMENT_STATUS {
+  CANCELED = 'CANCELED',
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  IN_PROGRESS = 'IN_PROGRESS'
+}

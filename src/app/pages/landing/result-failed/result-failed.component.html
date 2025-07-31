@@ -1,0 +1,63 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-3 text-center">
+      <img src="assets\icons\icon_21 1.png" alt="landing-icon" class="icon">
+    </div>
+    <div class="col-md-9">
+      <div class="redirect-failed-page">
+        <p class="title">{{ 'payment-result.payment-failed-title1' | translate }}</p>
+        <div class="subTitle-desktop">
+          <ul class="subTitle">
+            <li>
+              {{ 'payment-result.payment-failed-title2' | translate }}
+            </li>
+            <li>
+              {{ 'payment-result.payment-failed-title3' | translate }}
+            </li>
+          </ul>
+        </div>
+        <div class="subTitle-mobile">
+          <div class="subTitle">
+            {{ 'payment-result.payment-failed-title2' | translate }}
+            <span>{{ 'payment-result.payment-failed-title3' | translate }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="button">  
+        <button mat-flat-button color="primary" class="small button-full" (click)="rePayment()">
+          <span>{{ 'button.re-payment' | translate }}</span>
+        </button>
+      </div>
+      <div class="redirect-failed-page">
+          <p class="supportTitle">{{ 'payment-result.support-title' | translate }}</p>
+          <p class="description">{{ 'payment-result.insured-support' | translate }}</p>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">Hotline</p>
+            <p class="subContact">1900 1776</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">{{ 'payment-result.manu-connect' | translate }}</p>
+            <a class="subContact" href="https://hopdongcuatoi.manulife.com.vn/">hopdongcuatoi.manulife.com.vn</a>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">Website</p>
+            <a class="subContact" href="https://www.manulife.com.vn/">www.manulife.com.vn</a>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">Email</p>
+            <p class="subContact">khachhang@manulife.com</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

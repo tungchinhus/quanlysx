@@ -1,0 +1,74 @@
+<div *ngIf="isDisplayRelationship" class="relation-container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="row">
+        <div class="col-12 relation-label">
+          <mat-label class="text-label">{{ 'payer-info.relation-title' | translate }}</mat-label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xl-10 col-md-12 pd-0">
+          <mat-divider></mat-divider>
+        </div>
+      </div>
+      <div class="row border-row-1">
+        <div class="col-xl-5 col-md-6 border-bottom-format">
+            <ng-container *ngIf="policyMappingList.length > 0">
+              <div class="row relation-header">
+                <div class="col-md-12 col-5 header-content">
+                  <span class="text-label">{{ 'relationship-info.insured-contract-number' | translate }}</span>
+                </div>
+                <ng-container *ngFor="let item of policyMappingList">
+                  <div class="col-md-12 col-7 body-content " *ngIf="item.isDisplay">
+                    <span class="policy-number">{{ item.policyNumber }}</span>
+                  </div>
+                </ng-container>                
+              </div>
+            </ng-container>
+        </div>
+        <div class="col-xl-5 col-md-6">
+          <div class="row relation-body" [formGroup]="relationshipForm">
+            <div class="col-md-12">
+                <ng-container *ngIf="policyMappingList.length > 0">
+                  <div class="row relation-header">
+                    <div class="col-12 header-content">
+                      <span class="text-label">{{ 'relationship-info.insured-relationship' | translate }}</span>
+                    </div>
+                    <ng-container *ngFor="let item of policyMappingList">
+                      <div class="col-12 body-content" *ngIf="item.isDisplay">
+                      <mat-form-field>
+                        <mat-select #payerTypes
+                          [value]="item.relationship"
+                          formControlName="{{ item.billId }}"
+                          (selectionChange)="
+                            onSelectRelationship(item.policyNumber ? item.policyNumber : '', $event.value); payerTypes.close()
+                          "
+                          (openedChange)="openedChange($event)"
+                        >
+                          <mat-option *ngFor="let relation of relationshipList" [value]="relation">
+                            {{ 'relation.' + relation | translate }}
+                          </mat-option>
+                        </mat-select>
+                        <span matSuffix [style.visibility]="disabledForm ? 'hidden' : 'visible'">
+                          <!-- <img matSuffix src="assets/images/expand_more.svg" alt="" srcset="" class="expand-more">
+                          <img matSuffix src="assets/images/expand_less.svg" alt="" srcset="" class="expand-less"> -->
+                          <span matSuffix class="app-expand-more" *ngIf="cwsTypeIndicator !== '3'"></span>
+                          <span matSuffix class="app-expand-less" *ngIf="cwsTypeIndicator !== '3'"></span>
+                        </span>
+                      </mat-form-field>
+                    </div>
+                    </ng-container>                    
+                  </div>
+                </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xl-10 col-md-12 pd-0">
+          <mat-divider></mat-divider>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

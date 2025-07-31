@@ -1,0 +1,418 @@
+<form [formGroup]="searchForm">
+  <div class="search-form">
+    <app-heading-page
+      title="{{ 'policy-info.payment-ensure-fee' | translate }}"
+      subtitle="{{ 'policy-info.contract-info' | translate }}"
+    ></app-heading-page>
+    <div class="row mb-4" id="apiErrorMess">
+      <mat-error class="massage-error" *ngIf="dataEmpty != ''">
+        <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+        <span class="app-warning-icon"></span>
+        <ng-container>
+          <span class="warning-mes">{{ dataEmpty | translate }}</span>
+        </ng-container>
+      </mat-error>
+    </div>
+    <div class="row">
+      <div class="col-xl-5 col-md-6 policy-num" *ngIf="!isCWS">
+        <mat-label class="policy-info-title">{{ 'policy-info.polNum-title' | translate }}</mat-label>
+        <mat-form-field floatLabel="always">
+          <mat-label hidden>{{ 'policy-info.polNum-title' | translate }}</mat-label>
+          <input
+            class="text-input-format"
+            type="text"
+            appMaxLength
+            cMaxLength="32"
+            matInput
+            (input)="checkFormValid()"
+            formControlName="polNum"
+            placeholder="{{ 'policy-info.polNum-placeholder' | translate }}"
+            tabindex="6"
+            (keydown.enter)="$event.preventDefault()"
+            [errorStateMatcher]="matcher"
+            />
+            <span matSuffix class="tool-tip button-info-format">
+              <span class="app-icon-info" (click)="polNumTooltip.toogle($event)"></span>
+              <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="polNumTooltip.toogle($event)" class="button-info-format"> -->
+              <app-tooltip #polNumTooltip [content]="'policy-info.polNum-tooltip'" [disabled]="searchForm.controls['polNum'].disabled"></app-tooltip>
+            </span>
+          <mat-error *ngIf="searchForm.get('polNum') as polNum">
+            <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+            <span class="app-warning-icon"></span>
+            <ng-container *ngIf="polNum.errors !== null">
+              <div class="warning-mes">
+                <span *ngIf="polNum.errors?.['required']">{{
+                  'policy-info.polNum-require' | translate
+                }}</span>
+                <span *ngIf="polNum.errors?.['minlength']">{{
+                  'policy-info.polNum-invalid' | translate
+                }}</span>
+                <span *ngIf="polNum.errors?.['pattern']">{{
+                  'policy-info.polNum-invalid' | translate
+                }}</span>              
+              </div>
+            </ng-container>
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div class="col-xl-5 col-md-6 payment-reason" *ngIf="isCWS">
+        <mat-label class="policy-info-title">{{ 'policy-info.polNum-title' | translate }}</mat-label>
+        <mat-form-field floatLabel="always">
+          <mat-label hidden>{{ 'policy-info.polNum-title' | translate }}</mat-label>
+          <mat-select #cwsPolNum
+            placeholder="{{ 'policy-info.polNum-placeholder' | translate }}"
+            formControlName="cwsPolNum"
+            (blur)="checkFormValid()"
+            (selectionChange)="cwspolNumType($event.value)"
+            (openedChange)="openedChange($event)"
+            focused="false"
+            tabindex="9"
+          >
+            <ng-container *ngFor="let option of cwsPolicylst">
+              <mat-option value="{{ option.policyNumber }}">{{ option.policyNumber | translate }}</mat-option>
+            </ng-container>
+          </mat-select>
+          <span matSuffix class="app-expand-more"></span>
+          <span matSuffix class="app-expand-less"></span>
+          <mat-error *ngIf="searchForm.get('cwsPolNum') as cwsPolNum">
+            <span class="app-warning-icon"></span>
+            <ng-container *ngIf="cwsPolNum.errors !== null">
+              <div class="warning-mes">
+                <span *ngIf="cwsPolNum.errors['required']">{{'policy-info.polNum-require' | translate}}</span>
+              </div>
+            </ng-container>
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div class="col-xl-5 col-md-6 insured-dob">
+        <ng-container *ngTemplateOutlet="insuredDobTmpl"></ng-container>
+        <!-- <div class="web">
+        </div>
+        <div class="mobile">
+          <ng-container *ngTemplateOutlet="insuredNameTmpl"></ng-container>
+        </div> -->
+      </div>
+      <div class="col-xl-5 col-md-6 insured-name">
+        <ng-container *ngTemplateOutlet="insuredNameTmpl"></ng-container>
+        <!-- <div class="web">
+        </div>
+        <div class="mobile">
+          <ng-container *ngTemplateOutlet="insuredDobTmpl"></ng-container>
+        </div> -->
+      </div>
+      <div class="col-xl-5 col-md-6 payment-reason">
+        <mat-label class="policy-info-title">{{ 'policy-info.paymentReason-title' | translate }}</mat-label>
+        <mat-form-field floatLabel="always">
+          <mat-label hidden>{{ 'policy-info.paymentReason-title' | translate }}</mat-label>
+          <mat-select #paymentReason
+            placeholder="{{ 'policy-info.paymentReason-placeholder' | translate }}"
+            formControlName="paymentReason"
+            (blur)="checkFormValid()"
+            (selectionChange)="paymentType($event.value)"
+            (openedChange)="openedChange($event)"
+            focused="false"
+            tabindex="9"
+          >
+            <ng-container *ngFor="let option of premiumType">
+              <mat-option value="{{ option.value }}">{{ option.name | translate }}</mat-option>
+            </ng-container>
+          </mat-select>
+          <span matSuffix class="app-expand-more"></span>
+          <span matSuffix class="app-expand-less"></span>
+          <mat-error *ngIf="searchForm.controls['paymentReason'].errors">
+            <span class="app-warning-icon"></span>
+              <div class="warning-mes">
+                <span *ngIf="searchForm.controls['paymentReason'].errors['required']">{{'policy-info.paymentReason-require' | translate}}</span>
+                <span *ngIf="policy_exist !=''">{{ policy_exist | translate}}</span>
+                <span *ngIf="premium_err !=''">{{ premium_err | translate}}</span>
+              </div>
+              <!-- </ng-container> -->
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+    <ng-template #insuredDobTmpl>
+      <div id="insuredDobDt">
+        <mat-label class="policy-info-title">{{ 'policy-info.insuredDob-title' | translate }}</mat-label>
+        <mat-form-field floatLabel="always">
+          <mat-label hidden>{{ 'policy-info.insuredDob-title' | translate }}</mat-label>
+          <input
+            class="text-input-format"
+            matInput
+            #insuredDobDt
+            bsDatepicker
+            [bsConfig]="{ dateInputFormat: 'DD/MM/YYYY' }"
+            [minDate]="minDOB"
+            [maxDate]="maxDOB"
+            (onShown)="onDpShown()"
+            [container]="'#insuredDobDt'"
+            (focusout)="handleFocusOutDOB($event)"
+            formControlName="insuredDob"
+            placeholder="{{ 'policy-info.insuredDob-placeholder' | translate }}"
+            tabindex="8"
+            appMaxLength
+            cMaxLength="10"
+            (keydown.enter)="$event.preventDefault()"
+            (bsValueChange)="bsValueChange($event, insuredDobDt)"
+            (input)="insuredDobDt.dataset['date'] = insuredDobDt.value"
+            />
+            <!-- <mat-datepicker #picker></mat-datepicker> -->
+            <span matSuffix class="tool-tip button-info-format">
+              <span class="app-icon-info" (click)="insuredDob.toogle($event)"></span>
+              <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="insuredDob.toogle($event)" class="button-info-format"> -->
+              <app-tooltip #insuredDob [content]="'policy-info.insuredDob-tooltip'" [disabled]="searchForm.controls['insuredDob'].disabled"></app-tooltip>
+            </span>
+          <mat-error *ngIf="searchForm.get('insuredDob') as insuredDob">
+            <ng-container *ngIf="insuredDob.errors !== null">
+              <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+              <span class="app-warning-icon"></span>
+              <div class="warning-mes">
+                <span *ngIf="insuredDob.errors?.['required']">{{
+                  'policy-info.insuredDob-require' | translate
+                }}</span>
+                <span *ngIf="insuredDob.errors?.['pattern'] || insuredDob.hasError('bsDate')">{{
+                  'policy-info.insuredDob-invalid' | translate
+                }}</span>
+              </div>
+            </ng-container>
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </ng-template>
+    <ng-template #insuredNameTmpl>
+      <mat-label class="policy-info-title">{{ 'policy-info.insuredName-title' | translate }}</mat-label>
+      <mat-form-field floatLabel="always" class="field-uppercase">
+        <mat-label hidden>{{ 'policy-info.insuredName-title' | translate }}</mat-label>
+        <input
+          class="text-input-format"
+          type="text"
+          matInput
+          appMaxLength
+          cMaxLength="80"
+          (change)="changeInsuredName()"
+          formControlName="insuredName"
+          placeholder="{{ 'policy-info.insuredName-placeholder' | translate }}"
+          tabindex="7"
+          (keydown.enter)="$event.preventDefault()"
+          [errorStateMatcher]="matcher"
+          />
+          <span matSuffix class="tool-tip button-info-format">
+            <span class="app-icon-info" (click)="insuredName.toogle($event)"></span>
+            <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="insuredName.toogle($event)" class="button-info-format"> -->
+            <app-tooltip #insuredName [content]="'policy-info.insuredName-tooltip'" [disabled]="searchForm.controls['insuredName'].disabled"></app-tooltip>
+          </span>
+        <mat-error *ngIf="searchForm.get('insuredName') as insuredName">
+          <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+          <span class="app-warning-icon"></span>
+          <ng-container *ngIf="insuredName.errors !== null">
+            <span class="warning-mes" *ngIf="insuredName.errors['required']">{{
+              'policy-info.insuredName-require' | translate
+            }}</span>
+          </ng-container>
+        </mat-error>
+      </mat-form-field>
+    </ng-template>
+  </div>
+  
+  <div *ngIf="policyInfo?.rows">
+    <p class="subtitle">{{ policyTypeDisplay | translate }}</p>
+  </div>
+  <div class="mn-table search-result" *ngIf="policyInfo?.rows && searchParam?.paymentType == premiumType[1].value && policyInfo?.rows[0].planCode !='UL007'">
+    <div class="table-form">
+      <div class="row item header-row header-title-mobile">
+        <div class="col-3 col-md-1 item-col">
+        </div>
+        <div class="col-9 col-md-11 item-col">
+            <div class="row header-title">
+                <div class="col-md-6">{{'policy-info.payment-due-date' | translate}}</div>
+                <div class="col-md-5 text-right-992">{{'policy-info.payment-amount' | translate}}</div>
+            </div>
+        </div>
+      </div>
+      <div class="row item" *ngFor="let row of policyInfo?.rows; let i = index"  (click)="selectRow(row.checked?i-1:i, row)">
+        <div class="col-2 col-md-1 item-col">
+          <mat-checkbox [checked]="row.checked" (click)="$event.stopPropagation()" (change)="selectOne(row.checked?i-1:i)"></mat-checkbox>
+        </div>
+        <div class="col-9 col-md-11 item-col">
+          <div class="row">
+              <div class="col-md-6">
+                <p class="title">
+                  {{'policy-info.payment-due-date' | translate}}
+                </p>
+                <p class="content">
+                  {{ row.dueDate | formatDate }}
+                </p>
+              </div>
+              <div class="col-md-5">
+                <p class="title">
+                  {{'policy-info.payment-amount' | translate}}
+                </p>
+                <p class="content text-right-992">
+                  {{ row.billAmount| formatCurrency:'VND'}}
+                </p>
+              </div>
+          </div>
+        </div>
+      </div>
+      <div class="row item header-row" *ngIf="policyInfo?.rows">
+        <div class="col-2 col-md-1 item-col"></div>
+        <div class="col-9 col-md-11 item-col">
+          <div class="row amount-col">
+            <div class="col-md-6">
+              <span class="bold">{{ 'payment-info.total-amount' | translate }}</span>
+            </div>
+            <div class="col-md-5 text-end">
+              <div class="row">
+                <span class="bold">{{ totalAmount | formatCurrency : '' }} VND</span>
+              </div>
+            </div>
+          </div>
+          <div class="row mb-4" *ngIf="totalOver500mil !=''">
+            <div class="col-md-7"></div>
+            <div class="col-md-5">
+              <mat-error>
+                <ng-container>
+                  <span>
+                    {{ 'policy-info.total-over-500mil' | translate }}
+                  </span>
+                </ng-container>
+              </mat-error>
+            </div>
+          </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-10 mt-4 inline-alert-width" *ngIf="policyTypeValue == premiumType[1].value && policyInfo?.rows[0].planCode=='UL007'">
+    <app-inline-alert [closeButton]="false">
+      <!-- {{'policy-info.warning-renewal-fee' | translate}} -->
+    <span [innerHTML] ="'policy-info.warning-renewal-fee' | translate"></span>
+    </app-inline-alert>
+  </div>
+
+  <div *ngIf="policyInfo?.rows">
+    <div class="mt-3" *ngIf="policyTypeValue != premiumType[0].value && policyTypeValue != premiumType[1].value && policyTypeValue != ''" >
+      <div class="col-12 col-xl-10 inline-alert-width">
+        <app-inline-alert [closeButton]="false"
+            *ngIf="policyTypeValue == premiumType[4].value || policyTypeValue == premiumType[5].value">
+            {{ 'policy-info.warning1' | translate }}
+        </app-inline-alert>
+        <app-inline-alert [closeButton]="false" *ngIf="policyTypeValue == premiumType[2].value || policyTypeValue == premiumType[3].value">{{
+          'policy-info.warning2' | translate
+        }}</app-inline-alert>
+      </div>
+    </div>
+  
+    <div class="row" *ngIf="policyInfo?.rows[0].planCode =='UL007' || policyTypeValue !== premiumType[1].value" >
+      <div class="col-md-12">
+        <div class="row totalAmount mt-12">
+          <div class="col-md-9 total mt-4">{{ 'policy-info.total-amount' | translate }}</div>
+          <div class="col-md-3 value">
+            <div class="amount" *ngIf="policyTypeValue != premiumType[0].value">
+              <mat-form-field floatLabel="always" color="accent" class="amount">
+                <input
+                  class="text-input-format"
+                  matInput
+                  type="tel"
+                  formControlName="totalAmount"
+                  [errorStateMatcher]="matcher"
+                  maxDigits="15"
+                  currencyInput
+                  (blur)="totalAmountOnBlur()"
+                  (change)="totalAmountChange($event)"
+                  value="{{ totalAmount }}"
+                  (keydown)="restrictInputToTotalAmount($event)"
+                  (keydown.enter)="$event.preventDefault()"
+                  appDynamicInput
+                />
+                <span matSuffix class="amountVND">VND</span>
+                <span *ngIf="isWarningRound" matSuffix class="tool-tip button-info-format">
+                  <span class="app-icon-info" (click)="$event.stopPropagation(); totalAmount.toogle($event)"></span>
+                  <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="$event.stopPropagation(); totalAmount.toogle($event)" class="button-info-format button-info-amount"> -->
+                  <app-tooltip #totalAmount [content]="'policy-info.round-number'"></app-tooltip>
+                </span>
+              </mat-form-field>
+              <mat-error *ngIf="searchForm.get('totalAmount') as totalAmount" class="error-mes">
+                <ng-container *ngIf="totalAmount.errors !== null">
+                  <span *ngIf="min_pay_300k !=''">{{min_pay_300k | translate}}</span>
+                  <span *ngIf="min_pay_11k !=''">{{min_pay_11k | translate}}</span>
+                  <span *ngIf="min_pay_bill_amount !=''">{{
+                    min_pay_bill_amount | translate : { originalBillAmount : originalAmountParseText }
+                  }} VND</span>
+                  <span *ngIf="totalOver500mil !=''">{{totalOver500mil | translate}}</span>
+                </ng-container>
+              </mat-error>
+            </div>
+            <div class="amount-not-underline" *ngIf="policyTypeValue == premiumType[0].value">
+              <mat-form-field floatLabel="always" color="accent" class="amount-not-underline">
+                <input
+                  class="text-input-format"
+                  matInput
+                  formControlName="totalAmount"
+                  [errorStateMatcher]="matcher"
+                  maxDigits="15"
+                  currencyInput
+                  (blur)="totalAmountOnBlur()"
+                  (change)="totalAmountChange($event)"
+                  value="{{ totalAmount }}"
+                  (keydown)="restrictInputToTotalAmount($event)"
+                  appDynamicInput                  
+                  (keydown.enter)="$event.preventDefault()"
+                />
+                <span matSuffix class="amountVND">VND</span>
+                <span *ngIf="isWarningRound" matSuffix class="tool-tip button-info-format">
+                  <span class="app-icon-info" (click)="totalAmount.toogle($event)"></span>
+                  <!-- <img matSuffix src="assets/images/button-info.svg" alt="" srcset="" (click)="totalAmount.toogle($event)" class="button-info-format"> -->
+                  <app-tooltip #totalAmount [content]="'policy-info.round-number'"></app-tooltip>
+                </span>
+              </mat-form-field>
+              <ng-container *ngIf="searchForm.get('totalAmount') as totalAmount">
+                <mat-error *ngIf="totalAmount.errors !== null" class="error-mes">
+                    <span *ngIf="min_pay_300k !=''">{{min_pay_300k | translate}}</span>
+                    <span *ngIf="min_pay_11k !=''">{{min_pay_11k | translate}}</span>
+                    <span *ngIf="min_pay_bill_amount !=''">{{
+                      min_pay_bill_amount | translate : { originalBillAmount : originalAmountParseText }
+                    }} VND</span>
+                    <span *ngIf="totalOver500mil !=''">{{totalOver500mil | translate}}</span>
+                  </mat-error>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row" *ngIf="!policyInfo?.rows">
+    <div>
+      <button mat-flat-button class="button-search-format button-full" color="primary" (click)="searchPolicy()" [disabled]="!isFormValid">
+        {{ 'button.search' | translate }}
+      </button>
+      <button
+        mat-flat-button
+        color="secondary"
+        class="button-back-format button-full"
+        (click)="backPaymentInfo()"
+        *ngIf="addmore == 'add-more-policy'"
+      >
+        <span class="button-back">{{ 'button.back' | translate }}</span>
+      </button>
+    </div>
+  </div>
+  <div class="row" *ngIf="policyInfo?.rows">
+    <div>
+      <button
+        mat-flat-button
+        color="primary"
+        class="button-format button-full"
+        (click)="next()"
+        [disabled]="disabledbtnConfirm"
+      >
+        {{ 'button.confirm' | translate }}
+      </button>
+      <button mat-flat-button color="secondary" class="button-back-format button-full" (click)="back()">
+        <span class="button-back">{{ 'button.back' | translate }}</span>
+      </button>
+    </div>
+  </div>
+</form>

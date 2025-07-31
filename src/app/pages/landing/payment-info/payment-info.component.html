@@ -1,0 +1,105 @@
+<div class="payment-info-page">
+    <div class="row">
+        <div class="col-12">
+            <app-heading-page
+            title="{{ 'payment-info.title' | translate }}"
+            subtitle="{{ 'payment-info.sub-title' | translate }}" ></app-heading-page>
+            <app-inline-alert class="payment-alert" [style.display]="!isDisable ? 'none' : 'block'" [closeButton]="false">{{'payment-info.alert' | translate}}&nbsp;<b>"{{'payment-info.add-more-fee' | translate}}"</b>.</app-inline-alert>
+            <div [style.display]="!isDisable ? 'none' : 'flex'" class="add-more" (click)="addMore('policy-info')">
+                <!-- <img src="assets/images/add-fee.png" alt="" /> -->
+                <span class="app-plus-icon"></span>
+                <p>{{ 'payment-info.add-more-fee' | translate }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mn-table">
+        <div class="row item header-row" *ngIf="policyInfoDisplayList && policyInfoDisplayList.length > 0">
+            <div class="col-12 col-md-2 item-col header-title word-break">{{'payment-info.policy-num' | translate}}</div>
+            <div class="col-12 col-md-3 item-col header-title">{{'payment-info.insured' | translate}}</div>
+            <div class="col-12 col-md-2 item-col header-title">{{'payment-info.payment-reason' | translate}}</div>
+            <div class="col-12 col-md-4 col-xl-3 item-col header-title text-right-992">{{'payment-info.payment-amount' | translate}}</div>
+            <div class="col-12 col-md-1 col-xl-2 item-col header-title text-center">{{'button.cancel' | translate}}</div>
+        </div>
+        <div class="row item" *ngFor="let item of policyInfoDisplayList; let i = index">
+            <div class="col-12 item-col header-title-mobile text-right action">
+                <!-- <img matSuffix src="assets/images/delete.svg" alt="" srcset="" (click)="policyRemove(i,item)"> -->
+                <span class="app-delete-icon" (click)="policyRemove(i,item)"></span>
+            </div>
+            <div class="col-12 col-md-2 item-col border-bottom-format">
+                <div class="row word-break">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-info.policy-num' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile">
+                        {{item.policyNumber}}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-3 item-col border-bottom-format">
+                <div class="row">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-info.insured' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile">
+                        {{getEnsureName(item.ownerName || '')}} 
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-2 item-col border-bottom-format">
+                <div class="row">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-info.payment-reason' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile">
+                        {{getPaymentType(item.premiumType) | translate}}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 col-xl-3 item-col border-bottom-format text-right-992">
+                <div class="row">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-info.payment-amount' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile">
+                        {{item.totalAmount | formatCurrency:'VND'}}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-1 col-xl-2 item-col text-center action">
+                <!-- <img matSuffix src="assets/images/delete.svg" alt="" srcset="" (click)="policyRemove(i,item)"> -->
+                <span class="app-delete-icon" (click)="policyRemove(i,item)"></span>
+            </div>
+        </div>
+        <div *ngIf="policyInfo?.rows.length == 0" class="mt-3 mb-3 center">
+            <span [innerHTML]="'payment-info.no-item' | translate">
+            </span>
+        </div>
+        <div class="row item footer-row" *ngIf="policyInfo?.rows.length > 0">
+            <div class="col-12 col-md-5 item-col title"></div>
+            <div class="col-12 col-md-2 item-col title">{{'payment-info.total-amount' | translate}}</div>
+            <div class="col-12 col-md-4 col-xl-3 item-col title text-right-992"><span class="total-amount">{{totalAmount | formatCurrency}}</span><span class="VND">VND</span></div>
+            <div class="col-12 col-md-1 col-xl-2 item-col title"></div>
+        </div>
+        <div *ngIf="isOverlimit" class="row error-msg">
+            <div class="col-12 col-md-8 item-col title"></div>
+            <div class="col-12 col-md-4 item-col title">
+                <div>
+                    <mat-error>
+                        <!-- <img matSuffix src="assets/images/Warning.svg" alt="" srcset=""> -->
+                        <span class="app-warning-icon"></span>
+                        <span class="warning-mes">
+                            {{ 'payment-info.over-limit' | translate }}
+                        </span>
+                      </mat-error>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div>
+            <button mat-flat-button color="primary" class="button button-confirm button-full" (click)="next()" [disabled]="!isDisable">{{'button.confirm' | translate}}</button>
+            <button mat-flat-button color="secondary" class="button button-back button-full" (click)="back('policy-info')">{{'button.back' | translate}}</button>
+        </div>
+    </div>
+</div>

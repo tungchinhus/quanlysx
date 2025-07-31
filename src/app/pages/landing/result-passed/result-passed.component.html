@@ -1,0 +1,154 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-3 text-center">
+      <img src="assets\icons\Success_icon.png" alt="landing-icon" class="icon">
+    </div>
+    <div class="col-md-9">
+      <div class="redirect-failed-page">
+        <p class="title">{{ 'payment-result.payment-success-title1' | translate }}</p>
+        <ul class="subTitle">
+          <li>
+            {{ 'payment-result.payment-success-title2' | translate }}
+          </li>
+          <li class="subTitle-bold">
+            {{ 'payment-result.payment-success-title3' | translate }}
+          </li>
+        </ul>
+      </div>
+      <div class="row">
+        <div class="col-md-8">
+          <p class="subTitle32 mt-5">{{ 'payment-result.confirm-payment' | translate }}</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <app-inline-alert [closeButton]="false">
+            <span [innerHTML]="'payment-result.confirm-save' | translate"></span>
+          </app-inline-alert>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="row">
+            <div class="col-md-4 col-12 mt-3 mb-2">
+              <span class="subTitle16">{{ 'payment-result.banefice-name' | translate }}</span>
+              <span>{{ 'company.manulifevn' | translate}}</span>
+            </div>
+            <div class="col-md-4 col-12 mt-3 mb-2">
+              <span class="subTitle16">{{ 'payment-result.debit-account' | translate }}</span>
+              <span>{{payerInfo?.payor?.cardNumber}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="row">
+            <div class="col-md-4 col-12 mt-3 mb-2">
+              <span class="subTitle16">{{ 'payment-result.payment-method' | translate }}</span>
+              <span *ngIf="payerInfo?.gateway == paymentMethod.momo">{{'payment-method.momo' | translate}}</span>
+              <span *ngIf="payerInfo?.gateway == paymentMethod.vnpay">{{'payment-method.atm' | translate}}</span>
+              <span *ngIf="payerInfo?.gateway == paymentMethod.cybersource">{{'payment-method.master' | translate}}</span>
+            </div>
+            <div class="col-md-4 col-12 mt-3 mb-2">
+              <span class="subTitle16">{{ 'payment-result.transaction-num' | translate }}</span>
+              <span>{{payerInfo?.orderRef}}</span>
+            </div>
+            <div class="col-md-4 col-12 mt-3">
+              <span class="subTitle16">{{ 'payment-result.transaction-time' | translate }}</span>
+              <span>{{payerInfo?.startDate}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mn-table mt-4">
+        <div class="row item header-row" *ngIf="payerInfo?.policies?.length > 0">
+            <div class="col-12 col-md-4 item-col header-title">{{'payment-result.policy-num' | translate}}</div>
+            <div class="col-12 col-md-3 item-col header-title">{{'payment-result.payment-reason' | translate}}</div>
+            <div class="col-12 col-md-5 col-xl-3 item-col header-title text-right-992">{{'payment-result.amount' | translate}}</div>
+        </div>
+        <div class="row item" *ngFor="let item of payerInfo?.policies; let i = index">
+            <div class="col-12 col-md-4 item-col border-bottom-format">
+                <div class="row">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-result.policy-num' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile">
+                        {{item.policyNumber}}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-3 item-col border-bottom-format">
+                <div class="row">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-result.payment-reason' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile">
+                        {{getPolicyType(item.premType) | translate}}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-5 col-xl-3 item-col border-bottom-format">
+                <div class="row">
+                    <div class="col-5 header-title-mobile">
+                        {{'payment-result.amount' | translate}}
+                    </div>
+                    <div class="col-7 col-md-12 description-mobile text-right-992">
+                        {{item.billAmount | formatCurrency:'VND'}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="payerInfo?.policies.length == 0" class="mt-3 mb-3 center">
+            <span [innerHTML]="'payment-result.no-item' | translate">
+            </span>
+        </div>
+        <div class="row item footer-row" *ngIf="payerInfo?.policies.length > 0">
+            <div class="col-12 col-md-4 item-col title"></div>
+            <div class="col-12 col-md-3 item-col title">{{'payment-result.total-amount' | translate}}</div>
+            <div class="col-12 col-md-5 col-xl-3 item-col title text-right-992"><span class="total-amount">{{totalAmount | formatCurrency}}</span>&nbsp;VND</div>
+        </div>
+    </div>
+
+
+      <div class="button">  
+        <button mat-flat-button color="primary" (click)="printReceipt()" class="button-format button-full">
+          <span>{{ 'button.printreceipt' | translate }}</span>
+        </button>
+        <button mat-flat-button color="secondary" (click)="back()" class="button-back-format button-full">
+          <span>{{ 'button.backHome' | translate }}</span>
+        </button>
+      </div>
+      <div class="redirect-failed-page">
+          <p class="supportTitle">{{ 'payment-result.support-title' | translate }}</p>
+          <p class="description">{{ 'payment-result.insured-support' | translate }}</p>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">Hotline</p>
+            <p class="subContact">1900 1776</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">{{ 'payment-result.manu-connect' | translate }}</p>
+            <a class="subContact" href="https://hopdongcuatoi.manulife.com.vn/">hopdongcuatoi.manulife.com.vn</a>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">Website</p>
+            <a class="subContact" href="https://www.manulife.com.vn/">www.manulife.com.vn</a>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="redirect-failed-page">
+            <p class="contact">Email</p>
+            <span class="subContact" href="">khachhang@manulife.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

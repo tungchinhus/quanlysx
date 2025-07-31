@@ -1,0 +1,177 @@
+<header class="thibidi-nav">
+    <div class="thibidi-nav-container">
+        <div class="logo">
+            <img src="https://thibidi.com/wp-content/uploads/2024/12/3-logo.webp" alt="Logo">
+        </div>
+        <nav class="thibidi-nav-menu">
+            <li class="thibidi-nav-item">
+                <a href="#" class="thibidi-nav-link active">Trang chủ</a>
+            </li>
+            <li class="thibidi-nav-item">
+                <a href="#" class="thibidi-nav-link">Sản phẩm</a>
+            </li>
+            <li class="thibidi-nav-item">
+                <a href="#" class="thibidi-nav-link">Dịch vụ</a>
+            </li>
+            <li class="thibidi-nav-item">
+                <a href="#" class="thibidi-nav-link">Tin tức</a>
+            </li>
+            <li class="thibidi-nav-item">
+                <a href="#" class="thibidi-nav-link">Liên hệ</a>
+            </li>
+        </nav>
+        <nav>
+            <ng-container *ngIf="!isLoggedIn">
+                <button mat-button (click)="openLoginForm()"
+                    class="text-blue-500 hover:text-blue-700 font-semibold flex items-center px-4 py-2 rounded-md">
+                    <mat-icon class="mr-2">login</mat-icon>
+                    Đăng nhập
+                </button>
+            </ng-container>
+
+            <ng-container *ngIf="isLoggedIn">
+                <div class="relative">
+                    <button mat-button (click)="toggleUserDropdown()"
+                        class="text-blue-500 hover:text-blue-700 font-semibold flex items-center px-4 py-2 rounded-md">
+                        <mat-icon class="mr-2">account_circle</mat-icon>
+                        {{ loggedInUsername }}
+                        <mat-icon>{{ showUserDropdown ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                    </button>
+                    <div *ngIf="showUserDropdown"
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                        <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Thông tin cá nhân</a>
+                        <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Cài đặt</a>
+                        <button mat-button (click)="logout()"
+                            class="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
+                            Đăng xuất
+                        </button>
+                    </div>
+                </div>
+            </ng-container>
+        </nav>
+    </div>
+</header>
+
+<div *ngIf="isLoginFormOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <mat-card class="w-full max-w-md p-4 rounded-lg shadow-lg">
+        <mat-card-header class="flex flex-col items-center justify-center h-12 bg-green-100 rounded-t-lg -mx-4 -mt-4 mb-4">
+            <mat-card-title class="text-lg text-center font-semibold text-gray-800">
+                {{ isRegisterFormVisible ? 'Đăng ký' : 'Đăng nhập' }}
+            </mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="grid gap-2 py-2">
+            <mat-card-subtitle class="text-gray-700 text-sm mb-2">
+                {{ isRegisterFormVisible ? 'Nhập thông tin để đăng ký tài khoản mới.' : 'Đăng nhập để truy cập đầy đủ các tính năng của trang web.' }}
+            </mat-card-subtitle>
+
+            <div *ngIf="!isRegisterFormVisible">
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Tên đăng nhập</mat-label>
+                    <input matInput [(ngModel)]="username" placeholder=" ">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Mật khẩu</mat-label>
+                    <input matInput type="password" [(ngModel)]="password" placeholder=" ">
+                </mat-form-field>
+                <mat-checkbox [(ngModel)]="rememberMe" class="mb-2">Nhớ mật khẩu</mat-checkbox>
+                <button mat-raised-button color="primary"
+                    class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    (click)="handleLogin()">
+                    Đăng nhập
+                </button>
+            </div>
+
+            <div *ngIf="isRegisterFormVisible">
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Tên đăng ký</mat-label>
+                    <input matInput [(ngModel)]="registerUsername" placeholder=" ">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Mật khẩu</mat-label>
+                    <input matInput type="password" [(ngModel)]="registerPassword" placeholder=" ">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Email</mat-label>
+                    <input matInput type="email" [(ngModel)]="registerEmail" placeholder=" ">
+                </mat-form-field>
+                <button mat-raised-button color="primary"
+                    class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    (click)="handleRegister()">
+                    Đăng ký
+                </button>
+            </div>
+
+            <div class="text-center text-sm mt-2">
+                <button mat-button color="accent" (click)="toggleForm()" class="text-blue-500 hover:underline">
+                    {{ isRegisterFormVisible ? 'Bạn đã có tài khoản? Đăng nhập' : 'Bạn chưa có tài khoản? Đăng ký ngay' }}
+                </button>
+            </div>
+
+            <div #googleLoginButtonRef id="google-login-button" class="w-full flex justify-center"></div>
+
+            <div *ngIf="loginError || registerError"
+                class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">Lỗi!</strong>
+                <span class="block sm:inline">
+                    {{ isRegisterFormVisible ? 'Vui lòng nhập đầy đủ thông tin để đăng ký.' : 'Đăng nhập không thành công. Vui lòng thử lại.' }}
+                </span>
+            </div>
+        </mat-card-content>
+        <mat-card-actions align="end">
+            <button mat-button (click)="closeLoginForm()"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                Hủy
+            </button>
+        </mat-card-actions>
+    </mat-card>
+</div>
+
+<div class="main-container">
+    <mat-drawer-container hasBackdrop="false">
+        <mat-drawer #drawer mode="push">
+            </mat-drawer>
+        <mat-drawer-content (mousemove)="drawer.close()" (scroll)="onScroll()">
+            <div class="draw-content">
+
+                <div class="menu-sidenav-content">
+                    <router-outlet></router-outlet>
+                </div>
+
+                <footer class="thibidi-footer">
+                    <div class="thibidi-footer-content">
+                        <div class="thibidi-footer-grid">
+                            <div class="thibidi-footer-section">
+                                <h3 class="thibidi-footer-title">Công ty CỔ PHẦN thiết bị điện (THIBIDI)</h3>
+                                <p class="thibidi-text">Nhà máy: Lô P, đường N3-1, KCN Long Đức, Xã Bình An, Đồng Nai</p>
+                                <p class="thibidi-text">+84.251.3836276</p>
+                                <p class="thibidi-text">sales@thibidi.com</p>
+                            </div>
+                            <div class="thibidi-footer-section">
+                                <h3 class="thibidi-footer-title">Sản phẩm</h3>
+                                <ul class="thibidi-footer-links">
+                                    <li><a href="#">Máy biến áp Amorphous</a></li>
+                                    <li><a href="#">Máy biến áp dầu</a></li>
+                                    <li><a href="#">Máy biến áp khô</a></li>
+                                    <li><a href="#">Máy biến áp Pad-mounted</a></li>
+                                </ul>
+                            </div>
+                            <div class="thibidi-footer-section">
+                                <h3 class="thibidi-footer-title">Dịch vụ</h3>
+                                <ul class="thibidi-footer-links">
+                                    <li><a href="#">Bảo trì</a></li>
+                                    <li><a href="#">Phụ kiện</a></li>
+                                    <li><a href="#">Tư vấn kỹ thuật</a></li>
+                                    <li><a href="#">Sửa chữa máy biến áp</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="thibidi-footer-bottom">
+                            <p>Copyright 2025 © All rights Reserved. Design by THIBIDI</p>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </mat-drawer-content>
+    </mat-drawer-container>
+</div>
+<app-loading-indicator></app-loading-indicator>

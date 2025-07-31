@@ -1,0 +1,11 @@
+environment:
+  envName: 'dev'
+  production: true
+  apiUrl: ''
+  appBaseHref: '/quanlysx/'
+  TOKEN_REQUEST_URL: 'https://sea-emt-dev-api.ap.manulife.com/quanlysx/token'
+  ACCESS_TOKEN_REQUEST_URL: 'https://sea-emt-dev-api.ap.manulife.com/ext/vn-payment-bff-token-service/v1/frontend/token'
+  redirectUrls: [{
+    source: 'CWS',
+    url: 'https://hopdongcuatoi.manulife.com.vn'
+  }]

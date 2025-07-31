@@ -1,0 +1,264 @@
+.redirect-failed-page {
+    .title {
+        font-family: var(--cds-font-family);
+        font-style: normal;
+        font-weight: 600;
+        font-size: 48px;
+        line-height: 58px;
+        margin-top: 60px;
+        /* or 121% */
+
+        display: flex;
+        align-items: center;
+
+        /* Dark Navy (#282B3E) */
+
+        color: #282B3E;
+        @media (max-width: 767px){
+            font-size: 30px;
+            line-height: 36px;
+        }
+    }
+    .subTitle {
+        font-family: var(--cds-font-family);
+        font-style: normal;
+        font-weight: 300;
+        font-size: 30px;
+        line-height: 40px;
+        text-align: left;
+        /* or 133% */
+
+        /* Dark Navy (#282B3E) */
+
+        color: #282B3E;
+        @media (max-width: 767px){
+            font-size: 26px;
+            line-height: 36px;
+        }
+        .subTitle-bold{
+            @media (max-width: 767px){
+                font-size: 22px;
+                line-height: 28px;
+                font-weight: 400;
+                margin-top: 15px;
+            }
+        }
+    }
+        
+    .supportTitle{
+        font-family: var(--cds-font-family);
+        font-style: normal;
+        font-weight: 600;
+        font-size: 32px;
+        line-height: 42px;
+        border-top-color: #CCCCCC;
+        border-top-style: solid;
+        border-top-width: 1px;
+        padding-top: 32px;
+        /* or 131% */
+
+        display: flex;
+        align-items: center;
+
+        /* Dark Navy (#282B3E) */
+
+        color: #282B3E;
+        @media (max-width: 767px){
+            font-size: 26px;
+            line-height: 36px;
+        }
+    }
+    .description{
+        font-family: var(--cds-font-family);
+        font-style: normal;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 26px;
+        margin-top: 24px;
+            /* identical to box height, or 162% */
+
+
+            /* Dark Navy (#282B3E) */
+
+        color: #282B3E;
+    }
+    .contact{
+        font-family: var(--cds-font-family);
+        font-style: normal;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 26px;
+        margin-top: 24px;
+        margin-bottom: 0px;
+        /* or 162% */
+
+        display: flex;
+        align-items: center;
+
+        /* Dark Navy (#282B3E) */
+
+        color: #282B3E;
+    }
+    .subContact{
+        font-family: var(--cds-font-family);
+        font-style: normal;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 26px;
+        margin-bottom: 0px;
+            /* identical to box height, or 162% */
+
+        color: #282B3E;
+            /* Dark Navy (#282B3E) */
+    }
+}
+.button {
+    button {
+        margin-right: 20px;
+        margin-top: 32px;
+        margin-bottom: 32px;
+    }
+    .tertiary-button {
+        .button {
+            // background-color: #5E6073;
+            padding: 10px;
+        }
+    }
+}
+.button-format {
+    @media (max-width: 767px) {
+        font-weight: 600;
+        margin-top: 6px;
+        font-size: 18px;
+        line-height: 22px;
+        margin-bottom: -12px !important;
+    }
+
+}
+.container{
+    text-align: left;
+    margin-bottom: 60px;
+}
+.icon{
+    width: 155px;
+    height: 157px;
+    margin-top: 60px;
+    @media (max-width: 767px){
+        display: flex;
+        width: 108px;
+        height: 104px;
+        top: 120px;
+        left: 16px;
+    }
+}    
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+.payment-info {
+    font-family: var(--cds-font-family); 
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 26px;
+    color: #282B3E;
+}
+.subTitle32 {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 42px;
+    display: flex;
+    align-items: center;
+    color: #282B3E;
+    @media (max-width: 767px){
+        font-size: 26px;
+        line-height: 36px;
+    }
+}
+
+.subTitle16 {
+    font-family: var(--cds-font-family);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 26px;
+    display: flex;
+    align-items: center;
+    color: #282B3E;
+}
+.mn-table {
+    .item {
+        &:not(.header-row, .footer-row) {
+            &:hover{
+                background-color: rgba(250, 250, 250, 1) !important;   
+                cursor: unset;
+            }
+        }
+    }
+}
+.button-back-format{
+    @media (min-width: 768px){
+        float: left;
+    }
+}
+@media (max-width: 767px) {
+    .item {
+        &:not(.header-row, .footer-row) {
+            align-items: unset;
+            background-color: var(--cds-bg-item);
+            border: 1px solid #EDEDED;
+            .item-col {
+                padding-right: 20px;
+            }
+            &:hover{
+                background-color: var(--cds-bg-item) !important;
+                cursor: unset;
+            }
+        }
+        &.header-row,
+        &.footer-row {
+            background-color: var(--cds-bg-item);
+            @media (max-width: 767px) {
+                margin-block: 10px;
+                padding-left: 14px;
+                padding-block: 35px;
+                border: 1px solid #EDEDED;
+            }
+        }
+        .header-title-mobile {
+            .action {
+                padding-top: 20px;
+                padding-bottom: 20px;
+            }
+        }
+        .description-mobile {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .border-bottom-format{
+            position: relative;
+            padding-left: 25px;
+            padding-right: 25px;
+            padding-block: 30px;
+            &::after {
+                background-color: #EDEDED;
+                content: '';
+                position: absolute;
+                left: 25px;
+                right: 25px;
+                bottom: 0;
+                height: 1px;
+            }
+        }
+        .item-col {
+            .total-amount {
+                font-weight: 600;
+                font-size: 26px;
+                line-height: 36px;
+            }
+        }
+    }
+}

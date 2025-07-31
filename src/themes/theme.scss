@@ -1,0 +1,176 @@
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use '@angular/material' as mat;
+// Plus imports for other components in your app.
+@use './checkbox.theme' as checkbox;
+@use './input.theme' as input;
+@use './tooltip.theme' as tooltip;
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// THIBIDI Blue Primary Palette
+$mn-primary-palette: (
+  50: #e3f2fd,
+  100: #bbdefb,
+  200: #90caf9,
+  300: #64b5f6,
+  400: #42a5f5,
+  500: #0000c1, // THIBIDI Blue
+  600: #1e1ee5,
+  700: #00009a,
+  800: #000082,
+  900: #000060,
+  A100: #00a758, // THIBIDI Green
+  A200: #00c46e,
+  A400: #f49600, // THIBIDI Gold
+  A700: #5e6073,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #000000,
+    400: #000000,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+    A100: #ffffff,
+    A200: #ffffff,
+    A400: #000000,
+    A700: #ffffff
+  )
+);
+
+// THIBIDI Secondary Green Palette
+$mn-secondary-palette: (
+  50: #e8f5e8,
+  100: #c8e6c9,
+  200: #a5d6a7,
+  300: #81c784,
+  400: #66bb6a,
+  500: #00a758, // THIBIDI Green
+  600: #00c46e,
+  700: #06874e,
+  800: #046138,
+  900: #004427,
+  A100: #ffffff,
+  A200: #ffffff,
+  A400: #f49600,
+  A700: #ffedc8,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #000000,
+    400: #000000,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+    A100: #000000,
+    A200: #000000,
+    A400: #000000,
+    A700: #000000
+  )
+);
+
+$mn-default-palette: (
+  50: #e9ebf1,
+  100: #c7ccdf,
+  200: #a3abc8,
+  300: #808ab1,
+  400: #6670a1,
+  500: #282B3E,
+  600: #47508a,
+  700: #3e467e,
+  800: #373d72,
+  900: #2b2c5a,
+  A100: #ffffff,
+  A200: #ffffff,
+  A400: #fff5e1,
+  A700: #ffedc8,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #000000,
+    400: #000000,
+    500: #000000,
+    600: #000000,
+    700: #000000,
+    800: #000000,
+    900: #000000,
+    A100: #000000,
+    A200: #000000,
+    A400: #000000,
+    A700: #000000
+  )
+);
+
+$mn-error-palette: (
+  50: #e9ebf1,
+  100: #c7ccdf,
+  200: #a3abc8,
+  300: #808ab1,
+  400: #6670a1,
+  500: #C14A36,
+  600: #47508a,
+  700: #3e467e,
+  800: #373d72,
+  900: #2b2c5a,
+  A100: #ffffff,
+  A200: #ffffff,
+  A400: #fff5e1,
+  A700: #ffedc8,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #000000,
+    400: #000000,
+    500: #000000,
+    600: #000000,
+    700: #000000,
+    800: #000000,
+    900: #000000,
+    A100: #000000,
+    A200: #000000,
+    A400: #000000,
+    A700: #000000
+  )
+);
+
+// Define the palettes for your theme using the Material Design palettes available in palette.scss
+// (imported above). For each palette, you can optionally specify a default, lighter, and darker
+// hue. Available color palettes: https://material.io/design/color/
+$theme-primary: mat.define-palette($mn-primary-palette);
+$theme-default: mat.define-palette($mn-default-palette);
+$theme-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+
+// The warn palette is optional (defaults to red).
+$theme-warn: mat.define-palette($mn-error-palette);
+
+// Create the theme object. A theme consists of configurations for individual
+// theming systems such as "color" or "typography".
+$theme: mat.define-light-theme((
+  color: (
+    primary: $theme-primary,
+    accent: $theme-default,
+    warn: $theme-warn,
+  ),
+  typography: mat.define-typography-config(
+    $font-family: var(--cds-font-family),
+  )
+));
+
+// Include theme styles for core and each component used in your app.
+// Alternatively, you can import and @include the theme mixins for each component
+// that you are using.
+@include mat.all-component-themes($theme);
+@include checkbox.theme($theme);
+@include input.theme($theme);
+@include tooltip.theme($theme);

@@ -1,0 +1,215 @@
+.main-container {
+  padding: 24px;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+
+mat-card-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-card {
+  padding: 16px;
+  margin-bottom: 24px;
+  min-width: 770px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.fixed-fields-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  width: 100%;
+}
+
+.fixed-field-group {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  .fixed-label {
+    font-weight: 500;
+    min-width: 80px;
+  }
+
+  .fixed-input {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .unit-label {
+    margin-left: 4px;
+    font-size: 0.9rem;
+  }
+}
+
+.form-row,
+.form-row-full,
+.form-row-3-cols,
+.form-row-4-cols,
+.form-row-bv,
+.form-row-bv-outside,
+.form-row-flex-label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-field,
+.form-field-full {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+
+.form-field,
+.form-field-full {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.form-row,
+.form-field,
+.form-field-full {
+  min-width: 0;
+  flex: 1 1 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-row-3-cols > *,
+.form-row-4-cols > *,
+.form-row-bv > *,
+.form-row-bv-outside > * {
+  flex: 1;
+  min-width: 160px;
+}
+
+/* Radio buttons */
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Nhãn và văn bản phụ */
+.block-label,
+.block-label-inline,
+.form-group-label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.block-label-inline {
+  margin-right: 12px;
+}
+
+.label-text {
+  align-self: center;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.label-text-small {
+  align-self: center;
+  font-size: 13px;
+  color: #777;
+  margin-left: 8px;
+}
+
+/* Card section */
+.section-card {
+  margin-top: 16px;
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+::ng-deep mat-error {
+  display: none !important;
+}
+
+.section-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px
+}
+
+@media (max-width: 768px) {
+  .fixed-fields-grid,
+  .form-row,
+  .form-row-3-cols,
+  .form-row-4-cols,
+  .form-row-bv,
+  .form-row-bv-outside {
+    flex-direction: column;
+  }
+
+  .form-field,
+  .form-field-full,
+  .fixed-field-group {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+.fixed-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+  height: 50px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.fixed-field-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 250px;
+
+  .fixed-label {
+    min-width: 90px;
+    font-weight: 500;
+  }
+
+  .fixed-input {
+    flex: 1;
+  }
+
+  .unit-label {
+    font-size: 0.9rem;
+  }
+}
+
+.section-separator {
+  border: none;
+  border-top: 1px solid #ccc;
+  width: 100%;
+  margin-top: 30px;
+}
+

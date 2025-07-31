@@ -1,0 +1,27 @@
+.inline-alert {
+    display: flex;
+    box-shadow: 2px 2px 10px 0px rgba(0, 0, 0, 0.1);
+    .icon {
+        padding: 16px 8px;
+        &.warning {
+            background-color: var(--cds-bg-warning);
+        }
+    }
+    .alert-content {
+        padding: 16px;
+        border-top: 1px solid var(--cds-border-default);
+        border-right: 1px solid var(--cds-border-default);
+        border-bottom: 1px solid var(--cds-border-default);
+        display: flex;
+        flex-grow: 1;
+        color: var(--cds-color-dark-navy);
+        .content {
+            display: flex;
+            flex-grow: 1;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+            align-items: center;
+        }
+    }
+}

@@ -1,0 +1,30 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin manulife-tooltip($theme) {
+    .mat-tooltip{
+        font-family: var(--cds-font-family) !important;
+        font-weight: 400;
+        font-size: 13px;
+        line-height: 16px;
+        /* or 123% */
+        max-width: 276px !important;
+        display: flex;
+        align-items: center;
+        background-color: var(--cds-bg-info);
+        @media (max-width: 991px) {
+            max-width: 292px !important;
+        }
+        @media (max-width: 372px) {
+            width: auto;
+        }
+        
+    }
+}
+@mixin theme($theme) {
+    $color-config: mat.get-color-config($theme);
+
+    @if $color-config !=null {
+        @include manulife-tooltip($theme);
+    }
+}
