@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output, Input, OnInit } from '@angular/core'; // <-- Đảm bảo Input và OnInit
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'; // <-- Đảm bảo FormControl, Validators
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-boi-day-ha',
@@ -17,13 +18,17 @@ export class BoiDayHaComponent implements OnInit {
 
   boiDayHaControl = new FormControl('', [Validators.required]);
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,private router: Router) {
     this.windingForm = this.fb.group({
       boiDayHa: this.boiDayHaControl
     });
   }
 
   ngOnInit() {
+    const navigation = this.router.getCurrentNavigation();
+    let go_bangve = navigation?.extras?.state?.['drawings'];
+
+    console.log('go_bangve:', go_bangve);
     this.windingForm = this.fb.group({
       ngayGiaCong: [null, Validators.required],
       nguoiGiaCong: ['', Validators.required],

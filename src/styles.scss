@@ -1293,6 +1293,56 @@ bs-datepicker-container {
   }
 }
 
+
+/* Bạn có thể đặt các biến màu sắc ở đây để dễ quản lý */
+$success-color: #4CAF50; // Xanh lá cây
+$error-color: #F44336;   // Đỏ
+$warning-color: #FFC107; // Vàng
+$info-color: #2196F3;    // Xanh dương
+
+.snackbar-custom {
+  // Border radius tổng thể cho snackbar
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); // Đổ bóng nhẹ
+  padding: 12px 20px; // Tăng padding để trông rộng rãi hơn
+  font-family: 'Roboto', sans-serif; // Font chữ đồng bộ với Material
+
+  .mat-simple-snackbar-action {
+    color: #fff !important; // Màu chữ của nút hành động
+    font-weight: bold;
+    text-transform: uppercase;
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  .mat-simple-snackbar-message {
+    font-size: 16px;
+    color: #fff; // Màu chữ của thông báo
+  }
+
+  // Kiểu cho các loại thông báo khác nhau
+  &.snackbar-success {
+    background-color: $success-color;
+    color: #fff;
+  }
+
+  &.snackbar-error {
+    background-color: $error-color;
+    color: #fff;
+  }
+
+  &.snackbar-warning {
+    background-color: $warning-color;
+    color: #fff;
+  }
+
+  &.snackbar-info {
+    background-color: $info-color;
+    color: #fff;
+  }
+}
+
 // THIBIDI Responsive Design
 // =============================
 

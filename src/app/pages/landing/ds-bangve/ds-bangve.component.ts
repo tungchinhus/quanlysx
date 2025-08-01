@@ -1,9 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { BangVeComponent } from '../bang-ve/bang-ve.component';
 import { DialogComponent } from 'src/app/shared/dialogs/dialog/dialog.component';
+import { ActivatedRoute, Router } from '@angular/router';
 
 export interface BangVeData {
   id: number;
@@ -11,7 +12,7 @@ export interface BangVeData {
   congsuat: number;
   tbkt: string;
   dienap: string;
-  // /soboiday: string;
+  soboiday: string;
   bd_ha_trong: string;
   bd_ha_ngoai: string;
   bd_cao: string;
@@ -35,7 +36,7 @@ export class DsBangveComponent implements OnInit {
       congsuat: 250,
       tbkt: 'TBKT-01',
       dienap: '22kV',
-      //soboiday: '3',
+      soboiday: '3',
       bd_ha_trong: 'OK',
       bd_ha_ngoai: 'OK',
       bd_cao: 'OK',
@@ -51,7 +52,7 @@ export class DsBangveComponent implements OnInit {
       congsuat: 400,
       tbkt: 'TBKT-02',
       dienap: '35kV',
-      //soboiday: '4',
+      soboiday: '4',
       bd_ha_trong: 'OK',
       bd_ha_ngoai: 'Chưa',
       bd_cao: 'OK',
@@ -67,7 +68,7 @@ export class DsBangveComponent implements OnInit {
       congsuat: 630,
       tbkt: 'TBKT-03',
       dienap: '10kV',
-      //soboiday: '5',
+      soboiday: '5',
       bd_ha_trong: 'OK',
       bd_ha_ngoai: 'OK',
       bd_cao: 'Chưa',
@@ -83,7 +84,7 @@ export class DsBangveComponent implements OnInit {
       congsuat: 630,
       tbkt: 'TBKT-04',
       dienap: '10kV',
-      //soboiday: '5',
+      soboiday: '5',
       bd_ha_trong: 'OK',
       bd_ha_ngoai: 'OK',
       bd_cao: 'Chưa',
@@ -99,7 +100,7 @@ export class DsBangveComponent implements OnInit {
       congsuat: 630,
       tbkt: 'TBKT-05',
       dienap: '10kV',
-      //soboiday: '5',
+      soboiday: '5',
       bd_ha_trong: 'OK',
       bd_ha_ngoai: 'OK',
       bd_cao: 'Chưa',
@@ -115,7 +116,7 @@ export class DsBangveComponent implements OnInit {
       congsuat: 630,
       tbkt: 'TBKT-06',
       dienap: '10kV',
-      //soboiday: '5',
+      soboiday: '5',
       bd_ha_trong: 'OK',
       bd_ha_ngoai: 'OK',
       bd_cao: 'Chưa',
@@ -127,10 +128,7 @@ export class DsBangveComponent implements OnInit {
     }
   ];
 
-  displayedColumns: string[] = [
-    'kyhieubangve', 'congsuat', 'tbkt', 'dienap', 
-    'user_create', 'created_at', 'actions'
-  ];
+  displayedColumns: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
 
   searchTerm: string = '';
   filteredDrawings: BangVeData[] = [];
@@ -150,7 +148,8 @@ export class DsBangveComponent implements OnInit {
 
   constructor(
     public dialog: MatDialog,
-    private _snackBar: MatSnackBar
+    private _snackBar: MatSnackBar,
+    private router:Router,
   ) { }
 
   ngOnInit(): void {
@@ -242,14 +241,25 @@ export class DsBangveComponent implements OnInit {
     
     // Implement your processing logic here
     // Ví dụ: thay đổi trạng thái hoặc xóa khỏi danh sách
+    let  go_bangve = this.drawings.filter(b => b.id === drawing.id);
     this.drawings = this.drawings.filter(b => b.id !== drawing.id);
     this.filteredDrawings = this.filteredDrawings.filter(b => b.id !== drawing.id);
     this.updatePagedDrawings();
-    this._snackBar.open(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', { duration: 5000 });
+    this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', 'success');
+    this.router.navigate(['boi-day-ha'], { state: { drawings: go_bangve } });
   }
 
   viewDrawing(d: BangVeData) {
     alert(JSON.stringify(d, null, 2));
+  }
+
+  thongbao(text: string,action: string,type: 'success' | 'error' | 'warning' | 'info'): void {
+    let config = new MatSnackBarConfig();
+    config.verticalPosition = 'top'; // Đặt vị trí dọc là "trên cùng"
+    config.horizontalPosition = 'right'; // Đặt vị trí ngang là "bên phải"
+    config.duration = 3000; // Tùy chọn: Thời gian hiển thị (ví dụ 3 giây)
+    config.panelClass = ['snackbar-custom', `snackbar-${type}`];
+    this._snackBar.open(text, action, config);
   }
 
   openAddBangVeDialog(): void {
@@ -271,7 +281,7 @@ export class DsBangveComponent implements OnInit {
         ];
         this.filteredDrawings = this.drawings.slice();
         this.updatePagedDrawings();
-        this._snackBar.open('Thêm bảng vẽ mới thành công!', 'Đóng', { duration: 3000 });
+        this.thongbao('Thêm bảng vẽ mới thành công!', 'Đóng', 'success');
       }
     });
   }
@@ -295,7 +305,7 @@ export class DsBangveComponent implements OnInit {
           this.drawings[index] = result;
           this.filteredDrawings = this.drawings.slice();
           this.updatePagedDrawings();
-          this._snackBar.open('Cập nhật bảng vẽ thành công!', 'Đóng', { duration: 3000 });
+          this.thongbao('Cập nhật bảng vẽ thành công!', 'Đóng', 'success');
         }
       }
     });

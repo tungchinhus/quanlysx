@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { BangVeData } from '../ds-bangve/ds-bangve.component';
 
 @Component({
   selector: 'app-boi-day-ha',
@@ -12,25 +14,29 @@ export class BoiDayHaComponent implements OnInit {
 
   title = 'Bối dây hạ';
   windingForm!: FormGroup;
+  bangve: BangVeData[] = [];
 
   nguoiGiaCongOptions: string[] = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C'];
 
   boiDayHaControl = new FormControl('', [Validators.required]);
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private router: Router) {
     this.windingForm = this.fb.group({
       boiDayHa: this.boiDayHaControl
     });
+    const navigation = this.router.getCurrentNavigation();
+    this.bangve = navigation?.extras?.state?.['drawings'];
+    console.log('Bảng vẽ:', this.bangve);
   }
 
   ngOnInit() {
     console.log('Form:', this.windingForm);
     console.log('Controls:', this.windingForm.controls);
     this.windingForm = this.fb.group({
-      congSuat: [null, [Validators.required, Validators.min(0)]],
-      TBKT: [null, [Validators.required, Validators.min(0)]],
-      dienAp: [null, [Validators.required, Validators.min(0)]],
-      soBoiDay: [null, [Validators.required, Validators.min(1)]],
+      congSuat: [{ value: this.bangve[0]?.congsuat, disabled: true }],
+      TBKT: [{ value: this.bangve[0]?.tbkt, disabled: true }],
+      dienAp: [{ value: this.bangve[0]?.dienap, disabled: true }],
+      soBoiDay: [{ value: this.bangve[0]?.soboiday, disabled: true }],
 
       ngayGiaCong: [null, Validators.required],
       nguoiGiaCong: [null, Validators.required],
@@ -70,15 +76,14 @@ export class BoiDayHaComponent implements OnInit {
       dienTroRc: [null],
       doLechDienTro: [null]
     });
-
-    // Subscribe to changes in 'chuViKhuon' to enable/disable 'ktBungBdTruoc'
+    
     this.windingForm.get('chuViKhuon')?.valueChanges.subscribe(value => {
       const ktBungBdTruocControl = this.windingForm.get('ktBungBdTruoc');
       if (value !== null && value !== '' && value !== undefined) {
-        ktBungBdTruocControl?.enable();
+        ktBungBdTruocControl?.disable();
       } else {
         ktBungBdTruocControl?.disable();
-        ktBungBdTruocControl?.setValue(null); // Clear value when disabled
+        ktBungBdTruocControl?.setValue(null);
       }
     });
   }
