@@ -136,6 +136,33 @@ mat-card-content {
   }
 }
 
+.aligned-form-group {
+  display: flex;
+  align-items: center; /* Căn chỉnh các phần tử theo chiều dọc */
+  gap: 16px; /* Khoảng cách giữa các phần tử */
+  flex-wrap: wrap; /* Cho phép xuống dòng nếu cần */
+  margin-bottom: 12px;
+
+  .form-group-label {
+    flex-shrink: 0; /* Ngăn nhãn co lại */
+    min-width: 150px; /* Chiều rộng tối thiểu cho nhãn để căn chỉnh */
+    font-weight: 500;
+  }
+}
+
+.form-row-5-cols {
+  // Thay đổi cách sắp xếp các input
+  flex: 1;
+  display: flex;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+
+  .form-field {
+    flex: 1 1 0;
+    min-width: 60px; /* Đảm bảo các input đủ nhỏ để vừa trên 1 hàng */
+  }
+}
+
 .form-field,
 .form-field-full {
   flex: 1 1 0;

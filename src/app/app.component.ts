@@ -11,6 +11,7 @@ import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 import { LandingService } from './pages/landing/landing.service';
 import { LoginComponent } from './shared/components/login/login.component';
 import { MatCard } from '@angular/material/card';
+import { AuthServices, UserLoginDto } from './shared/services/authen/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -63,7 +64,8 @@ export class AppComponent implements OnInit {
     public dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
-    private localeService: BsLocaleService
+    private localeService: BsLocaleService,
+    private authService: AuthServices
   ) { }
 
   @HostListener('window:click', ["$event"])
@@ -196,30 +198,81 @@ export class AppComponent implements OnInit {
   }
 
   handleLogin(): void {
-    // For demonstration purposes, hardcode a successful login for 'user123' with password '12232'
-    if (this.username === 'user123' && this.password === 'user123') {
-      if (this.rememberMe) {
-        localStorage.setItem('rememberedUsername', this.username);
-        localStorage.setItem('rememberedPassword', this.password);
-        localStorage.setItem('rememberMe', 'true');
-      } else {
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberedPassword');
-        localStorage.removeItem('rememberMe');
-      }
-      this.isLoggedIn = true;
-      this.loggedInUsername = this.username;
-      this.isLoginFormOpen = false;
-      this.username = '';
-      this.password = '';
-      console.log('Đăng nhập thành công (ví dụ)');
-    } else {
+    this.loginError = false; // Reset error message
+    // Tạo đối tượng DTO để gửi lên API
+    const loginCredentials: UserLoginDto = {
+      Email: this.username,
+      Password: this.password
+    };
+
+    if (!loginCredentials.Email || !loginCredentials.Password) {
       this.loginError = true;
-      setTimeout(() => {
-        this.loginError = false;
-      }, 3000);
+      // You can add a more specific message here if needed
+      return;
     }
+
+    this.authService.login(loginCredentials).subscribe(
+      response => {
+        // Xử lý khi đăng nhập thành công
+        console.log('Đăng nhập thành công:', response);
+        this.isLoggedIn = true;
+        this.loggedInUsername = response.username; // Lấy username từ response
+        this.isLoginFormOpen = false; // Đóng form
+        this.username = ''; // Clear form fields
+        this.password = ''; // Clear form fields
+
+        // Lưu token hoặc thông tin người dùng vào Local Storage/Session Storage
+        // Ví dụ: localStorage.setItem('accessToken', response.accessToken);
+        // localStorage.setItem('user', JSON.stringify(response));
+
+        if (this.rememberMe) {
+          localStorage.setItem('rememberedUsername', this.loggedInUsername);
+          localStorage.setItem('rememberMe', 'true');
+          // Không nên lưu mật khẩu trực tiếp, chỉ username nếu cần "Remember Me"
+        } else {
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberMe');
+        }
+
+      },
+      error => {
+        // Xử lý khi đăng nhập thất bại
+        console.error('Đăng nhập thất bại:', error);
+        this.loginError = true;
+        // Hiển thị lỗi cụ thể từ backend nếu có
+        // error.error.message hoặc error.message
+        setTimeout(() => {
+          this.loginError = false;
+        }, 3000);
+      }
+    );
   }
+
+  // handleLogin(): void {
+  //   // For demonstration purposes, hardcode a successful login for 'user123' with password '12232'
+  //   if (this.username === 'user123' && this.password === 'user123') {
+  //     if (this.rememberMe) {
+  //       localStorage.setItem('rememberedUsername', this.username);
+  //       localStorage.setItem('rememberedPassword', this.password);
+  //       localStorage.setItem('rememberMe', 'true');
+  //     } else {
+  //       localStorage.removeItem('rememberedUsername');
+  //       localStorage.removeItem('rememberedPassword');
+  //       localStorage.removeItem('rememberMe');
+  //     }
+  //     this.isLoggedIn = true;
+  //     this.loggedInUsername = this.username;
+  //     this.isLoginFormOpen = false;
+  //     this.username = '';
+  //     this.password = '';
+  //     console.log('Đăng nhập thành công (ví dụ)');
+  //   } else {
+  //     this.loginError = true;
+  //     setTimeout(() => {
+  //       this.loginError = false;
+  //     }, 3000);
+  //   }
+  // }
 
   toggleForm(): void {
     this.isRegisterFormVisible = !this.isRegisterFormVisible;
