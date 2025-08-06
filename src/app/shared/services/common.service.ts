@@ -8,6 +8,7 @@ import { NavigationExtras, Router } from '@angular/router';
 import { ApiConstant } from 'src/app/constant/api.constant';
 import { LandingService } from 'src/app/pages/landing/landing.service';
 import { DialogComponent } from '../dialogs/dialog/dialog.component';
+import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 
 declare const moment: any;
 declare const $: any;
@@ -33,7 +34,7 @@ export class CommonService {
   notificationMethodCall$ = this.notification.asObservable();
   resetForm = new Subject<any>();
   isShowingTimeout = false;
-  constructor(private dialog: MatDialog, private router: Router, private http: HttpClient) {}
+  constructor(private dialog: MatDialog, private router: Router, private http: HttpClient,private _snackBar: MatSnackBar,) {}
 
   setServerAPIURL(serverAPIURL: any) {
     this.SERVER_API_URL = serverAPIURL;
@@ -216,4 +217,13 @@ export class CommonService {
       this.showSessionTimeoutPopup(Constant.sysRedirect.LANDING);              
     }
   }
+
+  thongbao(text: string,action: string,type: 'success' | 'error' | 'warning' | 'info'): void {
+      let config = new MatSnackBarConfig();
+      config.verticalPosition = 'top'; // Đặt vị trí dọc là "trên cùng"
+      config.horizontalPosition = 'right'; // Đặt vị trí ngang là "bên phải"
+      config.duration = 3000; // Tùy chọn: Thời gian hiển thị (ví dụ 3 giây)
+      config.panelClass = ['snackbar-custom', `snackbar-${type}`];
+      this._snackBar.open(text, action, config);
+    }
 }

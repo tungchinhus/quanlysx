@@ -5,15 +5,15 @@ import { BangVeData } from '../ds-bangve/ds-bangve.component';
 import { CommonService } from 'src/app/shared/services/common.service';
 
 @Component({
-  selector: 'app-boi-day-ha',
-  templateUrl: './boi-day-ha.component.html',
-  styleUrls: ['./boi-day-ha.component.scss']
+  selector: 'app-boi-day-cao',
+  templateUrl: './boi-day-cao.component.html',
+  styleUrls: ['./boi-day-cao.component.scss']
 })
-export class BoiDayHaComponent implements OnInit {
+export class BoiDayCaoComponent implements OnInit {
   @Input() isActive: boolean = false;
   @Output() isValid = new EventEmitter<boolean>();
 
-  title = 'Bối dây hạ';
+  title = 'Bối dây cao';
   windingForm!: FormGroup;
   bangve: BangVeData[] = [];
 
@@ -21,7 +21,7 @@ export class BoiDayHaComponent implements OnInit {
 
   boiDayHaControl = new FormControl('', [Validators.required]);
 
-  constructor(private fb: FormBuilder, private router: Router,private commonService: CommonService,) {
+  constructor(private fb: FormBuilder, private router: Router, private commonService: CommonService) {
     this.windingForm = this.fb.group({
       boiDayHa: this.boiDayHaControl
     });
@@ -100,11 +100,10 @@ export class BoiDayHaComponent implements OnInit {
     }
   }
 
-  giacongboidaycao(){ 
-    console.log('Giao công bối dây hạ');
+  giacongboidaycao(){
     this.isActive = false;
     this.isValid.emit(true);
-    this.commonService.thongbao('Giao công bối dây hạ thành công!', 'Đóng', 'success');
+    this.commonService.thongbao('Giao công bối dây cao thành công!', 'Đóng', 'success');
     this.router.navigate(['ds-bang-ve']);
   }
 }

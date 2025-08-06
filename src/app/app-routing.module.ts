@@ -40,6 +40,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/landing/boi-day-ha/boi-day-ha.module').then(m => m.BoiDayHaModule)
   },
   {
+    path: 'boi-day-cao',
+    loadChildren: () => import('./pages/landing/boi-day-cao/boi-day-cao.module').then(m => m.BoiDayCaoModule)
+  },
+  {
     path: '**',
     redirectTo: 'landing',
     pathMatch: 'full'

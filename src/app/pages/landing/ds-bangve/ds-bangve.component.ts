@@ -5,6 +5,7 @@ import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { BangVeComponent } from '../bang-ve/bang-ve.component';
 import { DialogComponent } from 'src/app/shared/dialogs/dialog/dialog.component';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonService } from 'src/app/shared/services/common.service';
 
 export interface BangVeData {
   id: number;
@@ -145,20 +146,26 @@ export class DsBangveComponent implements OnInit {
 
   // Danh sách người dùng giả lập
   availableUsers: string[] = ['user_quanday_1', 'user_quanday_2', 'user_quanday_3', 'user_quanday_4', 'user_quanday_5'];
+  userRole: string | null = null;
+  username: string | null = null;
 
   constructor(
     public dialog: MatDialog,
     private _snackBar: MatSnackBar,
     private router:Router,
+    private commonService: CommonService,
   ) { }
 
   ngOnInit(): void {
+    this.userRole = localStorage.getItem('role');
+    this.username = localStorage.getItem('rememberedUsername');
+
     this.filteredDrawings = this.drawings.slice();
     this.updatePagedDrawings();
     this.filteredOptions = this.drawings.map(d => d.kyhieubangve);
     this.filteredDrawingsForAutocomplete = this.drawings.slice();
     let userLogin = localStorage.getItem('rememberedUsername');
-    this.dataSource = this.drawings.slice(); // Đảm bảo dataSource được khởi tạo
+    this.dataSource = this.drawings.slice();
   }
 
   filterAutoComplete() {
@@ -233,6 +240,36 @@ export class DsBangveComponent implements OnInit {
     });
   }
 
+  giacongboidayha(drawing: BangVeData) {
+    const dialogRef = this.dialog.open(DialogComponent, {
+      data: {
+        title: 'Xác nhận gia công và thực hiện',
+        message: `Bạn có chắc chắn muốn gia công bảng vẽ "${drawing.kyhieubangve}"?`,
+        showProcessUsers: true,
+        users: this.availableUsers,
+        process1Label: 'Người quấn bối dây hạ',
+        process2Label: 'Người quấn bối dây cao'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {      
+      if (result && result.confirmed) {
+        this.processDrawing(drawing, result.user1, result.user2);
+      } else {
+        console.log('Gia công bị hủy hoặc không có người dùng được chọn.');
+      }
+    });
+  }
+
+  giacongboidayep() {
+    this.commonService.thongbao('Giao công bối dây ép thành công!', 'Đóng', 'success');
+  }
+
+  giacongboidaycao() {
+    this.commonService.thongbao('Giao công bối dây cao thành công!', 'Đóng', 'success');
+    this.router.navigate(['boi-day-cao']);
+  }
+
   // Logic gia công bảng vẽ, nhận thêm tham số người dùng thực hiện cho từng khâu
   processDrawing(drawing: BangVeData, userQuanday1: string, userQuanday2: string): void {
     console.log(`Bảng vẽ "${drawing.kyhieubangve}" đang được gia công.`);
@@ -245,8 +282,9 @@ export class DsBangveComponent implements OnInit {
     this.drawings = this.drawings.filter(b => b.id !== drawing.id);
     this.filteredDrawings = this.filteredDrawings.filter(b => b.id !== drawing.id);
     this.updatePagedDrawings();
-    this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', 'success');
-    this.router.navigate(['boi-day-ha'], { state: { drawings: go_bangve } });
+    //this.commonService.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', 'success');
+    this.commonService.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', 'success');
+    //this.router.navigate(['boi-day-ha'], { state: { drawings: go_bangve } });
   }
 
   viewDrawing(d: BangVeData) {
@@ -281,7 +319,7 @@ export class DsBangveComponent implements OnInit {
         ];
         this.filteredDrawings = this.drawings.slice();
         this.updatePagedDrawings();
-        this.thongbao('Thêm bảng vẽ mới thành công!', 'Đóng', 'success');
+        this.commonService.thongbao('Thêm bảng vẽ mới thành công!', 'Đóng', 'success');
       }
     });
   }
@@ -305,7 +343,7 @@ export class DsBangveComponent implements OnInit {
           this.drawings[index] = result;
           this.filteredDrawings = this.drawings.slice();
           this.updatePagedDrawings();
-          this.thongbao('Cập nhật bảng vẽ thành công!', 'Đóng', 'success');
+          this.commonService.thongbao('Cập nhật bảng vẽ thành công!', 'Đóng', 'success');
         }
       }
     });

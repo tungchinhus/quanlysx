@@ -693,6 +693,11 @@ mat-card-actions button.mat-button:hover {
   background-color: #d1d5db; /* hover:bg-gray-300 */
 }
 
+.user-dropdown-menu {
+  z-index: 1000;
+  position: absolute;
+}
+
 // Portrait orientation for tablets
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
   .thibidi-nav {

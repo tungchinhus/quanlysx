@@ -12,7 +12,9 @@ export class ApiConstant {
     transStatusUpdate: 'https://sea-emt-dev-api.ap.manulife.com/ext/vn-payment-bff-service/v1/payment/status',
     getMaintenance: 'https://sea-emt-dev-api.ap.manulife.com/ext/vn-payment-bff-service/v1/system/status',
     getSessionDetailCWS: 'https://sea-emt-dev-api.ap.manulife.com/ext/vn-payment-bff-service/v1/ses-map',
-    getConfig: 'https://sea-emt-dev-api.ap.manulife.com/ext/vn-payment-bff-service/v1/config'
+    getConfig: 'https://sea-emt-dev-api.ap.manulife.com/ext/vn-payment-bff-service/v1/config',
+    register: 'https://localhost:7190/api/Account/register',
+    login: 'https://localhost:7190/api/Account/login',
   };
   public static getApiUrl = (propName: string) => {
     const env = new Environment(environment);

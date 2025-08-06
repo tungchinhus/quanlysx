@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { ApiConstant } from 'src/app/constant/api.constant';
 import jsPDF from 'jspdf';
 import { TokenService } from 'src/app/shared/services/token-service';
@@ -168,5 +168,13 @@ export class LandingService {
       });
     }, 500);
     this.visibleTemplatePDF = false;
+  }
+
+  register(userData: any): Observable<any> {
+    const url = ApiConstant.getApiUrl('register');
+    return this.http.post(url, userData);
+  }
+  login(loginData: any): Observable<any> {    
+    return this.http.post('https://localhost:7190/api/Account/login', loginData);
   }
 }

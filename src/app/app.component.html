@@ -31,18 +31,17 @@
 
             <ng-container *ngIf="isLoggedIn">
                 <div class="relative">
-                    <button mat-button (click)="toggleUserDropdown()"
+                    <button mat-button (click)="toggleUserDropdown(!showUserDropdown)"
                         class="text-blue-500 hover:text-blue-700 font-semibold flex items-center px-4 py-2 rounded-md">
                         <mat-icon class="mr-2">account_circle</mat-icon>
                         {{ loggedInUsername }}
                         <mat-icon>{{ showUserDropdown ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
                     </button>
                     <div *ngIf="showUserDropdown"
-                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg user-dropdown-menu">
                         <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Thông tin cá nhân</a>
                         <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Cài đặt</a>
-                        <button mat-button (click)="logout()"
-                            class="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
+                        <button mat-button (click)="logout()" class="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
                             Đăng xuất
                         </button>
                     </div>
@@ -67,11 +66,11 @@
             <div *ngIf="!isRegisterFormVisible">
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Tên đăng nhập</mat-label>
-                    <input matInput [(ngModel)]="username" placeholder=" ">
+                    <input matInput [(ngModel)]="username" placeholder=" " required>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Mật khẩu</mat-label>
-                    <input matInput type="password" [(ngModel)]="password" placeholder=" ">
+                    <input matInput type="password" [(ngModel)]="password" placeholder=" " required>
                 </mat-form-field>
                 <mat-checkbox [(ngModel)]="rememberMe" class="mb-2">Nhớ mật khẩu</mat-checkbox>
                 <button mat-raised-button color="primary"
@@ -84,15 +83,29 @@
             <div *ngIf="isRegisterFormVisible">
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Tên đăng ký</mat-label>
-                    <input matInput [(ngModel)]="registerUsername" placeholder=" ">
+                    <input matInput [(ngModel)]="registerUsername" placeholder=" " required>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Mật khẩu</mat-label>
-                    <input matInput type="password" [(ngModel)]="registerPassword" placeholder=" ">
+                    <input matInput type="password" [(ngModel)]="registerPassword" placeholder=" " required>
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Email</mat-label>
-                    <input matInput type="email" [(ngModel)]="registerEmail" placeholder=" ">
+                    <input matInput type="email" [(ngModel)]="registerEmail" placeholder=" " required>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Họ và tên</mat-label>
+                    <input matInput [(ngModel)]="registerHoten" placeholder=" " required>
+                </mat-form-field>
+                 <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Số điện thoại</mat-label>
+                    <input matInput [(ngModel)]="registerPhoneNumber" placeholder=" ">
+                </mat-form-field>
+                 <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Ngày sinh</mat-label>
+                    <input matInput [matDatepicker]="registerDatePicker" [(ngModel)]="registerNgaySinh" placeholder=" ">
+                    <mat-datepicker-toggle matSuffix [for]="registerDatePicker"></mat-datepicker-toggle>
+                    <mat-datepicker #registerDatePicker></mat-datepicker>
                 </mat-form-field>
                 <button mat-raised-button color="primary"
                     class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"

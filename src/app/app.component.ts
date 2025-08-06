@@ -12,6 +12,11 @@ import { LandingService } from './pages/landing/landing.service';
 import { LoginComponent } from './shared/components/login/login.component';
 import { MatCard } from '@angular/material/card';
 
+
+export interface UserLoginDto {
+  username: string;
+  password: string;
+}
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -19,8 +24,7 @@ import { MatCard } from '@angular/material/card';
   standalone: false
 })
 export class AppComponent implements OnInit {
-
-  title: string = 'quanlysx';
+title: string = 'quanlysx';
   showFiller: boolean = false;
   isScrolled: boolean = false;
   activeNavId: number = 0;
@@ -48,6 +52,10 @@ export class AppComponent implements OnInit {
   registerUsername: string = '';
   registerPassword: string = '';
   registerEmail: string = '';
+  // Thêm các trường đăng ký khác nếu có (hoten, phoneNumber, ngaySinh)
+  registerHoten: string = '';
+  registerPhoneNumber: string = '';
+  registerNgaySinh: string = '';
 
   // New states for logged-in user and dropdown
   isLoggedIn: boolean = false;
@@ -56,6 +64,13 @@ export class AppComponent implements OnInit {
   loggedInUser: string | null = null;
   isProfileMenuOpen: boolean = false;
 
+  private users = [
+    { username: 'totruong', password: 'user123', email: 'totruong1@hh.com', role: 'totruong' },
+    { username: 'boidayha', password: 'user123', email: 'boidayha@hh.com', role: 'boidayha' },
+    { username: 'boidaycao', password: 'user123', email: 'boidaycao@hh.com', role: 'boidaycao' }
+  ];
+  
+
   constructor(
     private pageTitle:Title,
     private translateService: TranslateService,
@@ -63,7 +78,8 @@ export class AppComponent implements OnInit {
     public dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
-    private localeService: BsLocaleService
+    private localeService: BsLocaleService,
+    private landingService: LandingService
   ) { }
 
   @HostListener('window:click', ["$event"])
@@ -75,20 +91,25 @@ export class AppComponent implements OnInit {
   //   clearTimeout(this.idleTimeout);
   //   this.sessionTimeout();
   // }
-  
-  ngOnInit(): void {    
-  const remembered = localStorage.getItem('rememberMe');
-  const savedUser = localStorage.getItem('rememberedUsername');
+
+  ngOnInit(): void {
+    if (localStorage.getItem('rememberMe') && localStorage.getItem('rememberedUsername') && localStorage.getItem('rememberedPassword')) {
+      this.loggedInUser = localStorage.getItem('rememberedUsername');
+      this.username = localStorage.getItem('rememberedUsername') || '';
+      this.password = localStorage.getItem('rememberedPassword') || '';
+      this.rememberMe = localStorage.getItem('rememberMe') === 'true';
+      this.isLoginFormOpen = false;
+      this.isRegisterFormVisible = false;
+      this.isProfileMenuOpen = true;
+      this.isLoggedIn = true;
+      this.loggedInUsername = localStorage.getItem('rememberedUsername') || '';
+    }
+    const remembered = localStorage.getItem('rememberMe');
+    const savedUser = localStorage.getItem('rememberedUsername');
 
   if (remembered === 'true' && savedUser) {
     this.loggedInUser = savedUser;
   }
-
-    //this.commonService.getMaintenancePage();
-    // if(!localStorage.getItem('dataConfig')){
-    //   this.commonService.getConfig();
-    // }
-    //this.commonService.dataConfig = JSON.parse(localStorage.getItem('dataConfig') as any);
     this.currentLanguage = this.languages.find(lang => lang.code === this.translateService.getDefaultLang()) as Lang;  
     const namePage = this.translateService.instant("page-title");
     this.pageTitle.setTitle(namePage);
@@ -196,29 +217,116 @@ export class AppComponent implements OnInit {
   }
 
   handleLogin(): void {
-    // For demonstration purposes, hardcode a successful login for 'user123' with password '12232'
-    if (this.username === 'user123' && this.password === 'user123') {
-      if (this.rememberMe) {
-        localStorage.setItem('rememberedUsername', this.username);
-        localStorage.setItem('rememberedPassword', this.password);
-        localStorage.setItem('rememberMe', 'true');
-      } else {
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberedPassword');
-        localStorage.removeItem('rememberMe');
-      }
-      this.isLoggedIn = true;
-      this.loggedInUsername = this.username;
-      this.isLoginFormOpen = false;
-      this.username = '';
-      this.password = '';
-      console.log('Đăng nhập thành công (ví dụ)');
-    } else {
+    this.loginError = false; // Reset error message
+    // Tạo đối tượng DTO để gửi lên API
+    const loginCredentials: UserLoginDto = {
+      username: this.username,
+      password: this.password
+    };
+
+    if (!loginCredentials.username || !loginCredentials.password) {
       this.loginError = true;
-      setTimeout(() => {
-        this.loginError = false;
-      }, 3000);
+      // You can add a more specific message here if needed
+      return;
     }
+
+    this.landingService.login(loginCredentials).subscribe(
+      response => {
+        // Xử lý khi đăng nhập thành công
+        console.log('Đăng nhập thành công:', response);
+        this.isLoggedIn = true;
+        this.loggedInUsername = response.username; // Lấy username từ response
+        this.isLoginFormOpen = false; // Đóng form
+        this.username = ''; // Clear form fields
+        this.password = ''; // Clear form fields
+
+        // Lưu token hoặc thông tin người dùng vào Local Storage/Session Storage
+        // Ví dụ: localStorage.setItem('accessToken', response.accessToken);
+        // localStorage.setItem('user', JSON.stringify(response));
+
+        if (this.rememberMe) {
+          localStorage.setItem('rememberedUsername', this.loggedInUsername);
+          localStorage.setItem('rememberMe', 'true');
+          // Không nên lưu mật khẩu trực tiếp, chỉ username nếu cần "Remember Me"
+        } else {
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberMe');
+        }
+
+      },
+      error => {
+        // Xử lý khi đăng nhập thất bại
+        console.error('Đăng nhập thất bại:', error);
+        this.loginError = true;
+        // Hiển thị lỗi cụ thể từ backend nếu có
+        // error.error.message hoặc error.message
+        setTimeout(() => {
+          this.loginError = false;
+        }, 3000);
+      }
+    );
+  }
+
+  // handleLogin(): void {
+  //   const foundUser = this.users.find(
+  //     user => user.username === this.username && user.password === this.password
+  //   );
+
+  //   if (foundUser) {
+  //     if (this.rememberMe) {
+  //       localStorage.setItem('rememberedUsername', this.username);
+  //       localStorage.setItem('rememberedPassword', this.password);
+  //       localStorage.setItem('rememberMe', 'true');
+  //       localStorage.setItem('role', foundUser.role);
+  //     } else {
+  //       localStorage.removeItem('rememberedUsername');
+  //       localStorage.removeItem('rememberedPassword');
+  //       localStorage.removeItem('rememberMe');
+  //     }
+  //     this.isLoggedIn = true;
+  //     this.loggedInUsername = foundUser.username;
+  //     this.isLoginFormOpen = false;
+  //     this.username = '';
+  //     this.password = '';
+  //     this.landingService.login(this.registerForm.value).subscribe((res: any) => {
+        
+  //     });
+
+  //     this.router.navigate(['/ds-bang-ve']);
+  //     // Redirect based on role
+  //     // switch (foundUser.role) {
+  //     //   case 'totruong':
+  //     //     this.router.navigate(['/ds-bang-ve']);
+  //     //     //this.router.navigate(['boi-day-ha']);
+  //     //     break;
+  //     //   case 'boidayha':
+  //     //     this.router.navigate(['/boi-day-ha']);
+  //     //     break;
+  //     //   case 'boidaycao':
+  //     //     this.router.navigate(['/boi-day-cao']);
+  //     //     break;
+  //     //   default:
+  //     //     this.router.navigate(['/']);
+  //     //     break;
+  //     // }
+  //   } else {
+  //     this.loginError = true;
+  //     setTimeout(() => {
+  //       this.loginError = false;
+  //     }, 3000);
+  //   }
+  // }
+
+  logout(): void {
+      this.isLoggedIn = false;
+      this.loggedInUsername = '';
+      this.showUserDropdown = false;
+      this.loggedInUser = null;
+      this.isProfileMenuOpen = false;
+      localStorage.removeItem('rememberedUsername');
+      localStorage.removeItem('rememberedPassword');
+      localStorage.removeItem('rememberMe');
+      this.router.navigate(['/']);
   }
 
   toggleForm(): void {
@@ -247,19 +355,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  toggleUserDropdown(): void {
-    this.showUserDropdown = !this.showUserDropdown;
-  }
-
-  logout(): void {
-    this.isLoggedIn = false;
-    this.loggedInUsername = '';
-    this.showUserDropdown = false;
-    this.loggedInUser = null;
-    this.isProfileMenuOpen = false;
-    // You might want to clear local storage or session storage related to the login here
-    localStorage.removeItem('rememberedUsername');
-    localStorage.removeItem('rememberedPassword');
-    localStorage.removeItem('rememberMe');
+  toggleUserDropdown(showprofileMenu: boolean): void {
+    this.showUserDropdown = showprofileMenu;
   }
 }

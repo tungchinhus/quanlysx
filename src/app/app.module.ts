@@ -37,6 +37,8 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { LandingService } from './pages/landing/landing.service';
+import { TokenService } from './shared/services/token-service';
 defineLocale('vi', viLocale);
 defineLocale('en', enGbLocale);
 
@@ -133,7 +135,9 @@ const locationInitialized = async (translate: TranslateService, injector: Inject
       provide: APP_BASE_HREF,
       useFactory: appBaseHref
     },
-    HttpErrorHandler
+    HttpErrorHandler,
+    LandingService,
+    TokenService
   ],
   bootstrap: [AppComponent]
 })
