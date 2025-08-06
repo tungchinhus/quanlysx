@@ -8,14 +8,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { BsLocaleService } from 'ngx-bootstrap/datepicker';
-import { LandingService } from './pages/landing/landing.service';
 import { LoginComponent } from './shared/components/login/login.component';
-import { MatCard } from '@angular/material/card';
+import { AuthServices } from './shared/services/authen/auth.service';
 
 
 export interface UserLoginDto {
-  username: string;
-  password: string;
+  Email: string;
+  Password: string;
 }
 @Component({
   selector: 'app-root',
@@ -79,18 +78,13 @@ title: string = 'quanlysx';
     private router: Router,
     private route: ActivatedRoute,
     private localeService: BsLocaleService,
-    private landingService: LandingService
+    private authService: AuthServices
   ) { }
 
   @HostListener('window:click', ["$event"])
   @HostListener('window:scroll', ["$event"])
   @HostListener('mousemove', ["$event"])
   @HostListener('keypress', ["$event"])
-  // onEvent(event: HTMLElement) {
-  //   this.lastAction = Date.now();
-  //   clearTimeout(this.idleTimeout);
-  //   this.sessionTimeout();
-  // }
 
   ngOnInit(): void {
     if (localStorage.getItem('rememberMe') && localStorage.getItem('rememberedUsername') && localStorage.getItem('rememberedPassword')) {
@@ -220,17 +214,17 @@ title: string = 'quanlysx';
     this.loginError = false; // Reset error message
     // Tạo đối tượng DTO để gửi lên API
     const loginCredentials: UserLoginDto = {
-      username: this.username,
-      password: this.password
+      Email: this.username,
+      Password: this.password
     };
 
-    if (!loginCredentials.username || !loginCredentials.password) {
+    if (!loginCredentials.Email || !loginCredentials.Password) {
       this.loginError = true;
       // You can add a more specific message here if needed
       return;
     }
 
-    this.landingService.login(loginCredentials).subscribe(
+    this.authService.login(loginCredentials).subscribe(
       response => {
         // Xử lý khi đăng nhập thành công
         console.log('Đăng nhập thành công:', response);
@@ -268,47 +262,23 @@ title: string = 'quanlysx';
   }
 
   // handleLogin(): void {
-  //   const foundUser = this.users.find(
-  //     user => user.username === this.username && user.password === this.password
-  //   );
-
-  //   if (foundUser) {
+  //   // For demonstration purposes, hardcode a successful login for 'user123' with password '12232'
+  //   if (this.username === 'user123' && this.password === 'user123') {
   //     if (this.rememberMe) {
   //       localStorage.setItem('rememberedUsername', this.username);
   //       localStorage.setItem('rememberedPassword', this.password);
   //       localStorage.setItem('rememberMe', 'true');
-  //       localStorage.setItem('role', foundUser.role);
   //     } else {
   //       localStorage.removeItem('rememberedUsername');
   //       localStorage.removeItem('rememberedPassword');
   //       localStorage.removeItem('rememberMe');
   //     }
   //     this.isLoggedIn = true;
-  //     this.loggedInUsername = foundUser.username;
+  //     this.loggedInUsername = this.username;
   //     this.isLoginFormOpen = false;
   //     this.username = '';
   //     this.password = '';
-  //     this.landingService.login(this.registerForm.value).subscribe((res: any) => {
-        
-  //     });
-
-  //     this.router.navigate(['/ds-bang-ve']);
-  //     // Redirect based on role
-  //     // switch (foundUser.role) {
-  //     //   case 'totruong':
-  //     //     this.router.navigate(['/ds-bang-ve']);
-  //     //     //this.router.navigate(['boi-day-ha']);
-  //     //     break;
-  //     //   case 'boidayha':
-  //     //     this.router.navigate(['/boi-day-ha']);
-  //     //     break;
-  //     //   case 'boidaycao':
-  //     //     this.router.navigate(['/boi-day-cao']);
-  //     //     break;
-  //     //   default:
-  //     //     this.router.navigate(['/']);
-  //     //     break;
-  //     // }
+  //     console.log('Đăng nhập thành công (ví dụ)');
   //   } else {
   //     this.loginError = true;
   //     setTimeout(() => {
@@ -316,18 +286,6 @@ title: string = 'quanlysx';
   //     }, 3000);
   //   }
   // }
-
-  logout(): void {
-      this.isLoggedIn = false;
-      this.loggedInUsername = '';
-      this.showUserDropdown = false;
-      this.loggedInUser = null;
-      this.isProfileMenuOpen = false;
-      localStorage.removeItem('rememberedUsername');
-      localStorage.removeItem('rememberedPassword');
-      localStorage.removeItem('rememberMe');
-      this.router.navigate(['/']);
-  }
 
   toggleForm(): void {
     this.isRegisterFormVisible = !this.isRegisterFormVisible;

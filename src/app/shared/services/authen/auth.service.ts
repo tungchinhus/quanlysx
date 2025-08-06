@@ -10,6 +10,22 @@ const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
 };
 
+// Định nghĩa DTO cho Login
+export interface UserLoginDto {
+  Email: string;
+  Password: string;
+}
+
+// Định nghĩa DTO cho Login Response
+export interface LoginResponseDto {
+  accessToken: string;
+  username: string;
+  hoten: string;
+  userId: number;
+  email: string;
+  // Thêm các thuộc tính khác tùy theo API trả về
+}
+
 const SERVER_URL = '';
 @Injectable({
   providedIn: 'root'
@@ -73,5 +89,10 @@ export class AuthServices {
 
   redirect(path: string) {
     window.location.href = path;
+  }
+
+  login(credentials: any): Observable<any> {
+    const url = 'https://localhost:7190/api/Account/login';
+    return this.http.post(url, credentials);
   }
 }
