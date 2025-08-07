@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DsBangveComponent } from './ds-bangve.component';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSortModule } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTabsModule } from '@angular/material/tabs';
 
 const routes: Routes = [
   { path: '', component: DsBangveComponent }
@@ -27,6 +29,7 @@ const routes: Routes = [
   imports: [
     CommonModule,
     FormsModule,
+    HttpClientModule,
     MatTableModule,
     MatFormFieldModule,
     MatInputModule,
@@ -39,6 +42,7 @@ const routes: Routes = [
     MatTooltipModule,
     MatChipsModule,
     MatMenuModule,
+    MatTabsModule,
     RouterModule.forChild(routes)
   ]
 })

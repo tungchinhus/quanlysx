@@ -1354,8 +1354,28 @@ $info-color: #2196F3;    // Xanh dương
       padding: 0 16px;
     }
     
+    /* Ẩn hoàn toàn menu navigation */
     .thibidi-nav-menu {
-      display: none;
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    
+    /* Đảm bảo hamburger menu hiển thị */
+    .hamburger-menu {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Ẩn desktop menu */
+    .thibidi-nav-menu.desktop-menu {
+      display: none !important;
+    }
+    
+    /* Hiển thị mobile menu */
+    .mobile-menu {
+      display: block !important;
     }
   }
   
@@ -1407,8 +1427,28 @@ $info-color: #2196F3;    // Xanh dương
       padding: 0 20px;
     }
     
+    /* Ẩn hoàn toàn menu navigation */
     .thibidi-nav-menu {
-      display: none;
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    
+    /* Đảm bảo hamburger menu hiển thị */
+    .hamburger-menu {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Ẩn desktop menu */
+    .thibidi-nav-menu.desktop-menu {
+      display: none !important;
+    }
+    
+    /* Hiển thị mobile menu */
+    .mobile-menu {
+      display: block !important;
     }
   }
   
@@ -1446,37 +1486,40 @@ $info-color: #2196F3;    // Xanh dương
       height: 45px;
     }
     
+    /* Ẩn hoàn toàn menu navigation */
     .thibidi-nav-menu {
-      gap: 24px;
-      
-      .thibidi-nav-item {
-        .thibidi-nav-link {
-          padding: 6px 12px;
-          font-size: 0.9rem;
-        }
-      }
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+    
+    /* Đảm bảo hamburger menu hiển thị */
+    .hamburger-menu {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Ẩn desktop menu */
+    .thibidi-nav-menu.desktop-menu {
+      display: none !important;
+    }
+    
+    /* Hiển thị mobile menu */
+    .mobile-menu {
+      display: block !important;
     }
   }
   
   .thibidi-hero {
     padding: 60px 0;
     
-    .thibidi-hero-content {
-      padding: 0 32px;
-    }
-    
     .thibidi-hero-title {
-      font-size: 3rem;
-      margin-bottom: 20px;
+      font-size: 2.5rem;
     }
     
     .thibidi-hero-subtitle {
-      font-size: 1.1rem;
-      margin-bottom: 28px;
-    }
-    
-    .thibidi-hero-cta {
-      gap: 20px;
+      font-size: 1.125rem;
     }
   }
   
@@ -1484,61 +1527,18 @@ $info-color: #2196F3;    // Xanh dương
     padding: 60px 0;
     
     .thibidi-stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 40px;
-      padding: 0 32px;
-    }
-    
-    .thibidi-stat-item {
-      .thibidi-stat-number {
-        font-size: 2.75rem;
-      }
-      
-      .thibidi-stat-label {
-        font-size: 0.9rem;
-      }
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
     }
   }
   
   .thibidi-footer {
-    padding: 50px 0 20px;
-    
-    .thibidi-footer-content {
-      padding: 0 32px;
-    }
+    padding: 60px 0 30px;
     
     .thibidi-footer-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 32px;
     }
-  }
-  
-  // Tablet-specific container adjustments
-  .thibidi-container {
-    padding: 0 32px;
-  }
-  
-  .thibidi-section {
-    padding: 60px 0;
-  }
-  
-  // Tablet-specific card adjustments
-  .thibidi-card {
-    padding: 20px;
-  }
-  
-  // Tablet-specific button adjustments
-  .thibidi-btn {
-    padding: 10px 20px;
-    font-size: 0.9rem;
-    min-height: 40px;
-  }
-  
-  // Tablet-specific form adjustments
-  .thibidi-input,
-  .thibidi-textarea {
-    padding: 10px 14px;
-    font-size: 0.9rem;
   }
 }
 

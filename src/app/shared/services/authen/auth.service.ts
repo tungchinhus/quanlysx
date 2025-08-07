@@ -5,6 +5,7 @@ import { CacheService } from '../cache/cache.service';
 import { SessionStorageService } from '../session/session-storage.service';
 import { StateService } from '../state.service';
 import { Observable } from 'rxjs';
+import { Router } from '@angular/router';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -36,7 +37,8 @@ export class AuthServices {
     private session: SessionStorageService,
     private http: HttpClient,
     private tokenStorage: SessionStorageService,
-    private cache: CacheService
+    private cache: CacheService,
+    private router: Router
   ) {}
 
   // login(bodyData: any): Observable<any> {
@@ -45,8 +47,26 @@ export class AuthServices {
 
   logout() {
     this.stateService.setState(StorageKey.IS_LOGIN, false);
-    this.tokenStorage.remove(StorageKey.TOKEN_KEY);
-    this.tokenStorage.remove(StorageKey.USER_KEY);
+    
+    // Xóa token và user info khỏi sessionStorage
+    sessionStorage.removeItem(StorageKey.TOKEN_KEY);
+    sessionStorage.removeItem(StorageKey.USER_KEY);
+    
+    // Xóa tất cả thông tin user khỏi localStorage
+    localStorage.removeItem('role');
+    localStorage.removeItem('email');
+    localStorage.removeItem('username');
+    localStorage.removeItem('firstName');
+    localStorage.removeItem('lastName');
+    localStorage.removeItem('hoten');
+    localStorage.removeItem('khau_sx');
+    localStorage.removeItem('rememberedUsername');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('accessToken');
+    
+    // Chuyển về trang landing mà không reload
+    this.router.navigate(['/landing']);
   }
 
   isLoggedIn(): boolean {
@@ -87,12 +107,84 @@ export class AuthServices {
     return !!this.cache.get(StorageKey.FIRST_LOGIN);
   }
 
+  // Cải thiện method redirect để sử dụng Angular Router
   redirect(path: string) {
-    window.location.href = path;
+    this.router.navigate([path]);
+  }
+
+  // Thêm method để redirect với query params
+  redirectWithParams(path: string, params: any) {
+    this.router.navigate([path], { queryParams: params });
+  }
+
+  // Thêm method để redirect với state
+  redirectWithState(path: string, state: any) {
+    this.router.navigate([path], { state: state });
   }
 
   login(credentials: any): Observable<any> {
     const url = 'https://localhost:7190/api/Account/login';
+    console.log('Making login request to:', url);
+    console.log('With credentials:', credentials);
     return this.http.post(url, credentials);
+  }
+
+  // Thêm method để xử lý login thành công
+  handleLoginSuccess(response: any): void {
+    console.log('handleLoginSuccess called with response:', response);
+    console.log('Response accessToken:', response.accessToken);
+    
+    // Lưu thông tin user - sử dụng cấu trúc response thực tế
+    localStorage.setItem('role', response.roles?.[0] || 'user');
+    localStorage.setItem('email', response.email || '');
+    localStorage.setItem('username', response.username || '');
+    localStorage.setItem('firstName', response.firstName || '');
+    localStorage.setItem('lastName', response.lastName || '');
+    localStorage.setItem('hoten', response.hoten || '');
+    localStorage.setItem('userId', response.userId?.toString() || '');
+    localStorage.setItem('idToken', response.accessToken || '');
+    localStorage.setItem('accessToken', response.accessToken || '');
+    
+    console.log('Token saved to localStorage:', localStorage.getItem('accessToken'));
+    
+    // Cập nhật state
+    this.stateService.setState(StorageKey.IS_LOGIN, true);
+    
+    // Lưu token trực tiếp vào sessionStorage thay vì qua SessionStorageService
+    // để tránh lỗi JSON.parse với JWT token
+    sessionStorage.setItem(StorageKey.TOKEN_KEY, response.accessToken);
+    sessionStorage.setItem(StorageKey.USER_KEY, JSON.stringify(response));
+    
+    console.log('Token saved to sessionStorage:', sessionStorage.getItem(StorageKey.TOKEN_KEY));
+  }
+
+  // Thêm method để kiểm tra token
+  isTokenValid(): boolean {
+    const token = localStorage.getItem('accessToken');
+    return !!token;
+  }
+
+  // Thêm method để lấy token
+  getToken(): string | null {
+    // Ưu tiên lấy từ sessionStorage trước, sau đó mới từ localStorage
+    const sessionToken = sessionStorage.getItem(StorageKey.TOKEN_KEY);
+    if (sessionToken) {
+      return sessionToken;
+    }
+    return localStorage.getItem('accessToken');
+  }
+
+  // Thêm method để lấy thông tin user
+  getUserInfo(): any {
+    const userInfoString = sessionStorage.getItem(StorageKey.USER_KEY);
+    if (userInfoString) {
+      try {
+        return JSON.parse(userInfoString);
+      } catch (error) {
+        console.error('Error parsing user info:', error);
+        return null;
+      }
+    }
+    return null;
   }
 }

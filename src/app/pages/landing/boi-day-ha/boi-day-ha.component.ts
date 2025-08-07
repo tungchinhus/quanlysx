@@ -104,7 +104,7 @@ export class BoiDayHaComponent implements OnInit {
     console.log('Giao công bối dây hạ');
     this.isActive = false;
     this.isValid.emit(true);
-    this.commonService.thongbao('Giao công bối dây hạ thành công!', 'Đóng', 'success');
+    this.commonService.thongbao('Gia công bối dây hạ thành công!', 'Đóng', 'success');
     this.router.navigate(['ds-bang-ve']);
   }
 }

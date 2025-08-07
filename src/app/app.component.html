@@ -3,7 +3,16 @@
         <div class="logo">
             <img src="https://thibidi.com/wp-content/uploads/2024/12/3-logo.webp" alt="Logo">
         </div>
-        <nav class="thibidi-nav-menu">
+        
+        <!-- Hamburger menu cho tablet/mobile -->
+        <button class="hamburger-menu" (click)="toggleMobileMenu()" [class.active]="mobileMenuOpened">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        
+        <!-- Desktop menu - chỉ hiện trên desktop -->
+        <nav class="thibidi-nav-menu desktop-menu">
             <li class="thibidi-nav-item">
                 <a href="#" class="thibidi-nav-link active">Trang chủ</a>
             </li>
@@ -20,12 +29,96 @@
                 <a href="#" class="thibidi-nav-link">Liên hệ</a>
             </li>
         </nav>
-        <nav>
+        
+        <!-- Mobile/Tablet menu dropdown -->
+        <nav class="mobile-menu" [class.active]="mobileMenuOpened">
+            <!-- Close button -->
+            <button class="mobile-close-btn" (click)="closeMobileMenu()">
+                <mat-icon>close</mat-icon>
+            </button>
+            
+            <!-- Test button for debugging -->
+            <button mat-button (click)="testTokenSaving()" style="background: red; color: white; margin: 10px;">
+                Test Token Saving
+            </button>
+            
+            <!-- Navigation menu -->
+            <div class="mobile-nav-section">
+                <li class="thibidi-nav-item">
+                    <a href="#" class="thibidi-nav-link active">
+                        <mat-icon>home</mat-icon>
+                        Trang chủ
+                    </a>
+                </li>
+                <li class="thibidi-nav-item">
+                    <a href="#" class="thibidi-nav-link">
+                        <mat-icon>inventory</mat-icon>
+                        Sản phẩm
+                    </a>
+                </li>
+                <li class="thibidi-nav-item">
+                    <a href="#" class="thibidi-nav-link">
+                        <mat-icon>miscellaneous_services</mat-icon>
+                        Dịch vụ
+                    </a>
+                </li>
+                <li class="thibidi-nav-item">
+                    <a href="#" class="thibidi-nav-link">
+                        <mat-icon>article</mat-icon>
+                        Tin tức
+                    </a>
+                </li>
+                <li class="thibidi-nav-item">
+                    <a href="#" class="thibidi-nav-link">
+                        <mat-icon>contact_support</mat-icon>
+                        Liên hệ
+                    </a>
+                </li>
+            </div>
+            
+            <!-- Auth section -->
+            <div class="mobile-auth-section">
+                <ng-container *ngIf="!isLoggedIn">
+                    <button mat-button (click)="openLoginForm()"
+                        class="mobile-auth-btn">
+                        <mat-icon>login</mat-icon>
+                        <span>Đăng nhập</span>
+                    </button>
+                </ng-container>
+
+                <ng-container *ngIf="isLoggedIn">
+                    <div class="mobile-user-info">
+                        <div class="mobile-user-avatar">
+                            <mat-icon>account_circle</mat-icon>
+                        </div>
+                        <div class="mobile-user-details">
+                            <span class="mobile-username">{{ loggedInUsername }}</span>
+                            <span class="mobile-user-role">Người dùng</span>
+                        </div>
+                    </div>
+                    <div class="mobile-user-actions">
+                        <button mat-button class="mobile-action-btn">
+                            <mat-icon>person</mat-icon>
+                            Thông tin cá nhân
+                        </button>
+                        <button mat-button class="mobile-action-btn">
+                            <mat-icon>settings</mat-icon>
+                            Cài đặt
+                        </button>
+                        <button mat-button (click)="logout()" class="mobile-action-btn mobile-logout-btn">
+                            <mat-icon>logout</mat-icon>
+                            Đăng xuất
+                        </button>
+                    </div>
+                </ng-container>
+            </div>
+        </nav>
+        
+        <nav class="auth-section">
             <ng-container *ngIf="!isLoggedIn">
                 <button mat-button (click)="openLoginForm()"
                     class="text-blue-500 hover:text-blue-700 font-semibold flex items-center px-4 py-2 rounded-md">
-                    <mat-icon class="mr-2">login</mat-icon>
-                    Đăng nhập
+                    <span class="auth-text">Đăng nhập</span>
                 </button>
             </ng-container>
 
@@ -34,14 +127,13 @@
                     <button mat-button (click)="toggleUserDropdown(!showUserDropdown)"
                         class="text-blue-500 hover:text-blue-700 font-semibold flex items-center px-4 py-2 rounded-md">
                         <mat-icon class="mr-2">account_circle</mat-icon>
-                        {{ loggedInUsername }}
-                        <mat-icon>{{ showUserDropdown ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                        <span class="auth-text">{{ loggedInUsername }}</span>
                     </button>
                     <div *ngIf="showUserDropdown"
                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg user-dropdown-menu">
-                        <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Thông tin cá nhân</a>
-                        <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Cài đặt</a>
-                        <button mat-button (click)="logout()" class="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
+                        <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" (click)="closeUserDropdown()">Thông tin cá nhân</a>
+                        <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" (click)="closeUserDropdown()">Cài đặt</a>
+                        <button mat-button (click)="logout(); closeUserDropdown()" class="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
                             Đăng xuất
                         </button>
                     </div>
@@ -51,8 +143,8 @@
     </div>
 </header>
 
-<div *ngIf="isLoginFormOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <mat-card class="w-full max-w-md p-4 rounded-lg shadow-lg">
+<div *ngIf="isLoginFormOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" (click)="closeLoginForm()">
+    <mat-card class="w-full max-w-md p-4 rounded-lg shadow-lg login-form-container" (click)="$event.stopPropagation()">
         <mat-card-header class="flex flex-col items-center justify-center h-12 bg-green-100 rounded-t-lg -mx-4 -mt-4 mb-4">
             <mat-card-title class="text-lg text-center font-semibold text-gray-800">
                 {{ isRegisterFormVisible ? 'Đăng ký' : 'Đăng nhập' }}

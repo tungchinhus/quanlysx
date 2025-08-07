@@ -61,7 +61,7 @@
           <!-- Trường Số bối dây -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Số bối dây</mat-label>
-            <input matInput formControlName="soboyday" placeholder="Nhập số bối dây">
+            <input matInput formControlName="soboiday" placeholder="Nhập số bối dây">
           </mat-form-field>
   
           <!-- Trường BD Hạ trong -->
@@ -107,6 +107,11 @@
     </div>
   
     <div class="popup-actions">
+      <!-- Test button for debugging -->
+      <button mat-button color="accent" (click)="testForm()" *ngIf="data.mode === 'add'">
+        <mat-icon>bug_report</mat-icon> Test Form
+      </button>
+      
       <!-- Nút "Thêm Bảng Vẽ" chỉ hiển thị khi ở chế độ 'add' -->
       <button mat-raised-button color="primary" (click)="themBangVe()" *ngIf="data.mode === 'add'">
         <mat-icon>save</mat-icon> Lưu

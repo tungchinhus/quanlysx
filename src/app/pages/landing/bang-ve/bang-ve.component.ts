@@ -27,7 +27,7 @@ export class BangVeComponent implements OnInit {
       congsuat: ['', [Validators.required, Validators.pattern(/^[0-9]*$/)]],
       tbkt: [''],
       dienap: [''],
-      soboyday: [''],
+      soboiday: [''],
       bd_ha_trong: [''],
       bd_ha_ngoai: [''],
       bd_cao: [''],
@@ -37,6 +37,10 @@ export class BangVeComponent implements OnInit {
       trang_thai: [false],
       created_at: [{ value: new Date().toISOString().slice(0, 16), disabled: true }]
     });
+
+    console.log('Form initialized:', this.bangVeForm);
+    console.log('kyhieubangve control:', this.bangVeForm.get('kyhieubangve'));
+    console.log('kyhieubangve initial value:', this.bangVeForm.get('kyhieubangve')?.value);
 
     // Kiểm tra chế độ và điền dữ liệu nếu là xem/sửa
     if (this.data && this.data.bangVeData) {
@@ -52,20 +56,45 @@ export class BangVeComponent implements OnInit {
         created_at: new Date().toISOString().slice(0, 16),
         trang_thai: false
       });
+      
+      // Đảm bảo kyhieubangve không bị disabled
+      const kyhieuControl = this.bangVeForm.get('kyhieubangve');
+      if (kyhieuControl && kyhieuControl.disabled) {
+        kyhieuControl.enable();
+      }
+      
+      // Đảm bảo form được enable trong chế độ add
+      if (this.data.mode === 'add') {
+        this.bangVeForm.enable();
+      }
     }
+    
+    console.log('Form after initialization:', this.bangVeForm.value);
+    console.log('kyhieubangve after init:', this.bangVeForm.get('kyhieubangve')?.value);
   }
 
   /**
    * Xử lý sự kiện khi nhấn nút "Thêm Bảng Vẽ" (trong dialog)
    */
   themBangVe(): void {
+    console.log('Form valid:', this.bangVeForm.valid);
+    console.log('Form values:', this.bangVeForm.value);
+    console.log('Form raw values:', this.bangVeForm.getRawValue());
+    console.log('kyhieubangve value:', this.bangVeForm.get('kyhieubangve')?.value);
+    console.log('kyhieubangve valid:', this.bangVeForm.get('kyhieubangve')?.valid);
+    console.log('kyhieubangve errors:', this.bangVeForm.get('kyhieubangve')?.errors);
+    console.log('kyhieubangve disabled:', this.bangVeForm.get('kyhieubangve')?.disabled);
+    console.log('kyhieubangve enabled:', this.bangVeForm.get('kyhieubangve')?.enabled);
+    
     if (this.bangVeForm.valid) {
       const newBangVe = { ...this.bangVeForm.getRawValue(), id: null }; // ID sẽ được gán ở component cha
+      console.log('Sending data to parent:', newBangVe);
       this.dialogRef.close(newBangVe); // Đóng dialog và trả về dữ liệu mới
       this._snackBar.open('Đang thêm bảng vẽ...', 'Đóng', { duration: 2000 });
     } else {
-      this._snackBar.open('Vui lòng điền đầy đủ và đúng thông tin!', 'Đóng', { duration: 3000 });
+      console.log('Form is invalid. Errors:', this.bangVeForm.errors);
       this.bangVeForm.markAllAsTouched();
+      this._snackBar.open('Vui lòng điền đầy đủ và đúng thông tin!', 'Đóng', { duration: 3000 });
     }
   }
 
@@ -89,5 +118,26 @@ export class BangVeComponent implements OnInit {
    */
   onCancel(): void {
     this.dialogRef.close(); // Đóng dialog mà không truyền dữ liệu
+  }
+
+  /**
+   * Test method để kiểm tra form
+   */
+  testForm(): void {
+    console.log('Testing form...');
+    this.bangVeForm.patchValue({
+      kyhieubangve: 'TEST-BV-001',
+      congsuat: 250,
+      tbkt: 'TEST-TBKT',
+      dienap: '22kV',
+      soboiday: '3',
+      bd_ha_trong: 'OK',
+      bd_ha_ngoai: 'OK',
+      bd_cao: 'OK',
+      bd_ep: 'OK',
+      bung_bd: 1
+    });
+    console.log('Form after test patch:', this.bangVeForm.value);
+    console.log('Form valid after test:', this.bangVeForm.valid);
   }
 }

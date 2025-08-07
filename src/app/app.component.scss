@@ -587,15 +587,65 @@ mat-form-field {
 .mat-mdc-form-field-infix {
     padding-top: 0.625rem !important;
     padding-bottom: 0.625rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Điều chỉnh vị trí nhãn cho các input ngắn hơn */
 .mat-mdc-form-field-label {
     top: 0.625rem !important; /* Điều chỉnh để khớp với padding mới */
 }
+
 .mat-mdc-form-field-label.mat-mdc-form-field-floating:not(.mat-mdc-form-field-empty) {
     top: -0.5rem !important; /* Điều chỉnh cho nhãn nổi */
     font-size: 0.75rem !important;
+}
+
+/* Căn giữa text trong input fields của form đăng nhập */
+::ng-deep .mat-mdc-form-field-infix input {
+  text-align: center !important;
+  vertical-align: middle !important;
+  line-height: 1.5 !important;
+  height: auto !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 14px !important;
+}
+
+/* Căn giữa placeholder text */
+::ng-deep .mat-mdc-form-field-infix input::placeholder {
+  text-align: center !important;
+  vertical-align: middle !important;
+  line-height: 1.5 !important;
+}
+
+/* Đảm bảo mat-form-field-flex căn chỉnh đúng */
+::ng-deep .mat-mdc-form-field-flex {
+  align-items: center !important;
+  height: auto !important;
+}
+
+/* Đảm bảo mat-form-field-infix căn chỉnh đúng */
+::ng-deep .mat-mdc-form-field-infix {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: auto !important;
+}
+
+/* Đảm bảo mat-form-field-wrapper không có margin */
+::ng-deep .mat-mdc-form-field-wrapper {
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Đảm bảo mat-form-field-subscript-wrapper không chiếm không gian */
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  margin-top: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Checkbox "Nhớ mật khẩu" */
@@ -696,6 +746,57 @@ mat-card-actions button.mat-button:hover {
 .user-dropdown-menu {
   z-index: 1000;
   position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  min-width: 200px;
+  padding: 8px 0;
+  margin-top: 4px;
+  
+  // Đảm bảo dropdown không bị đóng khi hover
+  &:hover {
+    display: block !important;
+  }
+  
+  a, button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    color: #374151;
+    text-decoration: none;
+    border: none;
+    background: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+    
+    &:first-child {
+      border-radius: 8px 8px 0 0;
+    }
+    
+    &:last-child {
+      border-radius: 0 0 8px 8px;
+    }
+  }
+  
+  // Style cho nút đăng xuất
+  button[mat-button] {
+    color: #dc2626;
+    
+    &:hover {
+      background-color: #fef2f2;
+      color: #b91c1c;
+    }
+  }
 }
 
 // Portrait orientation for tablets
@@ -784,5 +885,708 @@ mat-card-actions button.mat-button:hover {
     .thibidi-service-item:hover {
       transform: none;
     }
+  }
+}
+
+/* CSS riêng cho form đăng nhập */
+.login-form-container {
+  /* Căn giữa text trong input fields của form đăng nhập */
+  ::ng-deep .mat-mdc-form-field-infix input {
+    text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
+    font-size: 14px !important;
+  }
+
+  /* Căn giữa placeholder text */
+  ::ng-deep .mat-mdc-form-field-infix input::placeholder {
+    text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Đảm bảo mat-form-field-flex căn chỉnh đúng */
+  ::ng-deep .mat-mdc-form-field-flex {
+    align-items: center !important;
+    height: auto !important;
+  }
+
+  /* Đảm bảo mat-form-field-infix căn chỉnh đúng */
+  ::ng-deep .mat-mdc-form-field-infix {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: auto !important;
+  }
+
+  /* Đảm bảo mat-form-field-wrapper không có margin */
+  ::ng-deep .mat-mdc-form-field-wrapper {
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Đảm bảo mat-form-field-subscript-wrapper không chiếm không gian */
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    margin-top: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+}
+
+/* Responsive Design và Tablet Support */
+
+/* Hamburger Menu - Đảm bảo hiển thị rõ ràng */
+.hamburger-menu {
+  display: none !important;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1000;
+  position: relative;
+  margin-left: auto;
+  
+  span {
+    width: 100%;
+    height: 3px;
+    background: #333;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+    display: block;
+  }
+  
+  &.active {
+    span {
+      &:nth-child(1) {
+        transform: rotate(45deg) translate(6px, 6px);
+      }
+      &:nth-child(2) {
+        opacity: 0;
+      }
+      &:nth-child(3) {
+        transform: rotate(-45deg) translate(6px, -6px);
+      }
+    }
+  }
+}
+
+/* Đảm bảo hamburger menu hiển thị trên tablet */
+@media (max-width: 1024px) {
+  .hamburger-menu {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ẩn desktop menu */
+  .thibidi-nav-menu.desktop-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  
+  /* Hiển thị mobile menu */
+  .mobile-menu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ẩn text trong auth section */
+  .auth-text {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Mobile Menu - Menu dropdown khi bấm hamburger */
+.mobile-menu {
+  display: none !important;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 1000;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  
+  &.active {
+    transform: translateY(0);
+  }
+  
+  /* Close button */
+  .mobile-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+    z-index: 1001;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    mat-icon {
+      font-size: 24px;
+      color: var(--cds-color-dark-navy);
+    }
+  }
+  
+  /* Mobile Navigation Section */
+  .mobile-nav-section {
+    flex: 1;
+    padding: 0;
+    
+    .thibidi-nav-item {
+      display: block;
+      border-bottom: 1px solid #eee;
+      
+      .thibidi-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 24px;
+        color: var(--cds-color-dark-navy);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+        
+        &:hover {
+          background-color: var(--cds-color-light-5-dark-navy);
+          color: var(--cds-color-jh-blue);
+        }
+        
+        &.active {
+          background-color: var(--cds-color-jh-blue);
+          color: white;
+        }
+      }
+    }
+  }
+  
+  /* Mobile Auth Section */
+  .mobile-auth-section {
+    padding: 20px 24px;
+    border-top: 1px solid #eee;
+    background: #f8f9fa;
+    
+    /* Login button */
+    .mobile-auth-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--cds-color-jh-blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      
+      &:hover {
+        background: var(--cds-color-dark-navy);
+      }
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+    
+    /* User info when logged in */
+    .mobile-user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 16px;
+      
+      .mobile-user-avatar {
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          color: var(--cds-color-jh-blue);
+        }
+      }
+      
+      .mobile-user-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        
+        .mobile-username {
+          font-weight: 600;
+          color: var(--cds-color-dark-navy);
+          font-size: 16px;
+        }
+        
+        .mobile-user-role {
+          color: var(--cds-color-text-inactive);
+          font-size: 14px;
+        }
+      }
+    }
+    
+    /* User actions */
+    .mobile-user-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      
+      .mobile-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        border-radius: 8px;
+        color: var(--cds-color-dark-navy);
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-align: left;
+        
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+        
+        &.mobile-logout-btn {
+          color: #dc3545;
+          
+          &:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Desktop Menu - Chỉ hiện trên desktop */
+.desktop-menu {
+  display: flex !important;
+}
+
+/* Auth Section */
+.auth-section {
+  position: relative;
+  
+  .relative {
+    position: relative;
+  }
+  
+  button[mat-button] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+    }
+    
+    .auth-text {
+      font-weight: 500;
+    }
+  }
+}
+
+/* Responsive Breakpoints */
+
+/* Tablet và Mobile (≤1024px) - Ẩn menu navigation, chỉ hiện hamburger */
+@media (max-width: 1024px) {
+  .thibidi-nav-container {
+    padding: 0 16px;
+    height: 70px;
+  }
+  
+  /* Ẩn hoàn toàn desktop menu */
+  .thibidi-nav-menu.desktop-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+  
+  /* Hiện hamburger menu */
+  .hamburger-menu {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ẩn mobile menu mặc định, chỉ hiện khi active */
+  .mobile-menu {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translateY(-100%) !important;
+  }
+  
+  /* Chỉ hiện mobile menu khi active */
+  .mobile-menu.active {
+    transform: translateY(0) !important;
+  }
+  
+  /* Ẩn text trong auth section */
+  .auth-text {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  .auth-section button {
+    padding: 8px !important;
+    min-width: auto !important;
+  }
+  
+  .auth-section mat-icon {
+    margin-right: 0 !important;
+  }
+}
+
+/* Mobile (≤767px) */
+@media (max-width: 767px) {
+  .thibidi-nav-container {
+    padding: 0 12px;
+    height: 60px;
+  }
+  
+  .logo img {
+    height: 40px;
+  }
+  
+  .mobile-menu {
+    top: 60px;
+  }
+  
+  .mobile-menu .mobile-nav-section .thibidi-nav-link {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .mobile-menu .mobile-auth-section {
+    padding: 16px 20px;
+  }
+}
+
+/* Desktop (>1024px) - Hiện menu navigation bình thường */
+@media (min-width: 1025px) {
+  .hamburger-menu {
+    display: none !important;
+  }
+  
+  .mobile-menu {
+    display: none !important;
+  }
+  
+  .thibidi-nav-menu.desktop-menu {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .auth-text {
+    display: inline !important;
+  }
+}
+
+/* Responsive Design cho Form Đăng nhập */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .login-form-container {
+    ::ng-deep .mat-mdc-form-field-infix input {
+      font-size: 16px !important; /* Tránh zoom trên iOS */
+      padding: 8px 0 !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding: 8px 0 !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field-label {
+      font-size: 14px !important;
+    }
+  }
+  
+  .login-form-container mat-card {
+    max-width: 90vw;
+    margin: 0 16px;
+  }
+  
+  .login-form-container mat-card-content {
+    gap: 16px;
+  }
+  
+  .login-form-container button.mat-raised-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+  
+  .login-form-container mat-checkbox {
+    margin-bottom: 16px;
+  }
+}
+
+/* Mobile (up to 767px) */
+@media (max-width: 767px) {
+  .login-form-container {
+    ::ng-deep .mat-mdc-form-field-infix input {
+      font-size: 16px !important;
+      padding: 6px 0 !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding: 6px 0 !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field-label {
+      font-size: 13px !important;
+    }
+  }
+  
+  .login-form-container mat-card {
+    max-width: 95vw;
+    margin: 0 8px;
+    padding: 12px;
+  }
+  
+  .login-form-container mat-card-header {
+    height: 48px;
+    margin-bottom: 12px;
+  }
+  
+  .login-form-container mat-card-title {
+    font-size: 16px;
+  }
+  
+  .login-form-container mat-card-content {
+    gap: 12px;
+  }
+  
+  .login-form-container button.mat-raised-button {
+    padding: 10px 20px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  
+  .login-form-container .text-center.text-sm.mt-2 button {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}
+
+/* Large Tablet (1025px - 1366px) */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .login-form-container mat-card {
+    max-width: 500px;
+  }
+  
+  .login-form-container mat-card-content {
+    gap: 20px;
+  }
+  
+  .login-form-container button.mat-raised-button {
+    padding: 14px 28px;
+    font-size: 16px;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .login-form-container {
+    ::ng-deep .mat-mdc-form-field-infix input {
+      min-height: 44px;
+    }
+    
+    ::ng-deep .mat-mdc-form-field-infix {
+      min-height: 44px;
+    }
+  }
+  
+  .login-form-container button.mat-raised-button {
+    min-height: 44px;
+    min-width: 120px;
+  }
+  
+  .login-form-container mat-checkbox {
+    min-height: 44px;
+  }
+}
+
+/* Landscape Tablet */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .login-form-container mat-card {
+    max-width: 80vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .login-form-container mat-card-content {
+    gap: 12px;
+  }
+  
+  .login-form-container mat-form-field {
+    margin-bottom: 8px !important;
+  }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .login-form-container {
+    ::ng-deep .mat-mdc-form-field-label {
+      font-weight: 600;
+    }
+  }
+  
+  .login-form-container button.mat-raised-button {
+    font-weight: 600;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .login-form-container mat-card {
+    background-color: #1a1a1a;
+    color: #fff;
+  }
+  
+  .login-form-container mat-card-header {
+    background-color: #2d2d2d;
+  }
+  
+  .login-form-container mat-card-title {
+    color: #fff;
+  }
+  
+  .login-form-container mat-card-subtitle {
+    color: #ccc;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .login-form-container {
+    ::ng-deep .mat-mdc-form-field-infix input,
+    ::ng-deep .mat-mdc-form-field-infix {
+      transition: none;
+    }
+  }
+}
+
+/* Print Styles */
+@media print {
+  .login-form-container {
+    display: none;
+  }
+}
+
+/* Override CSS để đảm bảo hamburger menu hiển thị */
+@media (max-width: 1024px) {
+  /* Force hiển thị hamburger menu */
+  .hamburger-menu {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Force ẩn desktop menu */
+  .thibidi-nav-menu.desktop-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+  
+  /* Force hiển thị mobile menu */
+  .mobile-menu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Force ẩn auth text */
+  .auth-text {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  
+  /* Đảm bảo layout đúng */
+  .thibidi-nav-container {
+    justify-content: space-between !important;
+  }
+  
+  /* Đảm bảo hamburger menu ở bên phải */
+  .hamburger-menu {
+    order: 3 !important;
+    margin-left: auto !important;
+  }
+  
+  /* Logo ở bên trái */
+  .logo {
+    order: 1 !important;
+  }
+  
+  /* Auth section ở giữa */
+  .auth-section {
+    order: 2 !important;
+  }
+}
+
+/* Mobile specific */
+@media (max-width: 767px) {
+  .hamburger-menu {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .hamburger-menu span {
+    height: 2px;
   }
 }

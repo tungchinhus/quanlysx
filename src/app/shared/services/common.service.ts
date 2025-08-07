@@ -189,7 +189,8 @@ export class CommonService {
       if(result){
         if(LandingService.sysCWS){
           CommonService.isRefreshPage=false;
-        window.open(window.location.href.split('?ss')[0], '_self');
+          // Thay thế window.location.href bằng Angular Router
+          this.router.navigate(['/landing'], { replaceUrl: true });
         } else{
           this.router.navigate(['/landing'], { replaceUrl: true });
           this.pushResetFormEvent();
