@@ -3,6 +3,27 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { Router } from '@angular/router';
 import { BangVeData } from '../ds-bangve/ds-bangve.component';
 import { CommonService } from 'src/app/shared/services/common.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+interface Worker {
+  id: number;
+  name: string;
+  username?: string;
+  email?: string;
+  role?: string;
+  code?: string;
+  department?: string;
+}
+
+interface ApiResponse {
+  isSuccess: boolean;
+  message: string;
+  users: Worker[];
+  totalCount: number;
+  roleName: string;
+}
 
 @Component({
   selector: 'app-boi-day-cao',
@@ -17,31 +38,52 @@ export class BoiDayCaoComponent implements OnInit {
   windingForm!: FormGroup;
   bangve: BangVeData[] = [];
 
-  nguoiGiaCongOptions: string[] = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C'];
+  nguoiGiaCongOptions: Worker[] = [];
+  isLoadingWorkers: boolean = false;
 
   boiDayHaControl = new FormControl('', [Validators.required]);
 
-  constructor(private fb: FormBuilder, private router: Router, private commonService: CommonService) {
+  constructor(
+    private fb: FormBuilder, 
+    private router: Router,
+    private commonService: CommonService,
+    private http: HttpClient
+  ) {
     this.windingForm = this.fb.group({
-      boiDayHa: this.boiDayHaControl
+      boiDayCao: this.boiDayHaControl
     });
     const navigation = this.router.getCurrentNavigation();
-    this.bangve = navigation?.extras?.state?.['drawings'];
+    // Lấy data drawing từ navigation state
+    const drawing = navigation?.extras?.state?.['drawing'];
+    if (drawing) {
+      this.bangve = [drawing]; // Convert single drawing to array
+    }
     console.log('Bảng vẽ:', this.bangve);
   }
 
   ngOnInit() {
     console.log('Form:', this.windingForm);
     console.log('Controls:', this.windingForm.controls);
+    
+    // Lấy thông tin user đang đăng nhập
+    const currentUser = this.getCurrentUser();
+    const today = new Date();
+    
+    console.log('Current User:', currentUser);
+    console.log('Today Date:', today);
+    
+    // Load danh sách người gia công từ API
+    this.loadWorkers();
+    
     this.windingForm = this.fb.group({
       congSuat: [{ value: this.bangve[0]?.congsuat, disabled: true }],
       TBKT: [{ value: this.bangve[0]?.tbkt, disabled: true }],
       dienAp: [{ value: this.bangve[0]?.dienap, disabled: true }],
       soBoiDay: [{ value: this.bangve[0]?.soboiday, disabled: true }],
 
-      ngayGiaCong: [null, Validators.required],
-      nguoiGiaCong: [null, Validators.required],
-      kyHieuBV: [null, Validators.required],
+      ngayGiaCong: [{ value: today.toLocaleDateString('vi-VN'), disabled: true }],
+      nguoiGiaCong: [{ value: currentUser.name, disabled: true }],
+      kyHieuBV: [{ value: this.bangve[0]?.kyhieubangve + '-065', disabled: true }],
       quyCachDay: [null, Validators.required],
       soSoiDay: [null, [Validators.required, Validators.min(1)]],
       ngaySanXuat: [null, Validators.required],
@@ -78,6 +120,13 @@ export class BoiDayCaoComponent implements OnInit {
       doLechDienTro: [null]
     });
     
+    // Debug: Kiểm tra giá trị sau khi set
+    console.log('Form after setup - ngayGiaCong:', this.windingForm.get('ngayGiaCong')?.value);
+    console.log('Form after setup - nguoiGiaCong:', this.windingForm.get('nguoiGiaCong')?.value);
+    console.log('Form after setup - soBoiDay:', this.windingForm.get('soBoiDay')?.value);
+    console.log('Bangve data:', this.bangve);
+    console.log('Bangve[0]?.soboiday:', this.bangve[0]?.soboiday);
+    
     this.windingForm.get('chuViKhuon')?.valueChanges.subscribe(value => {
       const ktBungBdTruocControl = this.windingForm.get('ktBungBdTruoc');
       if (value !== null && value !== '' && value !== undefined) {
@@ -87,6 +136,104 @@ export class BoiDayCaoComponent implements OnInit {
         ktBungBdTruocControl?.setValue(null);
       }
     });
+
+    // Emit form validity changes
+    this.windingForm.statusChanges.subscribe(status => {
+      this.isValid.emit(status === 'VALID');
+    });
+    // Emit initial validity
+    this.isValid.emit(this.windingForm.valid);
+  }
+
+  loadWorkers(): void {
+    this.isLoadingWorkers = true;
+    
+    // Debug: Kiểm tra token
+    const token = localStorage.getItem('accessToken');
+    console.log('Access Token:', token ? 'Present' : 'Missing');
+    
+    // Gọi API để lấy danh sách người gia công
+    this.getWorkers().subscribe({
+      next: (workers) => {
+        this.nguoiGiaCongOptions = workers;
+        this.isLoadingWorkers = false;
+        console.log('Danh sách người gia công:', workers);
+        
+        // Debug: Kiểm tra cấu trúc dữ liệu của từng worker
+        workers.forEach((worker, index) => {
+          console.log(`Worker ${index}:`, {
+            id: worker.id,
+            name: worker.name,
+            username: worker.username,
+            email: worker.email,
+            displayName: this.getWorkerDisplayName(worker)
+          });
+        });
+      },
+      error: (error) => {
+        console.error('Lỗi khi tải danh sách người gia công:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        this.isLoadingWorkers = false;
+        // Fallback to default list if API fails
+        this.nguoiGiaCongOptions = [
+          { id: 1, name: 'Nguyễn Văn A' },
+          { id: 2, name: 'Trần Thị B' },
+          { id: 3, name: 'Lê Văn C' }
+        ];
+      }
+    });
+  }
+
+  getWorkers(): Observable<Worker[]> {
+    // Thay đổi URL API theo endpoint thực tế của bạn
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Account/users-by-role?roleName=User`;
+    
+    // Thêm headers authentication
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`
+    };
+    
+    return this.http.get<ApiResponse>(apiUrl, { headers }).pipe(
+      map(response => response.users) // Extract users array from response
+    );
+  }
+
+  // Helper method để hiển thị tên người gia công trong select
+  getWorkerDisplayName(worker: Worker | null | undefined): string {
+    if (!worker) {
+      return 'Chưa chọn người gia công';
+    }
+    
+    // Ưu tiên hiển thị name, sau đó username, email, cuối cùng là User ID
+    if (worker.name && worker.name.trim() !== '') {
+      return worker.name;
+    }
+    
+    if (worker.username && worker.username.trim() !== '') {
+      return worker.username;
+    }
+    
+    if (worker.email && worker.email.trim() !== '') {
+      return worker.email;
+    }
+    
+    return `User ${worker.id}`;
+  }
+
+  getCurrentUser(): Worker {
+    // Lấy thông tin user đang đăng nhập từ localStorage
+    const username = localStorage.getItem('rememberedUsername') || '';
+    const userId = localStorage.getItem('userID') || '0';
+    
+    return {
+      id: parseInt(userId),
+      name: username,
+      username: username,
+      email: localStorage.getItem('email') || '',
+      role: localStorage.getItem('userRole') || 'User'
+    };
   }
   onSubmit(): void {
     if (this.windingForm.valid) {

@@ -29,7 +29,7 @@ export class CommonService {
   static isRefreshPage= true;
   static cwsViewMode: boolean = false;
   event = new Subject<any>();
-  SERVER_API_URL = '';
+  SERVER_API_URL = 'https://localhost:7190';
   private notification = new Subject<any>();
   notificationMethodCall$ = this.notification.asObservable();
   resetForm = new Subject<any>();

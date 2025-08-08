@@ -7,10 +7,10 @@ import { FormControl, Validators } from '@angular/forms';
   styleUrls: ['./ep-boi-day.component.scss']
 })
 export class EpBoiDayComponent implements OnInit {
-  @Input() isActive: boolean = false; // <-- PHẢI CÓ @Input() này
+  @Input() isActive: boolean = false;
   @Output() isValid = new EventEmitter<boolean>();
 
-  epBoiDayControl = new FormControl('', [Validators.required]); // <-- PHẢI CÓ FormControl này
+  epBoiDayControl = new FormControl('', [Validators.required]);
 
   ngOnInit() {
     this.epBoiDayControl.statusChanges.subscribe(status => {

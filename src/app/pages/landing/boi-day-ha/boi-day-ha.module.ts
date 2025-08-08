@@ -51,6 +51,9 @@ const routes: Routes = [
     MatDatepickerModule,
     MatSelectModule,
     RouterModule.forChild(routes)
+  ],
+  exports: [
+    BoiDayHaComponent
   ]
 })
 export class BoiDayHaModule { }

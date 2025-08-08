@@ -33,8 +33,9 @@
 
           <div class="form-item">
             <span class="label">Số bối dây:</span>
-            <mat-form-field class="input-field" disabled>
-              <input matInput type="number" formControlName="soBoiDay">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Số bối dây</mat-label>
+              <input matInput type="number" formControlName="soBoiDay" readonly>
             </mat-form-field>
           </div>
         </div>
@@ -44,23 +45,13 @@
           <!-- Ngày gia công -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Ngày gia công</mat-label>
-            <input matInput [matDatepicker]="pickerNgayGiaCong" formControlName="ngayGiaCong">
-            <mat-datepicker-toggle matSuffix [for]="pickerNgayGiaCong"></mat-datepicker-toggle>
-            <mat-datepicker #pickerNgayGiaCong></mat-datepicker>
-            <mat-error *ngIf="windingForm.get('ngayGiaCong')?.hasError('required') && windingForm.get('ngayGiaCong')?.touched">
-              Ngày gia công là bắt buộc.
-            </mat-error>
+            <input matInput formControlName="ngayGiaCong" readonly>
           </mat-form-field>
 
           <!-- Người gia công -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Người gia công</mat-label>
-            <mat-select formControlName="nguoiGiaCong">
-              <mat-option value="">Chọn người gia công</mat-option>
-              <mat-option *ngFor="let nguoi of nguoiGiaCongOptions" [value]="nguoi">
-                {{ nguoi }}
-              </mat-option>
-            </mat-select>
+            <input matInput formControlName="nguoiGiaCong" readonly>
           </mat-form-field>
         </div>
 
@@ -68,10 +59,7 @@
         <div class="form-row-full">
           <mat-form-field appearance="outline" class="form-field-full">
             <mat-label>Ký hiệu BV</mat-label>
-            <input matInput formControlName="kyHieuBV" placeholder="Nhập ký hiệu BV">
-            <mat-error *ngIf="windingForm.get('kyHieuBV')?.hasError('required') && windingForm.get('kyHieuBV')?.touched">
-              Ký hiệu BV là bắt buộc.
-            </mat-error>
+            <input matInput formControlName="kyHieuBV" readonly>
           </mat-form-field>
         </div>
 

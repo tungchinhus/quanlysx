@@ -27,10 +27,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
-import { QuanDayComponent } from './pages/landing/quan-day/quan-day.component';
-import { BoiDayHaComponent } from './pages/landing/quan-day/boi-day-ha/boi-day-ha.component';
-import { BoiDayCaoComponent } from './pages/landing/quan-day/boi-day-cao/boi-day-cao.component';
-import { EpBoiDayComponent } from './pages/landing/quan-day/ep-boi-day/ep-boi-day.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatRadioModule } from '@angular/material/radio';
@@ -117,11 +113,7 @@ const locationInitialized = async (translate: TranslateService, injector: Inject
     })
   ],
   declarations: [
-    AppComponent, 
-    QuanDayComponent,
-    BoiDayHaComponent,
-    BoiDayCaoComponent,
-    EpBoiDayComponent
+    AppComponent
   ],
   providers: [
     CommonService,

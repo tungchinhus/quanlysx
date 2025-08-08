@@ -277,13 +277,12 @@ mat-card-content {
   min-height: 32px; // Giảm min-height
   display: flex;
   align-items: center; // Căn giữa theo chiều dọc
-  justify-content: center; // Căn giữa theo chiều ngang
 }
 
 // Giảm font-size của input
 ::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input {
   font-size: 14px; // Giảm font-size
-  text-align: center; // Căn giữa text
+  text-align: left; // Căn trái text
   vertical-align: middle; // Căn giữa theo chiều dọc
   line-height: 32px; // Đặt line-height bằng với min-height để căn giữa
   height: 32px; // Đặt height cố định
@@ -312,67 +311,67 @@ mat-card-content {
   align-self: center;
 }
 
-// Căn giữa placeholder text
+// Căn trái placeholder text
 ::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input::placeholder {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }
 
-// Căn giữa placeholder cho mat-select
+// Căn trái placeholder cho mat-select
 ::ng-deep .mat-select-placeholder {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }
 
-// Căn giữa text trong input
+// Căn trái text trong input
 ::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }
 
-// Căn giữa text trong mat-select
+// Căn trái text trong mat-select
 ::ng-deep .mat-select-value {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }
 
-// Căn giữa text trong mat-select trigger
+// Căn trái text trong mat-select trigger
 ::ng-deep .mat-select-trigger {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
   height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-// Căn giữa text trong mat-select value text
+// Căn trái text trong mat-select value text
 ::ng-deep .mat-select-value-text {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }
 
-// Căn giữa text trong mat-select panel
+// Căn trái text trong mat-select panel
 ::ng-deep .mat-select-panel .mat-option {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }
 
-// Căn giữa text trong date picker input
+// Căn trái text trong date picker input
 ::ng-deep .mat-datepicker-toggle {
   align-self: center;
 }
 
-// Căn giữa text trong date input
+// Căn trái text trong date input
 ::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input[matDatepicker] {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   line-height: 32px;
 }

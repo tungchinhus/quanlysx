@@ -15,13 +15,14 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
 import { QuanDayComponent } from './quan-day.component';
-import { BoiDayHaComponent } from './boi-day-ha/boi-day-ha.component';
-import { BoiDayCaoComponent } from './boi-day-cao/boi-day-cao.component';
 import { EpBoiDayComponent } from './ep-boi-day/ep-boi-day.component';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatSelectModule } from '@angular/material/select';
+import { BoiDayHaModule } from '../boi-day-ha/boi-day-ha.module';
+import { BoiDayCaoModule } from '../boi-day-cao/boi-day-cao.module';
 
 const routes: Routes = [
   { path: '', component: QuanDayComponent }
@@ -29,10 +30,8 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    //QuanDayComponent,
-    // BoiDayHaComponent,
-    // BoiDayCaoComponent,
-    // EpBoiDayComponent
+    QuanDayComponent,
+    EpBoiDayComponent
   ],
   imports: [
     CommonModule,
@@ -54,6 +53,9 @@ const routes: Routes = [
     MatCardModule,
     MatRadioModule,
     MatDatepickerModule,
+    MatSelectModule,
+    BoiDayHaModule,
+    BoiDayCaoModule,
     RouterModule.forChild(routes)
   ]
 })

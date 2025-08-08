@@ -121,8 +121,8 @@ export class DsBangveComponent implements OnInit {
       console.log('User not authenticated, showing mock data');
       this.thongbao('Vui lòng đăng nhập để xem dữ liệu thực tế', 'Đóng', 'warning');
       // Load mock data thay vì gọi API
-      this.initializeMockDrawings();
-      this.initializeMockProcessedDrawings();
+      //this.initializeMockDrawings();
+      //this.initializeMockProcessedDrawings();
     } else {
       console.log('User authenticated, loading real data from API');
       // Load data từ API
@@ -176,20 +176,6 @@ export class DsBangveComponent implements OnInit {
     const userInfo = this.authService.getUserInfo();
     const userRole = localStorage.getItem('role');
     const roles = userInfo?.roles || [];
-    
-    console.log('=== User Permission Check ===');
-    console.log('User Info:', userInfo);
-    console.log('User Role from localStorage:', userRole);
-    console.log('Roles from userInfo:', roles);
-    console.log('Has Admin/Manager Role:', this.hasAdminOrManagerRole());
-    
-    // Hiển thị thông tin quyền cho user
-    if (this.hasAdminOrManagerRole()) {
-      console.log('User has admin/manager permissions');
-    } else {
-      console.log('User does not have admin/manager permissions');
-      this.thongbao('Bạn đang xem ở chế độ chỉ đọc. Chỉ admin hoặc manager mới có quyền thêm/sửa/xóa bảng vẽ.', 'Đóng', 'info');
-    }
   }
 
   // Test API connectivity
@@ -236,7 +222,7 @@ export class DsBangveComponent implements OnInit {
       console.error('No authentication token found');
       console.log('User needs to login first');
       // Không hiển thị error message vì đã được xử lý trong checkAuthentication()
-      this.initializeMockDrawings();
+      //this.initializeMockDrawings();
       return;
     }
 
@@ -270,7 +256,7 @@ export class DsBangveComponent implements OnInit {
         }
         
         // Fallback to mock data
-        this.initializeMockDrawings();
+        //this.initializeMockDrawings();
       }
     });
   }
@@ -727,22 +713,24 @@ export class DsBangveComponent implements OnInit {
     const dialogRef = this.dialog.open(DialogComponent, {
       width: '400px',
       data: {
-        title: 'Xác nhận gia công',
-        message: `Bạn có chắc chắn muốn gia công bảng vẽ ${drawing.kyhieubangve}?`,
-        confirmText: 'Gia công',
+        title: 'Xác nhận quấn dây hạ',
+        message: `Thực hiện quấn dây hạ ${drawing.kyhieubangve}?`,
+        confirmText: 'Quấn dây hạ',
         cancelText: 'Hủy'
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.confirmGiaCong(drawing);
+        //this.confirmGiaCong(drawing);
+        this.goBoidayHa(drawing);
       }
     });
   }
 
-  goBoidayHa(){
-    this.router.navigate(['/landing/boi-day-ha']);
+  goBoidayHa(drawing: BangVeData){
+    // Không dùng localStorage để truyền dữ liệu, chỉ dùng state khi navigate
+    this.router.navigate(['boi-day-ha'], { state: { drawing: drawing } });
   }
 
   goBoidayCao(){
