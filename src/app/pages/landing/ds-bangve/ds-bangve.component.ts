@@ -183,8 +183,8 @@ export class DsBangveComponent implements OnInit {
     console.log('Testing API connectivity...');
     const token = this.authService.getToken();
     
-    if (!token) {
-      console.log('No token available for API test');
+    if (!token || token === 'null' || token === 'undefined' || token.trim() === '') {
+      console.log('No valid token available for API test');
       return;
     }
     
@@ -201,8 +201,6 @@ export class DsBangveComponent implements OnInit {
       },
       error: (error) => {
         console.error('API connectivity test failed:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
       }
     });
   }

@@ -18,14 +18,24 @@ export class HttpConfigInterceptor implements HttpInterceptor {
     const started = Date.now();
     let ok: string;
     const token = this.storage.getToken();
-    if (token) {
+    
+    // Chỉ thêm Authorization header nếu token tồn tại và hợp lệ
+    if (token && token !== 'null' && token !== 'undefined' && token.trim() !== '') {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+    } else {
+      // Nếu không có token, chỉ thêm Content-Type
+      request = request.clone({
+        setHeaders: {
+          'Content-Type': 'application/json'
+        }
+      });
     }
+    
     console.log('HttpConfigInterceptor', request);
     return next.handle(request).pipe(
       tap({

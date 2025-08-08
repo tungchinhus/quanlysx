@@ -87,6 +87,12 @@ title: string = 'quanlysx';
   @HostListener('keypress', ["$event"])
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
+    // Kiểm tra xem event.target có phải là HTMLElement không
+    if (!event.target || typeof (event.target as any).closest !== 'function') {
+      console.warn('Event target is not an HTMLElement or does not have closest method:', event.target);
+      return;
+    }
+    
     const target = event.target as HTMLElement;
     
     // Chỉ đóng user dropdown khi click bên ngoài hoàn toàn
@@ -101,11 +107,17 @@ title: string = 'quanlysx';
   }
 
   ngOnInit(): void {
-    if (localStorage.getItem('rememberMe') && localStorage.getItem('rememberedUsername')) {
-      this.loggedInUser = localStorage.getItem('rememberedUsername');
-      this.username = localStorage.getItem('rememberedUsername') || '';
+    // Kiểm tra và khôi phục trạng thái đăng nhập từ localStorage
+    const remembered = localStorage.getItem('rememberMe');
+    const savedUser = localStorage.getItem('rememberedUsername');
+    const accessToken = localStorage.getItem('accessToken');
+
+    if (remembered === 'true' && savedUser && accessToken) {
+      // Khôi phục trạng thái đăng nhập
+      this.loggedInUser = savedUser;
+      this.username = savedUser;
       this.password = localStorage.getItem('rememberedPassword') || '';
-      this.rememberMe = localStorage.getItem('rememberMe') === 'true';
+      this.rememberMe = true;
       this.isLoginFormOpen = false;
       this.isRegisterFormVisible = false;
       this.isProfileMenuOpen = true;
@@ -128,15 +140,16 @@ title: string = 'quanlysx';
       } else if (username) {
         this.loggedInUsername = username;
       } else {
-        this.loggedInUsername = localStorage.getItem('rememberedUsername') || '';
+        this.loggedInUsername = savedUser;
       }
+      
+      console.log('Restored login state:', {
+        loggedInUser: this.loggedInUser,
+        loggedInUsername: this.loggedInUsername,
+        isLoggedIn: this.isLoggedIn,
+        accessToken: accessToken
+      });
     }
-    const remembered = localStorage.getItem('rememberMe');
-    const savedUser = localStorage.getItem('rememberedUsername');
-
-  if (remembered === 'true' && savedUser) {
-    this.loggedInUser = savedUser;
-  }
     this.currentLanguage = this.languages.find(lang => lang.code === this.translateService.getDefaultLang()) as Lang;  
     const namePage = this.translateService.instant("page-title");
     this.pageTitle.setTitle(namePage);
@@ -259,49 +272,60 @@ title: string = 'quanlysx';
         roles: ['user']
       };
       
-      this.authService.handleLoginSuccess(mockResponse);
-      this.isLoggedIn = true;
-      // Tạo tên hiển thị từ firstName và lastName cho mock login
-      let displayName = '';
-      if (mockResponse.firstName && mockResponse.lastName) {
-        displayName = `${mockResponse.firstName} ${mockResponse.lastName}`;
-      } else if (mockResponse.firstName) {
-        displayName = mockResponse.firstName;
-      } else if (mockResponse.lastName) {
-        displayName = mockResponse.lastName;
-      } else if (mockResponse.hoten) {
-        displayName = mockResponse.hoten;
-      } else if (mockResponse.username) {
-        displayName = mockResponse.username;
-      } else {
-        displayName = 'User';
-      }
-      this.loggedInUsername = displayName;
-      console.log('Mock login: Setting isLoginFormOpen to false');
-      this.isLoginFormOpen = false;
-      console.log('Mock login: isLoginFormOpen after setting to false:', this.isLoginFormOpen);
-      this.username = '';
-      this.password = '';
-      this.toggleUserDropdown(false);
-      
-      // Force close form after a short delay if it doesn't close automatically
-      setTimeout(() => {
-        if (this.isLoginFormOpen) {
-          console.log('Mock login: Force closing login form after timeout');
-          this.isLoginFormOpen = false;
+      try {
+        this.authService.handleLoginSuccess(mockResponse);
+        this.isLoggedIn = true;
+        // Tạo tên hiển thị từ firstName và lastName cho mock login
+        let displayName = '';
+        if (mockResponse.firstName && mockResponse.lastName) {
+          displayName = `${mockResponse.firstName} ${mockResponse.lastName}`;
+        } else if (mockResponse.firstName) {
+          displayName = mockResponse.firstName;
+        } else if (mockResponse.lastName) {
+          displayName = mockResponse.lastName;
+        } else if (mockResponse.hoten) {
+          displayName = mockResponse.hoten;
+        } else if (mockResponse.username) {
+          displayName = mockResponse.username;
+        } else {
+          displayName = 'User';
         }
-      }, 100);
-      
-      if (this.rememberMe) {
-        localStorage.setItem('rememberedUsername', this.loggedInUsername);
-        localStorage.setItem('rememberMe', 'true');          
-      } else {
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberMe');
+        this.loggedInUsername = displayName;
+        console.log('Mock login: Setting isLoginFormOpen to false');
+        this.isLoginFormOpen = false;
+        console.log('Mock login: isLoginFormOpen after setting to false:', this.isLoginFormOpen);
+        this.username = '';
+        this.password = '';
+        this.toggleUserDropdown(false);
+        
+        // Force close form after a short delay if it doesn't close automatically
+        setTimeout(() => {
+          if (this.isLoginFormOpen) {
+            console.log('Mock login: Force closing login form after timeout');
+            this.isLoginFormOpen = false;
+          }
+        }, 100);
+        
+        if (this.rememberMe) {
+          localStorage.setItem('rememberedUsername', this.loggedInUsername);
+          localStorage.setItem('rememberedPassword', this.password);
+          localStorage.setItem('rememberMe', 'true');          
+        } else {
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberedPassword');
+          localStorage.removeItem('rememberMe');
+        }
+        
+        this.router.navigate(['/landing']);
+        return;
+      } catch (error) {
+        console.error('Mock login failed:', error);
+        this.loginError = true;
+        setTimeout(() => {
+          this.loginError = false;
+        }, 3000);
+        return;
       }
-      
-      this.router.navigate(['/landing']);
-      return;
     }
 
     this.authService.login(loginCredentials).subscribe(
@@ -310,9 +334,19 @@ title: string = 'quanlysx';
         console.log('Đăng nhập thành công:', response);
         console.log('Response structure:', JSON.stringify(response, null, 2));
         
-        // Kiểm tra xem response có accessToken không
+        // Kiểm tra xem response có hợp lệ không
         if (!response) {
           console.error('Response is null or undefined:', response);
+          this.loginError = true;
+          setTimeout(() => {
+            this.loginError = false;
+          }, 3000);
+          return;
+        }
+        
+        // Kiểm tra xem response có phải là object không
+        if (typeof response !== 'object') {
+          console.error('Response is not an object:', response);
           this.loginError = true;
           setTimeout(() => {
             this.loginError = false;
@@ -355,16 +389,25 @@ title: string = 'quanlysx';
         };
         
         // Sử dụng auth service để xử lý login success
-        this.authService.handleLoginSuccess(normalizedResponse);
-        
-        // Debug: Check if token was saved
-        console.log('Token after handleLoginSuccess:', localStorage.getItem('accessToken'));
-        console.log('Token from getToken():', this.authService.getToken());
-        
-        // Verify token was actually saved
-        const savedToken = localStorage.getItem('accessToken');
-        if (!savedToken) {
-          console.error('Token không được lưu vào localStorage!');
+        try {
+          this.authService.handleLoginSuccess(normalizedResponse);
+          
+          // Debug: Check if token was saved
+          console.log('Token after handleLoginSuccess:', localStorage.getItem('accessToken'));
+          console.log('Token from getToken():', this.authService.getToken());
+          
+          // Verify token was actually saved
+          const savedToken = localStorage.getItem('accessToken');
+          if (!savedToken) {
+            console.error('Token không được lưu vào localStorage!');
+            this.loginError = true;
+            setTimeout(() => {
+              this.loginError = false;
+            }, 3000);
+            return;
+          }
+        } catch (error) {
+          console.error('Login success handling failed:', error);
           this.loginError = true;
           setTimeout(() => {
             this.loginError = false;
@@ -408,9 +451,11 @@ title: string = 'quanlysx';
         // Lưu thông tin remember me
         if (this.rememberMe) {
           localStorage.setItem('rememberedUsername', this.loggedInUsername);
+          localStorage.setItem('rememberedPassword', this.password);
           localStorage.setItem('rememberMe', 'true');          
         } else {
           localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberedPassword');
           localStorage.removeItem('rememberMe');
         }
 
@@ -421,10 +466,36 @@ title: string = 'quanlysx';
       error => {
         // Xử lý khi đăng nhập thất bại
         console.error('Đăng nhập thất bại:', error);
-        console.error('Error details:', error.error || error.message);
+        
+        // Xử lý các loại lỗi khác nhau
+        let errorMessage = 'Đăng nhập thất bại';
+        if (error.error) {
+          errorMessage = error.error.message || error.error || errorMessage;
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else if (error.status) {
+          switch (error.status) {
+            case 401:
+              errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng';
+              break;
+            case 403:
+              errorMessage = 'Tài khoản bị khóa hoặc không có quyền truy cập';
+              break;
+            case 404:
+              errorMessage = 'Không tìm thấy tài khoản';
+              break;
+            case 500:
+              errorMessage = 'Lỗi máy chủ, vui lòng thử lại sau';
+              break;
+            default:
+              errorMessage = 'Lỗi kết nối, vui lòng kiểm tra mạng và thử lại';
+          }
+        }
+        
+        console.error('Error details:', errorMessage);
         this.loginError = true;
+        
         // Hiển thị lỗi cụ thể từ backend nếu có
-        // error.error.message hoặc error.message
         setTimeout(() => {
           this.loginError = false;
         }, 3000);

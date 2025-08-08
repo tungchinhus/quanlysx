@@ -132,7 +132,21 @@ export class AuthServices {
   // Thêm method để xử lý login thành công
   handleLoginSuccess(response: any): void {
     console.log('handleLoginSuccess called with response:', response);
-    console.log('Response accessToken:', response.accessToken);
+    
+    // Kiểm tra response có hợp lệ không
+    if (!response) {
+      console.error('Response is null or undefined');
+      throw new Error('Invalid response: response is null or undefined');
+    }
+    
+    // Kiểm tra accessToken có tồn tại không
+    const accessToken = response.accessToken || response.token || response.access_token;
+    if (!accessToken) {
+      console.error('No access token found in response:', response);
+      throw new Error('Invalid token specified: No access token found in response');
+    }
+    
+    console.log('Response accessToken:', accessToken);
     
     // Lưu thông tin user - sử dụng cấu trúc response thực tế
     localStorage.setItem('role', response.roles?.[0] || 'user');
@@ -142,8 +156,8 @@ export class AuthServices {
     localStorage.setItem('lastName', response.lastName || '');
     localStorage.setItem('hoten', response.hoten || '');
     localStorage.setItem('userId', response.userId?.toString() || '');
-    localStorage.setItem('idToken', response.accessToken || '');
-    localStorage.setItem('accessToken', response.accessToken || '');
+    localStorage.setItem('idToken', accessToken);
+    localStorage.setItem('accessToken', accessToken);
     
     console.log('Token saved to localStorage:', localStorage.getItem('accessToken'));
     
@@ -152,7 +166,7 @@ export class AuthServices {
     
     // Lưu token trực tiếp vào sessionStorage thay vì qua SessionStorageService
     // để tránh lỗi JSON.parse với JWT token
-    sessionStorage.setItem(StorageKey.TOKEN_KEY, response.accessToken);
+    sessionStorage.setItem(StorageKey.TOKEN_KEY, accessToken);
     sessionStorage.setItem(StorageKey.USER_KEY, JSON.stringify(response));
     
     console.log('Token saved to sessionStorage:', sessionStorage.getItem(StorageKey.TOKEN_KEY));
@@ -166,12 +180,23 @@ export class AuthServices {
 
   // Thêm method để lấy token
   getToken(): string | null {
-    // Ưu tiên lấy từ sessionStorage trước, sau đó mới từ localStorage
-    const sessionToken = sessionStorage.getItem(StorageKey.TOKEN_KEY);
-    if (sessionToken) {
-      return sessionToken;
+    try {
+      // Ưu tiên lấy từ sessionStorage trước, sau đó mới từ localStorage
+      const sessionToken = sessionStorage.getItem(StorageKey.TOKEN_KEY);
+      if (sessionToken && sessionToken !== 'null' && sessionToken !== 'undefined') {
+        return sessionToken;
+      }
+      
+      const localToken = localStorage.getItem('accessToken');
+      if (localToken && localToken !== 'null' && localToken !== 'undefined') {
+        return localToken;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
     }
-    return localStorage.getItem('accessToken');
   }
 
   // Thêm method để lấy thông tin user
