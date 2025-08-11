@@ -106,15 +106,10 @@
       </form>
     </div>
   
-    <div class="popup-actions">
-      <!-- Test button for debugging -->
-      <button mat-button color="accent" (click)="testForm()" *ngIf="data.mode === 'add'">
-        <mat-icon>bug_report</mat-icon> Test Form
-      </button>
-      
+    <div class="popup-actions">      
       <!-- Nút "Thêm Bảng Vẽ" chỉ hiển thị khi ở chế độ 'add' -->
       <button mat-raised-button color="primary" (click)="themBangVe()" *ngIf="data.mode === 'add'">
-        <mat-icon>save</mat-icon> Lưu
+        <mat-icon>save</mat-icon> Thêm mới bảng vẽ
       </button>     
   
       <!-- Nút "Đóng" hoặc "Hủy" -->

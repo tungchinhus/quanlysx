@@ -16,6 +16,7 @@ interface Worker {
   role?: string;
   code?: string;
   department?: string;
+  khau_sx?: string; // Thêm field khau_sx để phân loại
 }
 
 interface ApiResponse {
@@ -30,6 +31,8 @@ interface ApiResponse {
 export class GiaCongPopupComponent implements OnInit {
   giaCongForm!: FormGroup;
   nguoiGiaCongOptions: Worker[] = [];
+  quandayhaUsers: Worker[] = []; // Danh sách user cho bối dây hạ
+  quandaycaoUsers: Worker[] = []; // Danh sách user cho bối dây cao
   isLoadingWorkers: boolean = false;
   hasPermission: boolean = false;
 
@@ -119,8 +122,21 @@ export class GiaCongPopupComponent implements OnInit {
           worker.role?.toLowerCase() !== 'manager'
         );
         
+        // Phân loại user theo khau_sx
+        this.quandayhaUsers = this.nguoiGiaCongOptions.filter(worker => 
+          worker.khau_sx?.toLowerCase() === 'quandayha' ||
+          worker.khau_sx?.toLowerCase() === 'boidayha'
+        );
+        
+        this.quandaycaoUsers = this.nguoiGiaCongOptions.filter(worker => 
+          worker.khau_sx?.toLowerCase() === 'quandaycao' ||
+          worker.khau_sx?.toLowerCase() === 'boidaycao'
+        );
+        
         console.log('All workers from API:', workers);
         console.log('Filtered workers (role=user):', this.nguoiGiaCongOptions);
+        console.log('Quan day ha users:', this.quandayhaUsers);
+        console.log('Quan day cao users:', this.quandaycaoUsers);
         
         // Log thông tin chi tiết về workers được lọc
         this.logWorkerDetails();
@@ -133,17 +149,6 @@ export class GiaCongPopupComponent implements OnInit {
       error: (error) => {
         console.error('Lỗi khi tải danh sách người gia công:', error);
         this.isLoadingWorkers = false;
-        
-        // Fallback to default list with only user role workers
-        this.nguoiGiaCongOptions = [
-          { id: 1, name: 'Nguyễn Văn A', role: 'user', email: 'nguyenvana@thibidi.com' },
-          { id: 2, name: 'Trần Thị B', role: 'user', email: 'tranthib@thibidi.com' },
-          { id: 3, name: 'Lê Văn C', role: 'user', email: 'levanc@thibidi.com' },
-          { id: 4, name: 'Phạm Văn D', role: 'user', email: 'phamvand@thibidi.com' },
-          { id: 5, name: 'Hoàng Thị E', role: 'user', email: 'hoangthie@thibidi.com' }
-        ];
-        
-        console.log('Using fallback workers list:', this.nguoiGiaCongOptions);
       }
     });
   }
@@ -153,6 +158,7 @@ export class GiaCongPopupComponent implements OnInit {
     const apiUrl = `${this.commonService.getServerAPIURL()}api/Account/users-by-role-public?roleName=User`;
     
     console.log('Calling API to get workers with role=User:', apiUrl);
+    console.log('Expected fields: id, userId, name, username, email, role, code, department, khau_sx');
     
     // Thêm headers authentication
     const headers = {
@@ -163,7 +169,22 @@ export class GiaCongPopupComponent implements OnInit {
     return this.http.get<ApiResponse>(apiUrl, { headers }).pipe(
       map(response => {
         console.log('API response for workers:', response);
-        return response.users || [];
+        
+        // Đảm bảo mỗi worker có đầy đủ thông tin
+        const workers = response.users || [];
+        workers.forEach(worker => {
+          // Log để debug
+          console.log('Worker from API:', {
+            id: worker.id,
+            userId: worker.userId,
+            name: worker.name,
+            email: worker.email,
+            role: worker.role,
+            khau_sx: worker.khau_sx
+          });
+        });
+        
+        return workers;
       })
     );
   }
@@ -359,6 +380,7 @@ export class GiaCongPopupComponent implements OnInit {
 
   // Method to log worker details for debugging
   private logWorkerDetails(): void {
+    console.log('=== Logging Worker Details ===');
     this.nguoiGiaCongOptions.forEach(worker => {
       console.log('Worker:', {
         id: worker.id,
@@ -367,7 +389,28 @@ export class GiaCongPopupComponent implements OnInit {
         username: worker.username,
         email: worker.email,
         role: worker.role,
-        department: worker.department
+        department: worker.department,
+        khau_sx: worker.khau_sx
+      });
+    });
+    
+    console.log('=== Quan Day Ha Users ===');
+    this.quandayhaUsers.forEach(worker => {
+      console.log('Quan Day Ha:', {
+        id: worker.id,
+        name: worker.name,
+        email: worker.email,
+        khau_sx: worker.khau_sx
+      });
+    });
+    
+    console.log('=== Quan Day Cao Users ===');
+    this.quandaycaoUsers.forEach(worker => {
+      console.log('Quan Day Cao:', {
+        id: worker.id,
+        name: worker.name,
+        email: worker.email,
+        khau_sx: worker.khau_sx
       });
     });
   }
@@ -377,6 +420,22 @@ export class GiaCongPopupComponent implements OnInit {
     if (this.nguoiGiaCongOptions.length === 0) {
       this.commonService.thongbao('Không tìm thấy người gia công. Vui lòng thử lại sau.', 'Đóng', 'warning');
       this.dialogRef.close(); // Close the dialog if no workers are available
+      return;
+    }
+    
+    // Kiểm tra từng danh sách cụ thể
+    if (this.quandayhaUsers.length === 0) {
+      this.commonService.thongbao('Không tìm thấy người gia công cho bối dây hạ (quandayha). Vui lòng kiểm tra lại.', 'Đóng', 'warning');
+    }
+    
+    if (this.quandaycaoUsers.length === 0) {
+      this.commonService.thongbao('Không tìm thấy người gia công cho bối dây cao (quandaycao). Vui lòng kiểm tra lại.', 'Đóng', 'warning');
+    }
+    
+    // Nếu cả hai danh sách đều trống, đóng dialog
+    if (this.quandayhaUsers.length === 0 && this.quandaycaoUsers.length === 0) {
+      this.commonService.thongbao('Không có người gia công nào phù hợp. Vui lòng thử lại sau.', 'Đóng', 'error');
+      this.dialogRef.close();
     }
   }
 }

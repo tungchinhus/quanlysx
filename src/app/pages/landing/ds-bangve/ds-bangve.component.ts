@@ -170,13 +170,23 @@ export class DsBangveComponent implements OnInit {
       console.log('User not authenticated, showing mock data');
       this.thongbao('Vui lòng đăng nhập để xem dữ liệu thực tế', 'Đóng', 'warning');
       // Load mock data thay vì gọi API
-      //this.initializeMockDrawings();
-      //this.initializeMockProcessedDrawings();
+      this.initializeMockDrawings();
+      this.initializeMockProcessedDrawings();
+      
+      // Sau khi khởi tạo mock data, cần phân loại và filter
+      this.categorizeDrawings([...this.drawings, ...this.processedDrawings]);
+      this.filterNewDrawings();
+      this.filterInProgressDrawings();
+      this.filterProcessedDrawings();
+      this.updatePagedNewDrawings();
+      this.updatePagedInProgressDrawings();
+      this.updatePagedProcessedDrawings();
     } else {
       console.log('User authenticated, loading real data from API');
-      // Load data từ API
+      // Load data từ API - chỉ gọi loadDrawings vì nó đã xử lý tất cả
       this.loadDrawings();
-      this.loadProcessedDrawings();
+      // Không cần gọi loadProcessedDrawings riêng vì loadDrawings đã xử lý
+      // this.loadProcessedDrawings();
     }
   }
 
@@ -243,8 +253,15 @@ export class DsBangveComponent implements OnInit {
 
   // API methods
   loadDrawings(): void {
+    console.log('=== loadDrawings called ===');
     this.getDrawings().subscribe({
       next: (drawings) => {
+        console.log('=== API Response received ===');
+        console.log('Raw drawings data:', drawings);
+        console.log('Drawings type:', typeof drawings);
+        console.log('Is Array?', Array.isArray(drawings));
+        console.log('Drawings length:', drawings?.length);
+        
         // Đảm bảo drawings là array
         if (!Array.isArray(drawings)) {
           console.warn('loadDrawings: API returned non-array data, using empty array');
@@ -252,9 +269,12 @@ export class DsBangveComponent implements OnInit {
         }
         
         // Phân loại bảng vẽ theo trang_thai
+        console.log('=== Before categorizeDrawings ===');
         this.categorizeDrawings(drawings);
+        console.log('=== After categorizeDrawings ===');
         
         // Cập nhật filtered lists
+        console.log('=== Updating filtered lists ===');
         this.filterNewDrawings();
         this.filterInProgressDrawings();
         this.filterProcessedDrawings();
@@ -264,15 +284,27 @@ export class DsBangveComponent implements OnInit {
         this.pageIndexInProgress = 0;
         
         // Cập nhật paged lists
+        console.log('=== Updating paged lists ===');
         this.updatePagedNewDrawings();
         this.updatePagedInProgressDrawings();
         this.updatePagedProcessedDrawings();
         
+        console.log('=== Final state ===');
         console.log('Drawings loaded and categorized:', {
           total: drawings.length,
           new: this.drawings.length,
           inProgress: this.inProgressDrawings.length,
           processed: this.processedDrawings.length
+        });
+        console.log('Filtered lists:', {
+          filteredNew: this.filteredDrawings.length,
+          filteredInProgress: this.filteredInProgressDrawings.length,
+          filteredProcessed: this.filteredProcessedDrawings.length
+        });
+        console.log('Paged lists:', {
+          pagedNew: this.pagedNewDrawings.length,
+          pagedInProgress: this.pagedInProgressDrawings.length,
+          pagedProcessed: this.pagedProcessedDrawings.length
         });
       },
       error: (error) => {
@@ -284,26 +316,49 @@ export class DsBangveComponent implements OnInit {
 
   // Method mới: Phân loại bảng vẽ theo trang_thai
   private categorizeDrawings(drawings: BangVeData[]): void {
+    console.log('=== categorizeDrawings called ===');
+    console.log('Input drawings:', drawings);
+    console.log('Input drawings length:', drawings?.length);
+    
     // Đảm bảo drawings là array
     if (!Array.isArray(drawings)) {
       console.warn('categorizeDrawings: drawings is not an array, using empty array');
       drawings = [];
     }
     
+    // Log từng drawing để kiểm tra trang_thai
+    drawings.forEach((drawing, index) => {
+      console.log(`Drawing ${index}:`, {
+        id: drawing.id,
+        kyhieubangve: drawing.kyhieubangve,
+        trang_thai: drawing.trang_thai,
+        trang_thai_type: typeof drawing.trang_thai,
+        trang_thai_null_check: drawing.trang_thai === null,
+        trang_thai_undefined_check: drawing.trang_thai === undefined,
+        trang_thai_truthy_check: !!drawing.trang_thai
+      });
+    });
+    
     // Bảng vẽ mới: trang_thai = null hoặc empty
-    this.drawings = drawings.filter(drawing => 
-      !drawing.trang_thai || drawing.trang_thai === null || drawing.trang_thai === undefined
-    );
+    this.drawings = drawings.filter(drawing => {
+      const isNew = !drawing.trang_thai || drawing.trang_thai === null || drawing.trang_thai === undefined;
+      console.log(`Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}): trang_thai = ${drawing.trang_thai}, isNew = ${isNew}`);
+      return isNew;
+    });
     
     // Bảng vẽ đang gia công: trang_thai = 1
-    this.inProgressDrawings = drawings.filter(drawing => 
-      drawing.trang_thai === 1
-    );
+    this.inProgressDrawings = drawings.filter(drawing => {
+      const isInProgress = drawing.trang_thai === 1;
+      console.log(`Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}): trang_thai = ${drawing.trang_thai}, isInProgress = ${isInProgress}`);
+      return isInProgress;
+    });
     
     // Bảng vẽ đã xử lý: trang_thai = 2
-    this.processedDrawings = drawings.filter(drawing => 
-      drawing.trang_thai === 2
-    ).map(drawing => ({
+    this.processedDrawings = drawings.filter(drawing => {
+      const isProcessed = drawing.trang_thai === 2;
+      console.log(`Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}): trang_thai = ${drawing.trang_thai}, isProcessed = ${isProcessed}`);
+      return isProcessed;
+    }).map(drawing => ({
       ...drawing,
       user_process: drawing.user_create || 'Unknown',
       process_date: drawing.created_at || new Date(),
@@ -315,12 +370,16 @@ export class DsBangveComponent implements OnInit {
     if (!Array.isArray(this.inProgressDrawings)) this.inProgressDrawings = [];
     if (!Array.isArray(this.processedDrawings)) this.processedDrawings = [];
     
+    console.log('=== categorizeDrawings results ===');
     console.log('Drawings categorized:', {
       total: drawings.length,
       new: this.drawings.length,
       inProgress: this.inProgressDrawings.length,
       processed: this.processedDrawings.length
     });
+    console.log('New drawings:', this.drawings);
+    console.log('In progress drawings:', this.inProgressDrawings);
+    console.log('Processed drawings:', this.processedDrawings);
   }
 
   // Method mới: Filter bảng vẽ mới
@@ -363,6 +422,11 @@ export class DsBangveComponent implements OnInit {
 
   // Method mới: Filter bảng vẽ đã xử lý
   private filterProcessedDrawings(): void {
+    console.log('=== filterProcessedDrawings called ===');
+    console.log('this.processedDrawings:', this.processedDrawings);
+    console.log('this.processedDrawings length:', this.processedDrawings?.length);
+    console.log('this.searchTermProcessed:', this.searchTermProcessed);
+    
     // Đảm bảo processedDrawings là array
     if (!Array.isArray(this.processedDrawings)) {
       console.warn('filterProcessedDrawings: processedDrawings is not an array, using empty array');
@@ -371,13 +435,17 @@ export class DsBangveComponent implements OnInit {
     
     if (!this.searchTermProcessed) {
       this.filteredProcessedDrawings = [...this.processedDrawings];
+      console.log('No search term, filteredProcessedDrawings = processedDrawings:', this.filteredProcessedDrawings);
     } else {
       this.filteredProcessedDrawings = this.processedDrawings.filter(drawing =>
         drawing.kyhieubangve.toLowerCase().includes(this.searchTermProcessed.toLowerCase()) ||
         drawing.tbkt.toLowerCase().includes(this.searchTermProcessed.toLowerCase()) ||
         drawing.soboiday.toLowerCase().includes(this.searchTermProcessed.toLowerCase())
       );
+      console.log('With search term, filteredProcessedDrawings:', this.filteredProcessedDrawings);
     }
+    
+    console.log('Final filteredProcessedDrawings length:', this.filteredProcessedDrawings.length);
   }
 
   // Method mới: Cập nhật paged list cho bảng vẽ đang gia công
@@ -839,8 +907,22 @@ export class DsBangveComponent implements OnInit {
   }
 
   updatePagedProcessedDrawings() {
+    console.log('=== updatePagedProcessedDrawings called ===');
+    console.log('this.pageIndex:', this.pageIndex);
+    console.log('this.pageSize:', this.pageSize);
+    console.log('this.filteredProcessedDrawings:', this.filteredProcessedDrawings);
+    console.log('this.filteredProcessedDrawings length:', this.filteredProcessedDrawings?.length);
+    
     const startIndex = this.pageIndex * this.pageSize;
-    this.pagedProcessedDrawings = this.filteredProcessedDrawings.slice(startIndex, startIndex + this.pageSize);
+    const endIndex = startIndex + this.pageSize;
+    
+    console.log('startIndex:', startIndex);
+    console.log('endIndex:', endIndex);
+    
+    this.pagedProcessedDrawings = this.filteredProcessedDrawings.slice(startIndex, endIndex);
+    
+    console.log('this.pagedProcessedDrawings:', this.pagedProcessedDrawings);
+    console.log('this.pagedProcessedDrawings length:', this.pagedProcessedDrawings.length);
   }
 
   onProcessedDrawingsPageChange(event: PageEvent) {
