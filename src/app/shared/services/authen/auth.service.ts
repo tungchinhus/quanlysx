@@ -24,6 +24,10 @@ export interface LoginResponseDto {
   hoten: string;
   userId: number;
   email: string;
+  khau_sx?: string; // Thêm field khau_sx
+  roles?: string[]; // Thêm field roles
+  firstName?: string; // Thêm field firstName
+  lastName?: string; // Thêm field lastName
   // Thêm các thuộc tính khác tùy theo API trả về
 }
 
@@ -148,6 +152,13 @@ export class AuthServices {
     
     console.log('Response accessToken:', accessToken);
     
+    // Tự động xác định khau_sx dựa trên email nếu API không trả về
+    let khau_sx = response.khau_sx || response.khauSx;
+    if (!khau_sx && response.email) {
+      khau_sx = this.determineKhauSxFromEmail(response.email);
+      console.log('Auto-determined khau_sx from email:', khau_sx);
+    }
+    
     // Lưu thông tin user - sử dụng cấu trúc response thực tế
     localStorage.setItem('role', response.roles?.[0] || 'user');
     localStorage.setItem('email', response.email || '');
@@ -156,10 +167,12 @@ export class AuthServices {
     localStorage.setItem('lastName', response.lastName || '');
     localStorage.setItem('hoten', response.hoten || '');
     localStorage.setItem('userId', response.userId?.toString() || '');
+    localStorage.setItem('khau_sx', khau_sx || '');
     localStorage.setItem('idToken', accessToken);
     localStorage.setItem('accessToken', accessToken);
     
     console.log('Token saved to localStorage:', localStorage.getItem('accessToken'));
+    console.log('khau_sx saved to localStorage:', localStorage.getItem('khau_sx'));
     
     // Cập nhật state
     this.stateService.setState(StorageKey.IS_LOGIN, true);
@@ -170,6 +183,24 @@ export class AuthServices {
     sessionStorage.setItem(StorageKey.USER_KEY, JSON.stringify(response));
     
     console.log('Token saved to sessionStorage:', sessionStorage.getItem(StorageKey.TOKEN_KEY));
+  }
+
+  // Thêm method để tự động xác định khau_sx dựa trên email
+  private determineKhauSxFromEmail(email: string): string {
+    const emailLower = email.toLowerCase();
+    
+    if (emailLower.includes('quandayha') || emailLower.includes('boidayha')) {
+      return 'boidayha';
+    } else if (emailLower.includes('quandaycao') || emailLower.includes('boidaycao')) {
+      return 'boidaycao';
+    } else if (emailLower.includes('quandayep') || emailLower.includes('boidayep')) {
+      return 'boidayep';
+    } else if (emailLower.includes('admin') || emailLower.includes('manager')) {
+      return 'admin'; // Đánh dấu là admin/manager
+    }
+    
+    // Mặc định nếu không xác định được
+    return 'unknown';
   }
 
   // Thêm method để kiểm tra token

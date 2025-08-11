@@ -34,13 +34,9 @@ export class BangVeComponent implements OnInit {
       bd_ep: [''],
       bung_bd: ['', Validators.pattern(/^[0-9]*$/)],
       user_create: [{ value: 'Current User', disabled: true }],
-      trang_thai: [false],
+      trang_thai: [null],
       created_at: [{ value: new Date().toISOString().slice(0, 16), disabled: true }]
     });
-
-    console.log('Form initialized:', this.bangVeForm);
-    console.log('kyhieubangve control:', this.bangVeForm.get('kyhieubangve'));
-    console.log('kyhieubangve initial value:', this.bangVeForm.get('kyhieubangve')?.value);
 
     // Kiểm tra chế độ và điền dữ liệu nếu là xem/sửa
     if (this.data && this.data.bangVeData) {
@@ -54,7 +50,7 @@ export class BangVeComponent implements OnInit {
       this.bangVeForm.patchValue({
         user_create: 'Current User',
         created_at: new Date().toISOString().slice(0, 16),
-        trang_thai: false
+        trang_thai: null // Đảm bảo trang_thai luôn là null cho bảng vẽ mới
       });
       
       // Đảm bảo kyhieubangve không bị disabled
@@ -66,6 +62,8 @@ export class BangVeComponent implements OnInit {
       // Đảm bảo form được enable trong chế độ add
       if (this.data.mode === 'add') {
         this.bangVeForm.enable();
+        // Đảm bảo trang_thai được set lại là null sau khi enable
+        this.bangVeForm.patchValue({ trang_thai: null });
       }
     }
     
@@ -77,17 +75,14 @@ export class BangVeComponent implements OnInit {
    * Xử lý sự kiện khi nhấn nút "Thêm Bảng Vẽ" (trong dialog)
    */
   themBangVe(): void {
-    console.log('Form valid:', this.bangVeForm.valid);
-    console.log('Form values:', this.bangVeForm.value);
-    console.log('Form raw values:', this.bangVeForm.getRawValue());
-    console.log('kyhieubangve value:', this.bangVeForm.get('kyhieubangve')?.value);
-    console.log('kyhieubangve valid:', this.bangVeForm.get('kyhieubangve')?.valid);
-    console.log('kyhieubangve errors:', this.bangVeForm.get('kyhieubangve')?.errors);
-    console.log('kyhieubangve disabled:', this.bangVeForm.get('kyhieubangve')?.disabled);
-    console.log('kyhieubangve enabled:', this.bangVeForm.get('kyhieubangve')?.enabled);
     
     if (this.bangVeForm.valid) {
-      const newBangVe = { ...this.bangVeForm.getRawValue(), id: null }; // ID sẽ được gán ở component cha
+      const formData = this.bangVeForm.getRawValue();
+      const newBangVe = { 
+        ...formData, 
+        id: null,
+        trang_thai: null // Đảm bảo trang_thai luôn là null cho bảng vẽ mới
+      };
       console.log('Sending data to parent:', newBangVe);
       this.dialogRef.close(newBangVe); // Đóng dialog và trả về dữ liệu mới
       this._snackBar.open('Đang thêm bảng vẽ...', 'Đóng', { duration: 2000 });
@@ -104,7 +99,12 @@ export class BangVeComponent implements OnInit {
   copyBangVe(): void {
     if (this.bangVeForm.valid) {
       const currentData = this.bangVeForm.getRawValue();
-      const copiedData = { ...currentData, id: null, created_at: new Date().toISOString().slice(0, 16) };
+      const copiedData = { 
+        ...currentData, 
+        id: null, 
+        created_at: new Date().toISOString().slice(0, 16),
+        trang_thai: null // Đảm bảo trang_thai luôn là null khi copy
+      };
       this.bangVeForm.patchValue(copiedData);
       this._snackBar.open('Đã sao chép bảng vẽ!', 'Đóng', { duration: 3000 });
     } else {
@@ -135,7 +135,8 @@ export class BangVeComponent implements OnInit {
       bd_ha_ngoai: 'OK',
       bd_cao: 'OK',
       bd_ep: 'OK',
-      bung_bd: 1
+      bung_bd: 1,
+      trang_thai: null // Đảm bảo trang_thai luôn là null khi test
     });
     console.log('Form after test patch:', this.bangVeForm.value);
     console.log('Form valid after test:', this.bangVeForm.valid);

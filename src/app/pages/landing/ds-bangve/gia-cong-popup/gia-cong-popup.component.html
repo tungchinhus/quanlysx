@@ -1,0 +1,77 @@
+<div class="gia-cong-popup-container">
+  <!-- Header với tiêu đề ở giữa và icon X -->
+  <div class="popup-header">
+    <div class="header-spacer"></div>
+    <h2 class="popup-title">Gia công bảng vẽ</h2>
+    <button mat-icon-button class="close-button" (click)="onCancel()" aria-label="Đóng popup">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Nội dung popup -->
+  <div class="popup-content">
+    <!-- Thông tin về danh sách workers -->
+    <div class="workers-info">
+      <p class="workers-description">
+        <mat-icon class="info-icon">info</mat-icon>
+        Danh sách chỉ hiển thị người dùng có quyền thực hiện gia công (role: user)
+      </p>
+      <p class="workers-count" *ngIf="!isLoadingWorkers">
+        Tổng cộng: {{ nguoiGiaCongOptions.length }} người dùng
+      </p>
+    </div>
+
+    <form [formGroup]="giaCongForm" class="gia-cong-form">
+      <!-- Bối dây hạ -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Bối dây hạ</mat-label>
+        <mat-select formControlName="boiDayHa" placeholder="Chọn người thực hiện bối dây hạ">
+          <mat-option value="">Chọn người thực hiện</mat-option>
+          <mat-option *ngFor="let worker of nguoiGiaCongOptions" [value]="worker">
+            {{ getWorkerDisplayName(worker) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="giaCongForm.get('boiDayHa')?.hasError('required') && giaCongForm.get('boiDayHa')?.touched">
+          Vui lòng chọn người thực hiện bối dây hạ
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Bối dây cao -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Bối dây cao</mat-label>
+        <mat-select formControlName="boiDayCao" placeholder="Chọn người thực hiện bối dây cao">
+          <mat-option value="">Chọn người thực hiện</mat-option>
+          <mat-option *ngFor="let worker of nguoiGiaCongOptions" [value]="worker">
+            {{ getWorkerDisplayName(worker) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="giaCongForm.get('boiDayCao')?.hasError('required') && giaCongForm.get('boiDayCao')?.touched">
+          Vui lòng chọn người thực hiện bối dây cao
+        </mat-error>
+        <mat-error *ngIf="giaCongForm.get('boiDayCao')?.hasError('sameUser') && giaCongForm.get('boiDayCao')?.touched">
+          Không thể chọn cùng một người cho cả hai khâu
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Loading indicator -->
+      <div *ngIf="isLoadingWorkers" class="loading-container">
+        <mat-spinner diameter="20"></mat-spinner>
+        <span class="loading-text">Đang tải danh sách người gia công...</span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Footer với các nút -->
+  <div class="popup-footer">
+    <button mat-button class="cancel-button" (click)="onCancel()">
+      Hủy
+    </button>
+    <button mat-raised-button 
+            color="primary" 
+            class="confirm-button" 
+            (click)="onConfirm()"
+            [disabled]="!isFormValidForSubmission || isLoadingWorkers">
+      Xác nhận
+    </button>
+  </div>
+</div>

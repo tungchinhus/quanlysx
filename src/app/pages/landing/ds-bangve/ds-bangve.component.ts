@@ -4,11 +4,12 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { BangVeComponent } from '../bang-ve/bang-ve.component';
 import { DialogComponent } from 'src/app/shared/dialogs/dialog/dialog.component';
+import { GiaCongPopupComponent } from './gia-cong-popup/gia-cong-popup.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonService } from 'src/app/shared/services/common.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 
 export interface BangVeData {
@@ -24,7 +25,7 @@ export interface BangVeData {
   bd_ep: string;
   bung_bd: number;
   user_create: string;
-  trang_thai: boolean;
+  trang_thai: number | null; // Thay đổi từ boolean thành number | null
   created_at: Date;
   username: string;
   email: string;
@@ -45,8 +46,11 @@ export interface ProcessedBangVeData extends BangVeData {
 export class DsBangveComponent implements OnInit {
   drawings: BangVeData[] = [];
   processedDrawings: ProcessedBangVeData[] = [];
+  inProgressDrawings: BangVeData[] = []; // Thêm danh sách bảng vẽ đang gia công
 
   displayedColumns: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
+  displayedColumnsInProgress: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions']; // Cột cho tab đang gia công
+  displayedColumnsProcessed: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'process_date','actions'];
   
   // New drawings properties
   searchTerm: string = '';
@@ -57,10 +61,15 @@ export class DsBangveComponent implements OnInit {
   searchTermProcessed: string = '';
   filteredProcessedDrawings: ProcessedBangVeData[] = [];
   pagedProcessedDrawings: ProcessedBangVeData[] = [];
-  displayedColumnsProcessed: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'process_date','actions'];
-  
+
+  // In Progress drawings properties
+  searchTermInProgress: string = ''; // Tìm kiếm cho tab đang gia công
+  filteredInProgressDrawings: BangVeData[] = [];
+  pagedInProgressDrawings: BangVeData[] = [];
+
   pageSize = 5;
   pageIndex = 0;
+  pageIndexInProgress = 0; // Page index cho tab đang gia công
   currentTabIndex = 0;
   
   // Autocomplete properties
@@ -87,9 +96,19 @@ export class DsBangveComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.userRole = localStorage.getItem('userRole');
-    this.username = localStorage.getItem('username');
-    this.khau_sx = localStorage.getItem('khau_sx');
+    // Lấy thông tin user từ getUserInfo() trước, sau đó fallback về localStorage
+    const userInfo = this.authService.getUserInfo();
+    this.userRole = userInfo?.roles?.[0] || localStorage.getItem('userRole');
+    this.username = userInfo?.username || localStorage.getItem('username');
+    this.khau_sx = userInfo?.khau_sx || localStorage.getItem('khau_sx');
+    
+    console.log('User info from getUserInfo():', userInfo);
+    console.log('khau_sx from userInfo:', userInfo?.khau_sx);
+    console.log('khau_sx from localStorage:', localStorage.getItem('khau_sx'));
+    console.log('Final khau_sx value:', this.khau_sx);
+    
+    // Debug khau_sx functionality
+    this.debugKhauSxFunctionality();
     
     // Kiểm tra authentication trước khi load data
     this.checkAuthentication();
@@ -99,6 +118,36 @@ export class DsBangveComponent implements OnInit {
     
     // Kiểm tra quyền của user
     this.checkUserPermissions();
+  }
+
+  // Method để debug khau_sx functionality
+  private debugKhauSxFunctionality(): void {
+    console.log('=== DEBUG khau_sx FUNCTIONALITY ===');
+    console.log('Current khau_sx:', this.khau_sx);
+    console.log('Is admin/manager?', this.hasAdminOrManagerRole());
+    
+    if (this.khau_sx) {
+      console.log('khau_sx is defined, will redirect based on value');
+      switch (this.khau_sx.toLowerCase()) {
+        case 'boidayha':
+          console.log('User will be redirected to boi-day-ha page');
+          break;
+        case 'boidaycao':
+          console.log('User will be redirected to boi-day-cao page');
+          break;
+        case 'boidayep':
+          console.log('User will see boidayep message');
+          break;
+        case 'admin':
+          console.log('User is admin/manager, no redirection needed');
+          break;
+        default:
+          console.log('Unknown khau_sx value, user will see warning');
+      }
+    } else {
+      console.log('khau_sx is undefined, user will see error message');
+    }
+    console.log('=== END DEBUG ===');
   }
 
   // Method để kiểm tra authentication
@@ -134,36 +183,23 @@ export class DsBangveComponent implements OnInit {
   // Method để kiểm tra quyền admin hoặc manager
   hasAdminOrManagerRole(): boolean {
     const userInfo = this.authService.getUserInfo();
-    const userRole = localStorage.getItem('role');
-    const roles = userInfo?.roles || [];
     
-    console.log('Checking user permissions:');
-    console.log('User info:', userInfo);
-    console.log('User role from localStorage:', userRole);
-    console.log('Roles from user info:', roles);
-    
-    // Kiểm tra role từ userInfo trước
-    if (roles && roles.length > 0) {
-      const hasPermission = roles.some((role: string) => 
-        role.toLowerCase() === 'admin' || 
-        role.toLowerCase() === 'manager' ||
-        role.toLowerCase() === 'administrator'
-      );
-      console.log('Has permission from userInfo roles:', hasPermission);
-      return hasPermission;
+    // Kiểm tra từ userInfo trước
+    if (userInfo?.roles) {
+      const hasAdminRole = userInfo.roles.includes('admin') || userInfo.roles.includes('manager');
+      if (hasAdminRole) {
+        return true;
+      }
     }
     
-    // Fallback: kiểm tra role từ localStorage
-    if (userRole) {
-      const hasPermission = userRole.toLowerCase() === 'admin' || 
-                           userRole.toLowerCase() === 'manager' ||
-                           userRole.toLowerCase() === 'administrator';
-      console.log('Has permission from localStorage role:', hasPermission);
-      return hasPermission;
-    }
+    // Kiểm tra từ localStorage
+    const role = localStorage.getItem('role');
+    const hasAdminRole = role === 'admin' || role === 'manager';
     
-    console.log('No role found, denying access');
-    return false;
+    // Kiểm tra thêm từ khau_sx
+    const hasAdminKhauSx = this.khau_sx === 'admin';
+    
+    return hasAdminRole || hasAdminKhauSx;
   }
 
   // Method để hiển thị thông báo không có quyền
@@ -207,56 +243,154 @@ export class DsBangveComponent implements OnInit {
 
   // API methods
   loadDrawings(): void {
-    // Debug: Kiểm tra token và thông tin user
-    const token = this.authService.getToken();
-    const isLoggedIn = this.authService.isLoggedIn();
-    console.log('Debug - Token:', token);
-    console.log('Debug - IsLoggedIn:', isLoggedIn);
-    console.log('Debug - localStorage accessToken:', localStorage.getItem('accessToken'));
-    console.log('Debug - localStorage idToken:', localStorage.getItem('idToken'));
-
-    // Kiểm tra token trước khi gọi API
-    if (!token) {
-      console.error('No authentication token found');
-      console.log('User needs to login first');
-      // Không hiển thị error message vì đã được xử lý trong checkAuthentication()
-      //this.initializeMockDrawings();
-      return;
-    }
-
     this.getDrawings().subscribe({
-      next: (data: BangVeData[]) => {
-        this.drawings = data;
-        this.filteredDrawings = [...this.drawings];
-        this.updatePagedNewDrawings();
-        this.filteredDrawingsForAutocomplete = [...this.drawings];
-        console.log('Drawings loaded from API:', this.drawings);
-      },
-      error: (error) => {
-        console.error('Error loading drawings:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.error);
-        
-        // Xử lý lỗi authentication
-        if (error.status === 401) {
-          this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
-          // Có thể redirect về trang login
-          this.router.navigate(['/landing']);
-        } else if (error.status === 400) {
-          console.error('Bad Request - Check API parameters');
-          this.thongbao('Lỗi tham số API khi tải danh sách bảng vẽ', 'Đóng', 'error');
-        } else if (error.status === 500) {
-          console.error('Internal Server Error - Server issue');
-          this.thongbao('Lỗi máy chủ khi tải danh sách bảng vẽ', 'Đóng', 'error');
-        } else {
-          this.thongbao('Lỗi khi tải danh sách bảng vẽ', 'Đóng', 'error');
+      next: (drawings) => {
+        // Đảm bảo drawings là array
+        if (!Array.isArray(drawings)) {
+          console.warn('loadDrawings: API returned non-array data, using empty array');
+          drawings = [];
         }
         
-        // Fallback to mock data
-        //this.initializeMockDrawings();
+        // Phân loại bảng vẽ theo trang_thai
+        this.categorizeDrawings(drawings);
+        
+        // Cập nhật filtered lists
+        this.filterNewDrawings();
+        this.filterInProgressDrawings();
+        this.filterProcessedDrawings();
+        
+        // Reset pagination về trang đầu tiên
+        this.pageIndex = 0;
+        this.pageIndexInProgress = 0;
+        
+        // Cập nhật paged lists
+        this.updatePagedNewDrawings();
+        this.updatePagedInProgressDrawings();
+        this.updatePagedProcessedDrawings();
+        
+        console.log('Drawings loaded and categorized:', {
+          total: drawings.length,
+          new: this.drawings.length,
+          inProgress: this.inProgressDrawings.length,
+          processed: this.processedDrawings.length
+        });
+      },
+      error: (error) => {
+        console.error('Lỗi khi tải danh sách bảng vẽ:', error);
+        this.thongbao('Có lỗi xảy ra khi tải danh sách bảng vẽ. Vui lòng thử lại.', 'Đóng', 'error');
       }
     });
+  }
+
+  // Method mới: Phân loại bảng vẽ theo trang_thai
+  private categorizeDrawings(drawings: BangVeData[]): void {
+    // Đảm bảo drawings là array
+    if (!Array.isArray(drawings)) {
+      console.warn('categorizeDrawings: drawings is not an array, using empty array');
+      drawings = [];
+    }
+    
+    // Bảng vẽ mới: trang_thai = null hoặc empty
+    this.drawings = drawings.filter(drawing => 
+      !drawing.trang_thai || drawing.trang_thai === null || drawing.trang_thai === undefined
+    );
+    
+    // Bảng vẽ đang gia công: trang_thai = 1
+    this.inProgressDrawings = drawings.filter(drawing => 
+      drawing.trang_thai === 1
+    );
+    
+    // Bảng vẽ đã xử lý: trang_thai = 2
+    this.processedDrawings = drawings.filter(drawing => 
+      drawing.trang_thai === 2
+    ).map(drawing => ({
+      ...drawing,
+      user_process: drawing.user_create || 'Unknown',
+      process_date: drawing.created_at || new Date(),
+      process_status: 'Completed'
+    }));
+    
+    // Đảm bảo tất cả đều là array
+    if (!Array.isArray(this.drawings)) this.drawings = [];
+    if (!Array.isArray(this.inProgressDrawings)) this.inProgressDrawings = [];
+    if (!Array.isArray(this.processedDrawings)) this.processedDrawings = [];
+    
+    console.log('Drawings categorized:', {
+      total: drawings.length,
+      new: this.drawings.length,
+      inProgress: this.inProgressDrawings.length,
+      processed: this.processedDrawings.length
+    });
+  }
+
+  // Method mới: Filter bảng vẽ mới
+  private filterNewDrawings(): void {
+    // Đảm bảo drawings là array
+    if (!Array.isArray(this.drawings)) {
+      console.warn('filterNewDrawings: drawings is not an array, using empty array');
+      this.drawings = [];
+    }
+    
+    if (!this.searchTerm) {
+      this.filteredDrawings = [...this.drawings];
+    } else {
+      this.filteredDrawings = this.drawings.filter(drawing =>
+        drawing.kyhieubangve.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        drawing.tbkt.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        drawing.soboiday.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    }
+  }
+
+  // Method mới: Filter bảng vẽ đang gia công
+  private filterInProgressDrawings(): void {
+    // Đảm bảo inProgressDrawings là array
+    if (!Array.isArray(this.inProgressDrawings)) {
+      console.warn('filterInProgressDrawings: inProgressDrawings is not an array, using empty array');
+      this.inProgressDrawings = [];
+    }
+    
+    if (!this.searchTermInProgress) {
+      this.filteredInProgressDrawings = [...this.inProgressDrawings];
+    } else {
+      this.filteredInProgressDrawings = this.inProgressDrawings.filter(drawing =>
+        drawing.kyhieubangve.toLowerCase().includes(this.searchTermInProgress.toLowerCase()) ||
+        drawing.tbkt.toLowerCase().includes(this.searchTermInProgress.toLowerCase()) ||
+        drawing.soboiday.toLowerCase().includes(this.searchTermInProgress.toLowerCase())
+      );
+    }
+  }
+
+  // Method mới: Filter bảng vẽ đã xử lý
+  private filterProcessedDrawings(): void {
+    // Đảm bảo processedDrawings là array
+    if (!Array.isArray(this.processedDrawings)) {
+      console.warn('filterProcessedDrawings: processedDrawings is not an array, using empty array');
+      this.processedDrawings = [];
+    }
+    
+    if (!this.searchTermProcessed) {
+      this.filteredProcessedDrawings = [...this.processedDrawings];
+    } else {
+      this.filteredProcessedDrawings = this.processedDrawings.filter(drawing =>
+        drawing.kyhieubangve.toLowerCase().includes(this.searchTermProcessed.toLowerCase()) ||
+        drawing.tbkt.toLowerCase().includes(this.searchTermProcessed.toLowerCase()) ||
+        drawing.soboiday.toLowerCase().includes(this.searchTermProcessed.toLowerCase())
+      );
+    }
+  }
+
+  // Method mới: Cập nhật paged list cho bảng vẽ đang gia công
+  private updatePagedInProgressDrawings(): void {
+    // Đảm bảo filteredInProgressDrawings là array
+    if (!Array.isArray(this.filteredInProgressDrawings)) {
+      console.warn('updatePagedInProgressDrawings: filteredInProgressDrawings is not an array, using empty array');
+      this.filteredInProgressDrawings = [];
+    }
+    
+    const startIndex = this.pageIndexInProgress * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.pagedInProgressDrawings = this.filteredInProgressDrawings.slice(startIndex, endIndex);
   }
 
   loadProcessedDrawings(): void {
@@ -277,7 +411,8 @@ export class DsBangveComponent implements OnInit {
 
     this.getProcessedDrawings().subscribe({
       next: (data: ProcessedBangVeData[]) => {
-        this.processedDrawings = data;
+        // Đảm bảo data là array
+        this.processedDrawings = Array.isArray(data) ? data : [];
         this.filteredProcessedDrawings = [...this.processedDrawings];
         this.updatePagedProcessedDrawings();
         this.filteredProcessedDrawingsForAutocomplete = [...this.processedDrawings];
@@ -312,7 +447,7 @@ export class DsBangveComponent implements OnInit {
 
   getDrawings(): Observable<BangVeData[]> {
     // Replace with your actual API endpoint
-    const apiUrl = 'https://localhost:7190/api/Drawings/GetDrawings';
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetDrawings`;
     const headers = new HttpHeaders()
       .set('Authorization', `Bearer ${this.authService.getToken()}`)
       .set('Content-Type', 'application/json');
@@ -342,7 +477,7 @@ export class DsBangveComponent implements OnInit {
 
   getProcessedDrawings(): Observable<ProcessedBangVeData[]> {
     // Replace with your actual API endpoint
-    const apiUrl = 'https://localhost:7190/api/Drawings/GetProcessedDrawings';
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetProcessedDrawings`;
     const headers = new HttpHeaders()
       .set('Authorization', `Bearer ${this.authService.getToken()}`)
       .set('Content-Type', 'application/json');
@@ -372,47 +507,46 @@ export class DsBangveComponent implements OnInit {
 
   // API method để thêm mới bảng vẽ
   addNewDrawing(drawingData: BangVeData): Observable<BangVeData> {
-    const apiUrl = 'https://localhost:7190/api/Drawings/AddDrawing';
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/AddDrawing`;
     const headers = new HttpHeaders()
       .set('Authorization', `Bearer ${this.authService.getToken()}`)
       .set('Content-Type', 'application/json');
     
-    // Lấy thông tin user và role
+    // Lấy thông tin user hiện tại
     const userInfo = this.authService.getUserInfo();
-    const userRole = localStorage.getItem('role');
-    const roles = userInfo?.roles || [];
+    const currentUserId = userInfo?.userId || localStorage.getItem('userId') || 'unknown';
+    const currentUsername = userInfo?.username || localStorage.getItem('username') || 'unknown';
     
-    // Chuẩn bị dữ liệu để gửi lên API theo cấu trúc mà server mong đợi
+    // Chuẩn bị dữ liệu để gửi lên API
     const requestData = {
-      drawing: {
-        kyhieubangve: drawingData.kyhieubangve,
-        congsuat: drawingData.congsuat,
-        tbkt: drawingData.tbkt,
-        dienap: drawingData.dienap,
-        soboiday: drawingData.soboiday,
-        bd_ha_trong: drawingData.bd_ha_trong,
-        bd_ha_ngoai: drawingData.bd_ha_ngoai,
-        bd_cao: drawingData.bd_cao,
-        bd_ep: drawingData.bd_ep,
-        bung_bd: drawingData.bung_bd,
-        user_create: drawingData.user_create,
-        trang_thai: drawingData.trang_thai,
-        created_at: drawingData.created_at
-      },
-      userInfo: {
-        userId: userInfo?.userId || 0,
-        username: userInfo?.username || '',
-        email: userInfo?.email || '',
-        roles: roles,
-        userRole: userRole
-      }
+      kyhieubangve: drawingData.kyhieubangve,
+      congsuat: drawingData.congsuat,
+      tbkt: drawingData.tbkt,
+      dienap: drawingData.dienap,
+      soboiday: drawingData.soboiday,
+      bd_ha_trong: drawingData.bd_ha_trong,
+      bd_ha_ngoai: drawingData.bd_ha_ngoai,
+      bd_cao: drawingData.bd_cao,
+      bd_ep: drawingData.bd_ep,
+      bung_bd: drawingData.bung_bd,
+      user_create: currentUsername,
+      trang_thai: null, // Bảng vẽ mới có trang_thai = null
+      created_at: new Date().toISOString(),
+      username: currentUsername,
+      email: userInfo?.email || '',
+      role_name: userInfo?.roles?.[0] || localStorage.getItem('role') || 'user'
     };
     
     console.log('Calling AddDrawing API with data:', requestData);
     console.log('API URL:', apiUrl);
     console.log('Headers:', headers);
     
-    return this.http.post<BangVeData>(apiUrl, requestData, { headers });
+    return this.http.post<BangVeData>(apiUrl, requestData, { headers }).pipe(
+      catchError((error) => {
+        console.error('Error adding new drawing:', error);
+        throw error;
+      })
+    );
   }
 
   // API method để cập nhật bảng vẽ
@@ -499,7 +633,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'admin',
-        trang_thai: true,
+        trang_thai: 1,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -518,7 +652,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'Chưa',
         bung_bd: 0,
         user_create: 'user1',
-        trang_thai: false,
+        trang_thai: null,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -537,7 +671,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'user2',
-        trang_thai: true,
+        trang_thai: 1,
         username: 'boidaycao',
         email: 'quandaycao1@thibidi.com',
         role_name: 'user',
@@ -564,7 +698,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'admin',
-        trang_thai: true,
+        trang_thai: 2,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -586,7 +720,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'user1',
-        trang_thai: true,
+        trang_thai: 2,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -604,6 +738,27 @@ export class DsBangveComponent implements OnInit {
   // Tab management
   onTabChange(event: any): void {
     this.currentTabIndex = event.index;
+    console.log('Tab changed to index:', this.currentTabIndex);
+    
+    // Reset page index khi chuyển tab
+    if (this.currentTabIndex === 0) {
+      // Tab "Bảng vẽ mới"
+      this.pageIndex = 0;
+      this.updatePagedNewDrawings();
+    } else if (this.currentTabIndex === 1) {
+      // Tab "Đang gia công"
+      this.pageIndexInProgress = 0;
+      this.updatePagedInProgressDrawings();
+    } else if (this.currentTabIndex === 2) {
+      // Tab "Bảng vẽ đã xử lý"
+      this.pageIndex = 0;
+      this.updatePagedProcessedDrawings();
+    }
+    
+    // Reset search terms khi chuyển tab
+    this.searchTerm = '';
+    this.searchTermInProgress = '';
+    this.searchTermProcessed = '';
   }
 
   // New drawings methods
@@ -708,22 +863,194 @@ export class DsBangveComponent implements OnInit {
   }
 
   onGiaCong(drawing: BangVeData): void {
-    const dialogRef = this.dialog.open(DialogComponent, {
-      width: '400px',
-      data: {
-        title: 'Xác nhận quấn dây hạ',
-        message: `Thực hiện quấn dây hạ ${drawing.kyhieubangve}?`,
-        confirmText: 'Quấn dây hạ',
-        cancelText: 'Hủy'
-      }
+    // Kiểm tra quyền admin hoặc manager
+    if (!this.hasAdminOrManagerRole()) {
+      // Nếu không phải admin/manager, tự động chuyển trang dựa trên khau_sx
+      this.redirectBasedOnKhauSx(drawing);
+      return;
+    }
+
+    // Mở popup để user chọn workers
+    const dialogRef = this.dialog.open(GiaCongPopupComponent, {
+      width: '500px',
+      data: { drawing }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        //this.confirmGiaCong(drawing);
-        this.goBoidayHa(drawing);
+      console.log('Popup closed with result:', result);
+      console.log('Result type:', typeof result);
+      console.log('Result confirmed:', result?.confirmed);
+      console.log('Result boiDayHa:', result?.boiDayHa);
+      console.log('Result boiDayCao:', result?.boiDayCao);
+      
+      if (result && result.confirmed) {
+        console.log('Calling assignDrawingToUsers...');
+        // Gọi API assign-drawing-to-user khi user xác nhận
+        this.assignDrawingToUsers(drawing, result.boiDayHa, result.boiDayCao);
+      } else {
+        console.log('Popup closed without confirmation or invalid result');
       }
     });
+  }
+
+  // Method mới: Gán bảng vẽ cho users sử dụng API assign-drawing-to-user
+  private assignDrawingToUsers(drawing: BangVeData, boiDayHa: any, boiDayCao: any): void {
+    // Kiểm tra xem có chọn đủ 2 workers không
+    if (!boiDayHa || !boiDayCao) {
+      this.thongbao('Vui lòng chọn đủ 2 người gia công.', 'Đóng', 'warning');
+      return;
+    }
+
+    // Validation về trùng lặp đã được xử lý trong popup, không cần kiểm tra lại ở đây
+    // Chỉ cần kiểm tra cơ bản để đảm bảo an toàn
+
+    // Lấy thông tin user hiện tại
+    const currentUser = this.authService.getUserInfo();
+    const currentUserId = currentUser?.userId || localStorage.getItem('userId') || 'unknown';
+    
+    console.log('Current user info:', currentUser);
+    console.log('Current user ID from auth service:', currentUser?.userId);
+    console.log('Current user ID from localStorage:', localStorage.getItem('userId'));
+    console.log('Final currentUserId:', currentUserId);
+    
+    // Tạo request body theo format API yêu cầu
+    const requestBody = {
+      userId_boidayha: boiDayHa.userId?.toString() || boiDayHa.id?.toString(),
+      userId_boidaycao: boiDayCao.userId?.toString() || boiDayCao.id?.toString(),
+      bangVeId: drawing.id,
+      permissionType: "gia_cong", // Loại quyền
+      status: true, // Trạng thái active
+      assignedAt: new Date().toISOString(),
+      assignedByUserId: currentUserId
+    };
+
+    console.log('Assigning drawing to users with request:', requestBody);
+    console.log('Selected workers:', { 
+      boidayha: { 
+        id: boiDayHa.id, 
+        userId: boiDayHa.userId,
+        name: boiDayHa.name, 
+        email: boiDayHa.email 
+      },
+      boidaycao: { 
+        id: boiDayCao.id, 
+        userId: boiDayCao.userId,
+        name: boiDayCao.name, 
+        email: boiDayCao.email 
+      }
+    });
+
+    // Gọi API assign-drawing-to-user
+    this.callAssignDrawingAPI(requestBody, drawing).subscribe({
+      next: (response) => {
+        console.log('Drawing assigned successfully:', response);
+        this.thongbao('Gia công bảng vẽ thành công!', 'Đóng', 'success');
+        
+        // Cập nhật trạng thái bảng vẽ trong danh sách
+        this.updateDrawingStatus(drawing.id, true);
+        
+        // Cập nhật trạng thái thành "đang gia công" (1)
+        this.updateDrawingStatusToInProgress(drawing.id);
+        
+        // Refresh danh sách bảng vẽ
+        this.loadDrawings();
+      },
+      error: (error) => {
+        if(error.error.errors.length > 0) {
+          this.thongbao('Bảng vẽ đã được chuyển qua khâu sản xuất trước đó.', 'Đóng','info');
+        } else {
+          this.thongbao('Có lỗi xảy ra khi gia công bảng vẽ. Vui lòng thử lại.', 'Đóng', 'error');
+        }        
+      }
+    });
+  }
+
+  // Method để gọi API assign-drawing-to-user
+  private callAssignDrawingAPI(requestBody: any, drawing: BangVeData): Observable<any> {
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/assign-drawing-to-user`;
+    const headers = new HttpHeaders()
+      .set('Authorization', `Bearer ${this.authService.getToken()}`)
+      .set('Content-Type', 'application/json');
+
+    return this.http.post(apiUrl, requestBody, { headers });
+  }
+
+  // Method để cập nhật trạng thái bảng vẽ
+  private updateDrawingStatus(drawingId: number, isProcessed: boolean): void {
+    const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
+    if (drawingIndex !== -1) {
+      this.drawings[drawingIndex].trang_thai = isProcessed ? 1 : null;
+      
+      // Cập nhật filtered lists
+      const filteredIndex = this.filteredDrawings.findIndex(d => d.id === drawingId);
+      if (filteredIndex !== -1) {
+        this.filteredDrawings[filteredIndex].trang_thai = isProcessed ? 1 : null;
+      }
+    }
+  }
+
+  // Method mới: Cập nhật trạng thái bảng vẽ thành "đang gia công" (1)
+  private updateDrawingStatusToInProgress(drawingId: number): void {
+    // Tìm bảng vẽ trong danh sách mới
+    const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
+    if (drawingIndex !== -1) {
+      const drawing = this.drawings[drawingIndex];
+      drawing.trang_thai = 1;
+      
+      // Cập nhật filtered lists
+      const filteredIndex = this.filteredDrawings.findIndex(d => d.id === drawingId);
+      if (filteredIndex !== -1) {
+        this.filteredDrawings[filteredIndex].trang_thai = 1;
+      }
+      
+      // Chuyển bảng vẽ từ danh sách mới sang danh sách đang gia công
+      this.drawings.splice(drawingIndex, 1);
+      this.inProgressDrawings.push(drawing);
+      
+      // Cập nhật filtered lists
+      this.filteredDrawings = this.filteredDrawings.filter(d => d.id !== drawingId);
+      this.filteredInProgressDrawings.push(drawing);
+      
+      // Cập nhật paged lists
+      this.updatePagedNewDrawings();
+      this.updatePagedInProgressDrawings();
+    }
+  }
+
+  // Phương thức mới: Tự động chuyển trang dựa trên khau_sx của user
+  private redirectBasedOnKhauSx(drawing: BangVeData): void {
+    if (!this.khau_sx || this.khau_sx === 'unknown') {
+      this.thongbao('Không thể xác định khâu sản xuất của bạn. Vui lòng liên hệ quản trị viên.', 'Đóng', 'warning');
+      return;
+    }
+
+    // Nếu user là admin/manager, không cần chuyển hướng
+    if (this.khau_sx === 'admin') {
+      this.thongbao('Bạn có quyền admin/manager. Vui lòng sử dụng chức năng gia công thông thường.', 'Đóng', 'info');
+      return;
+    }
+
+    console.log(`User khau_sx: ${this.khau_sx}, redirecting to appropriate page...`);
+
+    switch (this.khau_sx.toLowerCase()) {
+      case 'boidayha':
+        console.log('Redirecting to boi-day-ha page');
+        this.goBoidayHa(drawing);
+        break;
+      case 'boidaycao':
+        console.log('Redirecting to boi-day-cao page');
+        this.goBoidayCao();
+        break;
+      case 'boidayep':
+        console.log('Redirecting to boi-day-ep page (if exists)');
+        // Nếu có trang boi-day-ep, có thể thêm navigation ở đây
+        this.thongbao('Chức năng bối dây ép đang được phát triển.', 'Đóng', 'info');
+        break;
+      default:
+        console.log(`Unknown khau_sx: ${this.khau_sx}`);
+        this.thongbao(`Khâu sản xuất "${this.khau_sx}" không được hỗ trợ. Vui lòng liên hệ quản trị viên.`, 'Đóng', 'warning');
+        break;
+    }
   }
 
   goBoidayHa(drawing: BangVeData){
@@ -732,7 +1059,7 @@ export class DsBangveComponent implements OnInit {
   }
 
   goBoidayCao(){
-    this.router.navigate(['/landing/boi-day-cao']);
+    this.router.navigate(['boi-day-cao']);
   }
 
   confirmGiaCong(drawing: BangVeData): void {
@@ -760,40 +1087,57 @@ export class DsBangveComponent implements OnInit {
   }
 
   giacongboidayha(drawing: BangVeData) {
-    const dialogRef = this.dialog.open(DialogComponent, {
-      data: {
-        title: 'Xác nhận gia công và thực hiện',
-        message: `Bạn có chắc chắn muốn gia công bảng vẽ "${drawing.kyhieubangve}"?`,
-        showProcessUsers: true,
-        users: this.availableUsers,
-        process1Label: 'Người quấn bối dây hạ',
-        process2Label: 'Người quấn bối dây cao'
-      }
+    // Kiểm tra quyền admin hoặc manager
+    if (!this.hasAdminOrManagerRole()) {
+      // Nếu không phải admin/manager, tự động chuyển trang dựa trên khau_sx
+      this.redirectBasedOnKhauSx(drawing);
+      return;
+    }
+
+    const dialogRef = this.dialog.open(GiaCongPopupComponent, {
+      width: '500px',
+      data: { drawing }
     });
 
-    dialogRef.afterClosed().subscribe(result => {      
+    dialogRef.afterClosed().subscribe(result => {
       if (result && result.confirmed) {
-        this.processDrawing(drawing, result.user1, result.user2);
-      } else {
-        console.log('Gia công bị hủy hoặc không có người dùng được chọn.');
+        this.processDrawing(drawing, result.boiDayHa, result.boiDayCao);
       }
     });
   }
 
-  giacongboidayep() {
+  giacongboidayep(drawing: BangVeData) {
+    // Kiểm tra quyền admin hoặc manager
+    if (!this.hasAdminOrManagerRole()) {
+      // Nếu không phải admin/manager, tự động chuyển trang dựa trên khau_sx
+      this.redirectBasedOnKhauSx(drawing);
+      return;
+    }
+
     this.commonService.thongbao('Giao công bối dây ép thành công!', 'Đóng', 'success');
   }
 
-  giacongboidaycao() {
+  giacongboidaycao(drawing: BangVeData) {
+    // Kiểm tra quyền admin hoặc manager
+    if (!this.hasAdminOrManagerRole()) {
+      // Nếu không phải admin/manager, tự động chuyển trang dựa trên khau_sx
+      this.redirectBasedOnKhauSx(drawing);
+      return;
+    }
+
     this.commonService.thongbao('Giao công bối dây cao thành công!', 'Đóng', 'success');
     this.router.navigate(['boi-day-cao']);
   }
 
   // Logic gia công bảng vẽ, nhận thêm tham số người dùng thực hiện cho từng khâu
-  processDrawing(drawing: BangVeData, userQuanday1: string, userQuanday2: string): void {
+  processDrawing(drawing: BangVeData, userQuanday1: any, userQuanday2: any): void {
+    // Lấy tên người dùng từ object Worker
+    const userName1 = typeof userQuanday1 === 'string' ? userQuanday1 : userQuanday1?.name || 'Không xác định';
+    const userName2 = typeof userQuanday2 === 'string' ? userQuanday2 : userQuanday2?.name || 'Không xác định';
+    
     console.log(`Bảng vẽ "${drawing.kyhieubangve}" đang được gia công.`);
-    console.log(`Người quấn dây 1: ${userQuanday1}`);
-    console.log(`Người quấn dây 2: ${userQuanday2}`);
+    console.log(`Người quấn dây hạ: ${userName1}`);
+    console.log(`Người quấn dây cao: ${userName2}`);
     
     // Kiểm tra authentication trước khi gọi API
     const token = this.authService.getToken();
@@ -815,7 +1159,7 @@ export class DsBangveComponent implements OnInit {
         // Thêm vào danh sách đã xử lý
         const processedDrawing: ProcessedBangVeData = {
           ...drawing,
-          user_process: `${userQuanday1}, ${userQuanday2}`,
+          user_process: `${userName1}, ${userName2}`,
           process_date: new Date(),
           process_status: 'Completed'
         };
@@ -823,7 +1167,7 @@ export class DsBangveComponent implements OnInit {
         this.filteredProcessedDrawings = this.processedDrawings.slice();
         this.updatePagedProcessedDrawings();
         
-        this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', 'success');
+        this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}!`, 'Đóng', 'success');
       },
       error: (error) => {
         console.error('Error processing drawing:', error);
@@ -849,7 +1193,7 @@ export class DsBangveComponent implements OnInit {
         
         const processedDrawing: ProcessedBangVeData = {
           ...drawing,
-          user_process: `${userQuanday1}, ${userQuanday2}`,
+          user_process: `${userName1}, ${userName2}`,
           process_date: new Date(),
           process_status: 'Completed'
         };
@@ -857,7 +1201,7 @@ export class DsBangveComponent implements OnInit {
         this.filteredProcessedDrawings = this.processedDrawings.slice();
         this.updatePagedProcessedDrawings();
         
-        this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userQuanday1} và ${userQuanday2}!`, 'Đóng', 'success');
+        this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}!`, 'Đóng', 'success');
       }
     });
   }
@@ -911,19 +1255,12 @@ export class DsBangveComponent implements OnInit {
         const newDrawingData: BangVeData = {
           ...result,
           id: 0, // ID sẽ được server tạo
+          trang_thai: null, // Bảng vẽ mới có trang_thai = null
           created_at: new Date(),
           username: this.authService.getUserInfo()?.username || 'Unknown',
           email: this.authService.getUserInfo()?.email || '',
           role_name: this.authService.getUserInfo()?.roles?.[0] || 'user'
         };
-
-        // Kiểm tra và log dữ liệu trước khi gửi API
-        console.log('Result from dialog:', result);
-        console.log('New drawing data prepared:', newDrawingData);
-        console.log('kyhieubangve value:', newDrawingData.kyhieubangve);
-        console.log('kyhieubangve type:', typeof newDrawingData.kyhieubangve);
-        console.log('kyhieubangve length:', newDrawingData.kyhieubangve?.length);
-        console.log('kyhieubangve trimmed:', newDrawingData.kyhieubangve?.trim());
         
         // Validate required fields
         if (!newDrawingData.kyhieubangve || newDrawingData.kyhieubangve.trim() === '') {
@@ -941,10 +1278,15 @@ export class DsBangveComponent implements OnInit {
           next: (response) => {
             console.log('API response for new drawing:', response);
             
-            // Thêm bảng vẽ mới vào danh sách local
-            this.drawings = [...this.drawings, response];
-            this.filteredDrawings = this.drawings.slice();
-            this.updatePagedNewDrawings();
+            // Refresh toàn bộ danh sách từ server để đảm bảo đồng bộ
+            this.loadDrawings();
+            
+            // Reset search và pagination về trạng thái ban đầu
+            this.searchTerm = '';
+            this.pageIndex = 0;
+            
+            // Chuyển về tab "Bảng vẽ mới" để user thấy bảng vẽ mới được thêm
+            this.currentTabIndex = 0;
             
             this.thongbao('Thêm bảng vẽ mới thành công!', 'Đóng', 'success');
           },
@@ -970,11 +1312,25 @@ export class DsBangveComponent implements OnInit {
             // Fallback: thêm vào local nếu API thất bại
             const fallbackDrawing = {
               ...newDrawingData,
-              id: this.drawings.length > 0 ? Math.max(...this.drawings.map(b => b.id)) + 1 : 1
+              id: this.drawings.length > 0 ? Math.max(...this.drawings.map(b => b.id)) + 1 : 1,
+              trang_thai: null // Đảm bảo trang_thai = null cho bảng vẽ mới
             };
+            
+            // Thêm vào local list
             this.drawings = [...this.drawings, fallbackDrawing];
-            this.filteredDrawings = this.drawings.slice();
+            
+            // Cập nhật filtered lists và paged lists
+            this.filterNewDrawings();
             this.updatePagedNewDrawings();
+            
+            // Reset search và pagination
+            this.searchTerm = '';
+            this.pageIndex = 0;
+            
+            // Chuyển về tab "Bảng vẽ mới"
+            this.currentTabIndex = 0;
+            
+            this.thongbao('Bảng vẽ đã được thêm vào local (API thất bại)', 'Đóng', 'warning');
           }
         });
       }
@@ -1100,6 +1456,20 @@ export class DsBangveComponent implements OnInit {
         });
       }
     });
+  }
+
+  // Method mới: Tìm kiếm bảng vẽ đang gia công
+  searchInProgressDrawings(): void {
+    this.filterInProgressDrawings();
+    this.pageIndexInProgress = 0;
+    this.updatePagedInProgressDrawings();
+  }
+
+  // Method mới: Xử lý page change cho bảng vẽ đang gia công
+  onInProgressDrawingsPageChange(event: PageEvent): void {
+    this.pageIndexInProgress = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.updatePagedInProgressDrawings();
   }
 
 }

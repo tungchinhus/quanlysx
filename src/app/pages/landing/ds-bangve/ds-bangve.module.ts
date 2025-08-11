@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DsBangveComponent } from './ds-bangve.component';
+import { GiaCongPopupComponent } from './gia-cong-popup/gia-cong-popup.component';
 import { RouterModule, Routes } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,6 +18,9 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 const routes: Routes = [
   { path: '', component: DsBangveComponent }
@@ -24,11 +28,13 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    DsBangveComponent
+    DsBangveComponent,
+    GiaCongPopupComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     MatTableModule,
     MatFormFieldModule,
@@ -43,6 +49,9 @@ const routes: Routes = [
     MatChipsModule,
     MatMenuModule,
     MatTabsModule,
+    MatSelectModule,
+    MatDialogModule,
+    MatProgressSpinnerModule,
     RouterModule.forChild(routes)
   ]
 })
