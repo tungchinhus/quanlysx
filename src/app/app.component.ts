@@ -108,6 +108,9 @@ title: string = 'quanlysx';
   }
 
   ngOnInit(): void {
+    console.log('🔍 AppComponent ngOnInit called');
+    console.log('🔍 Current route:', this.router.url);
+    
     // Lắng nghe event từ các component con để mở popup đăng nhập
     this.eventSubscription = this.commonService.getEvent().subscribe((event: any) => {
       if (event && event.action === 'openLoginForm') {
@@ -134,6 +137,8 @@ title: string = 'quanlysx';
       filter((e) => e instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.currentRoute = event;
+      console.log('🔍 NavigationEnd event:', event);
+      console.log('🔍 New URL:', event.url);
     });
   }
 

@@ -31,7 +31,7 @@ import { LoginComponent } from './components/login/login.component';
 import { DialogComponent } from './dialogs/dialog/dialog.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
-import { WindingOperationPopupModule } from '../pages/landing/ds-quan-day/winding-operation-popup/winding-operation-popup.module';
+// WindingOperationPopupModule đã được xóa
 
 @NgModule({
   imports: [
@@ -45,7 +45,7 @@ import { WindingOperationPopupModule } from '../pages/landing/ds-quan-day/windin
     MatToolbarModule,
     MatIconModule,
     TranslateModule.forChild(Constant.translateConfig),
-    WindingOperationPopupModule
+    // WindingOperationPopupModule đã được xóa
   ],
   declarations: [
     SliderComponent,

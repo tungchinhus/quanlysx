@@ -3,6 +3,11 @@ import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
   {
+    path: '',
+    redirectTo: 'ds-quan-day',
+    pathMatch: 'full'
+  },
+  {
     path: 'components',
     loadChildren: () =>
       import('./shared/components/components.module').then((m) => m.ComponentsModule)
@@ -38,7 +43,16 @@ const routes: Routes = [
   },
   {
     path: 'ds-quan-day',
-    loadChildren: () => import('./pages/landing/ds-quan-day/ds-quan-day.module').then(m => m.DSQuanDayModule)
+    loadChildren: () => {
+      console.log('🔍 App Routing: Loading ds-quan-day module');
+      return import('./pages/landing/ds-quan-day/ds-quan-day.module').then(m => {
+        console.log('🔍 App Routing: ds-quan-day module loaded successfully');
+        return m.DSQuanDayModule;
+      }).catch(error => {
+        console.error('🔍 App Routing: Error loading ds-quan-day module:', error);
+        throw error;
+      });
+    }
     // Temporarily comment out guard for testing
     // canActivate: [() => import('./pages/landing/ds-quan-day/ds-quan-day.guard').then(m => m.WindingAccessGuard)]
   },
