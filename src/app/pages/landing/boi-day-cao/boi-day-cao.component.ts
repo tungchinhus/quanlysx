@@ -32,6 +32,9 @@ interface ApiResponse {
 })
 export class BoiDayCaoComponent implements OnInit {
   @Input() isActive: boolean = false;
+  @Input() windingData?: any;
+  @Input() bangVeData?: any;
+  @Input() mode: 'view' | 'edit' = 'edit';
   @Output() isValid = new EventEmitter<boolean>();
 
   title = 'Bối dây cao';
@@ -63,7 +66,9 @@ export class BoiDayCaoComponent implements OnInit {
 
   ngOnInit() {
     console.log('Form:', this.windingForm);
-    console.log('Controls:', this.windingForm.controls);
+    console.log('Winding Data:', this.windingData);
+    console.log('Bang Ve Data:', this.bangVeData);
+    console.log('Mode:', this.mode);
     
     // Lấy thông tin user đang đăng nhập
     const currentUser = this.getCurrentUser();
@@ -75,49 +80,53 @@ export class BoiDayCaoComponent implements OnInit {
     // Load danh sách người gia công từ API
     this.loadWorkers();
     
+    // Sử dụng data từ input nếu có, nếu không thì dùng data từ navigation
+    const bangVeData = this.bangVeData || this.bangve[0];
+    const isViewMode = this.mode === 'view';
+    
     this.windingForm = this.fb.group({
-      congSuat: [{ value: this.bangve[0]?.congsuat, disabled: true }],
-      TBKT: [{ value: this.bangve[0]?.tbkt, disabled: true }],
-      dienAp: [{ value: this.bangve[0]?.dienap, disabled: true }],
-      soBoiDay: [{ value: this.bangve[0]?.soboiday, disabled: true }],
+      congSuat: [{ value: bangVeData?.congsuat, disabled: true }],
+      TBKT: [{ value: bangVeData?.tbkt, disabled: true }],
+      dienAp: [{ value: bangVeData?.dienap, disabled: true }],
+      soBoiDay: [{ value: bangVeData?.soboiday, disabled: true }],
 
       ngayGiaCong: [{ value: today.toLocaleDateString('vi-VN'), disabled: true }],
       nguoiGiaCong: [{ value: currentUser.name, disabled: true }],
-      kyHieuBV: [{ value: this.bangve[0]?.kyhieubangve + '-065', disabled: true }],
-      quyCachDay: [null, Validators.required],
-      soSoiDay: [null, [Validators.required, Validators.min(1)]],
-      ngaySanXuat: [null, Validators.required],
-      nhaSanXuat: [null, Validators.required],
-      chuViKhuon: [null, [Validators.required, Validators.min(0)]],
-      ktBungBdTruoc: [null], // Changed from [{ value: null, disabled: true }]
-      bungBdSau: [null, Validators.required],
-      chieuQuanDay: ['trai', Validators.required], // Default to 'trai'
-      mayQuanDay: [null, Validators.required],
+      kyHieuBV: [{ value: bangVeData?.kyhieubangve + '-065', disabled: true }],
+      quyCachDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      soSoiDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required, Validators.min(1)]],
+      ngaySanXuat: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      nhaSanXuat: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      chuViKhuon: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required, Validators.min(0)]],
+      ktBungBdTruoc: [{ value: null, disabled: isViewMode }],
+      bungBdSau: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      chieuQuanDay: [{ value: 'trai', disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      mayQuanDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
       // QTD Hạ - Xung quanh
-      xqDay2: [null],
-      xqDay3: [null],
-      xqDay4: [null],
-      xqDay6: [null],
+      xqDay2: [{ value: null, disabled: isViewMode }],
+      xqDay3: [{ value: null, disabled: isViewMode }],
+      xqDay4: [{ value: null, disabled: isViewMode }],
+      xqDay6: [{ value: null, disabled: isViewMode }],
       // QTD Hạ - Hai đầu
-      hdDay2: [null],
-      hdDay3: [null],
-      hdDay4: [null],
-      hdDay6: [null],
+      hdDay2: [{ value: null, disabled: isViewMode }],
+      hdDay3: [{ value: null, disabled: isViewMode }],
+      hdDay4: [{ value: null, disabled: isViewMode }],
+      hdDay6: [{ value: null, disabled: isViewMode }],
       // Các thông số kỹ thuật bổ sung
-      ktBdHaTrongBv1: [''],
-      ktBdHaTrongBv2: [''],
-      ktBdHaTrongBv3: [''],
-      cvBdHa1p: [''],
-      cvBdHa2p: [''],
-      cvBdHa3p: [''],
-      ktBdHaNgoaiBv1: [''],
-      ktBdHaNgoaiBv2: [''],
-      ktBdHaNgoaiBv3: [''],
-      ktBdHaNgoaiBv4: [''],
-      dienTroRa: [null],
-      dienTroRb: [null],
-      dienTroRc: [null],
-      doLechDienTro: [null]
+      ktBdHaTrongBv1: [{ value: '', disabled: isViewMode }],
+      ktBdHaTrongBv2: [{ value: '', disabled: isViewMode }],
+      ktBdHaTrongBv3: [{ value: '', disabled: isViewMode }],
+      cvBdHa1p: [{ value: '', disabled: isViewMode }],
+      cvBdHa2p: [{ value: '', disabled: isViewMode }],
+      cvBdHa3p: [{ value: '', disabled: isViewMode }],
+      ktBdHaNgoaiBv1: [{ value: '', disabled: isViewMode }],
+      ktBdHaNgoaiBv2: [{ value: '', disabled: isViewMode }],
+      ktBdHaNgoaiBv3: [{ value: '', disabled: isViewMode }],
+      ktBdHaNgoaiBv4: [{ value: '', disabled: isViewMode }],
+      dienTroRa: [{ value: null, disabled: isViewMode }],
+      dienTroRb: [{ value: null, disabled: isViewMode }],
+      dienTroRc: [{ value: null, disabled: isViewMode }],
+      doLechDienTro: [{ value: null, disabled: isViewMode }]
     });
     
     // Debug: Kiểm tra giá trị sau khi set

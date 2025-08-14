@@ -29,11 +29,18 @@ const routes: Routes = [
   },
   {
     path: 'ds-bang-ve',
-    loadChildren: () => import('./pages/landing/ds-bangve/ds-bangve.module').then(m => m.DSBangVeModule)
+    loadChildren: () => import('./pages/landing/ds-bangve/ds-bangve.module').then(m => m.DSBangVeModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'quan-day',
     loadChildren: () => import('./pages/landing/quan-day/quan-day.module').then(m => m.QuanDayModule)
+  },
+  {
+    path: 'ds-quan-day',
+    loadChildren: () => import('./pages/landing/ds-quan-day/ds-quan-day.module').then(m => m.DSQuanDayModule)
+    // Temporarily comment out guard for testing
+    // canActivate: [() => import('./pages/landing/ds-quan-day/ds-quan-day.guard').then(m => m.WindingAccessGuard)]
   },
   {
     path: 'boi-day-ha',

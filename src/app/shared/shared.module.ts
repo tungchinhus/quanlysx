@@ -31,6 +31,7 @@ import { LoginComponent } from './components/login/login.component';
 import { DialogComponent } from './dialogs/dialog/dialog.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { WindingOperationPopupModule } from '../pages/landing/ds-quan-day/winding-operation-popup/winding-operation-popup.module';
 
 @NgModule({
   imports: [
@@ -43,7 +44,8 @@ import { MatIconModule } from '@angular/material/icon';
     HttpClientModule,
     MatToolbarModule,
     MatIconModule,
-    TranslateModule.forChild(Constant.translateConfig)
+    TranslateModule.forChild(Constant.translateConfig),
+    WindingOperationPopupModule
   ],
   declarations: [
     SliderComponent,

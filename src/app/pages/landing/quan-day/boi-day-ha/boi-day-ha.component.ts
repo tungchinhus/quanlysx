@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Output, Input, OnInit } from '@angular/core'; // <-- Đảm bảo Input và OnInit
+import { Component, EventEmitter, Output, Input, OnInit, Inject } from '@angular/core'; // <-- Đảm bảo Input và OnInit
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'; // <-- Đảm bảo FormControl, Validators
 import { ActivatedRoute, Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-boi-day-ha',
@@ -13,18 +14,39 @@ export class BoiDayHaComponent implements OnInit {
 
   title = 'Bối dây hạ';
   windingForm!: FormGroup;
+  isPopup = false;
+  mode: 'view' | 'edit' = 'edit';
+  windingData: any;
+  bangVeData: any;
 
   nguoiGiaCongOptions: string[] = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C'];
 
   boiDayHaControl = new FormControl('', [Validators.required]);
 
-  constructor(private fb: FormBuilder,private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private dialogRef: MatDialogRef<BoiDayHaComponent>
+  ) {
     this.windingForm = this.fb.group({
       boiDayHa: this.boiDayHaControl
     });
   }
 
   ngOnInit() {
+    // Check if component is used as popup
+    if (this.data) {
+      this.isPopup = this.data.isPopup || false;
+      this.mode = this.data.mode || 'edit';
+      this.windingData = this.data.winding;
+      this.bangVeData = this.data.bangVe;
+      
+      if (this.isPopup && this.windingData) {
+        this.populateFormWithData();
+      }
+    }
+
     const navigation = this.router.getCurrentNavigation();
     let go_bangve = navigation?.extras?.state?.['drawings'];
 
@@ -84,11 +106,47 @@ export class BoiDayHaComponent implements OnInit {
     if (this.windingForm.valid) {
       console.log('Form Submitted!', this.windingForm.value);
       // Here you would typically send the data to a backend service
-      alert('Thông tin đã được lưu thành công!'); // Using alert for demo purposes
+      
+      if (this.isPopup) {
+        // Close dialog with success result
+        this.dialogRef.close({ success: true, data: this.windingForm.value });
+      } else {
+        alert('Thông tin đã được lưu thành công!'); // Using alert for demo purposes
+      }
     } else {
       console.log('Form is invalid');
       // Mark all fields as touched to display validation errors
       this.windingForm.markAllAsTouched();
+    }
+  }
+
+  // Populate form with existing data when used as popup
+  private populateFormWithData(): void {
+    if (this.windingData) {
+      this.windingForm.patchValue({
+        ngayGiaCong: this.windingData.ngaygiacong,
+        nguoiGiaCong: this.windingData.nguoigiacong,
+        kyHieuBV: this.windingData.kyhieubangve,
+        quyCachDay: this.windingData.quycachday,
+        soSoiDay: this.windingData.sosoiday,
+        ngaySanXuat: this.windingData.ngaysanxuat,
+        nhaSanXuat: this.windingData.nhasanxuat,
+        chieuQuanDay: this.windingData.chieuquanday,
+        mayQuanDay: this.windingData.mayquanday,
+        // Add other fields as needed
+      });
+    }
+
+    // Set form to read-only if in view mode
+    if (this.mode === 'view') {
+      this.windingForm.disable();
+    }
+  }
+
+  // Close dialog
+  onCancel(): void {
+    if (this.isPopup) {
+      this.dialogRef.close({ success: false });
     }
   }
 }

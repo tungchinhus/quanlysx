@@ -34,7 +34,7 @@ export class BangVeComponent implements OnInit {
       bd_ep: [''],
       bung_bd: ['', Validators.pattern(/^[0-9]*$/)],
       user_create: [{ value: 'Current User', disabled: true }],
-      trang_thai: [null],
+      trang_thai: [0],
       created_at: [{ value: new Date().toISOString().slice(0, 16), disabled: true }]
     });
 
@@ -50,7 +50,7 @@ export class BangVeComponent implements OnInit {
       this.bangVeForm.patchValue({
         user_create: 'Current User',
         created_at: new Date().toISOString().slice(0, 16),
-        trang_thai: null // Đảm bảo trang_thai luôn là null cho bảng vẽ mới
+        trang_thai: 0 // Đảm bảo trang_thai luôn là 0 cho bảng vẽ mới
       });
       
       // Đảm bảo kyhieubangve không bị disabled
@@ -62,8 +62,8 @@ export class BangVeComponent implements OnInit {
       // Đảm bảo form được enable trong chế độ add
       if (this.data.mode === 'add') {
         this.bangVeForm.enable();
-        // Đảm bảo trang_thai được set lại là null sau khi enable
-        this.bangVeForm.patchValue({ trang_thai: null });
+        // Đảm bảo trang_thai được set lại là 0 sau khi enable
+        this.bangVeForm.patchValue({ trang_thai: 0 });
       }
     }
     
@@ -81,7 +81,7 @@ export class BangVeComponent implements OnInit {
       const newBangVe = { 
         ...formData, 
         id: null,
-        trang_thai: null // Đảm bảo trang_thai luôn là null cho bảng vẽ mới
+        trang_thai: 0 // Đảm bảo trang_thai luôn là 0 cho bảng vẽ mới
       };
       console.log('Sending data to parent:', newBangVe);
       this.dialogRef.close(newBangVe); // Đóng dialog và trả về dữ liệu mới
@@ -103,7 +103,7 @@ export class BangVeComponent implements OnInit {
         ...currentData, 
         id: null, 
         created_at: new Date().toISOString().slice(0, 16),
-        trang_thai: null // Đảm bảo trang_thai luôn là null khi copy
+        trang_thai: 0 // Đảm bảo trang_thai luôn là 0 khi copy
       };
       this.bangVeForm.patchValue(copiedData);
       this._snackBar.open('Đã sao chép bảng vẽ!', 'Đóng', { duration: 3000 });
@@ -136,7 +136,7 @@ export class BangVeComponent implements OnInit {
       bd_cao: 'OK',
       bd_ep: 'OK',
       bung_bd: 1,
-      trang_thai: null // Đảm bảo trang_thai luôn là null khi test
+      trang_thai: 0 // Đảm bảo trang_thai luôn là 0 khi test
     });
     console.log('Form after test patch:', this.bangVeForm.value);
     console.log('Form valid after test:', this.bangVeForm.valid);

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tabs</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        .tab-group {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        
+        .tab-header {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tab-label {
+            padding: 16px 24px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-label:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .tab-label.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .tab-content {
+            padding: 24px;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Tabs - Danh sách bảng vẽ</h1>
+        
+        <div class="debug-info">
+            <h4>Debug Info:</h4>
+            <p>Selected Tab: <span id="selectedTab">0</span></p>
+            <p>New Windings Count: <span id="newCount">0</span></p>
+            <p>In Progress Count: <span id="inProgressCount">0</span></p>
+            <p>Processed Count: <span id="processedCount">0</span></p>
+        </div>
+        
+        <div class="tab-group">
+            <div class="tab-header">
+                <button class="tab-label active" onclick="showTab(0)">Quấn dây mới</button>
+                <button class="tab-label" onclick="showTab(1)">Quấn dây đang gia công</button>
+                <button class="tab-label" onclick="showTab(2)">Quấn dây đã xử lý</button>
+            </div>
+            
+            <div class="tab-content active">
+                <h3>Tab 1: Quấn dây mới</h3>
+                <p>Nội dung tab quấn dây mới sẽ hiển thị ở đây.</p>
+                <div style="background: #e9ecef; padding: 20px; border-radius: 8px;">
+                    <p>Search bar và table sẽ được hiển thị ở đây</p>
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <h3>Tab 2: Quấn dây đang gia công</h3>
+                <p>Nội dung tab quấn dây đang gia công sẽ hiển thị ở đây.</p>
+                <div style="background: #e9ecef; padding: 20px; border-radius: 8px;">
+                    <p>Search bar và table sẽ được hiển thị ở đây</p>
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <h3>Tab 3: Quấn dây đã xử lý</h3>
+                <p>Nội dung tab quấn dây đã xử lý sẽ hiển thị ở đây.</p>
+                <div style="background: #e9ecef; padding: 20px; border-radius: 8px;">
+                    <p>Search bar và table sẽ được hiển thị ở đây</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabIndex) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tab labels
+            const tabLabels = document.querySelectorAll('.tab-label');
+            tabLabels.forEach(label => label.classList.remove('active'));
+            
+            // Show selected tab content
+            tabContents[tabIndex].classList.add('active');
+            tabLabels[tabIndex].classList.add('active');
+            
+            // Update debug info
+            document.getElementById('selectedTab').textContent = tabIndex;
+        }
+        
+        // Simulate data loading
+        setTimeout(() => {
+            document.getElementById('newCount').textContent = '5';
+            document.getElementById('inProgressCount').textContent = '3';
+            document.getElementById('processedCount').textContent = '12';
+        }, 1000);
+    </script>
+</body>
+</html>

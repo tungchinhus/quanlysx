@@ -1,4 +1,9 @@
 {
+    "/api": {
+      "target": "https://localhost:7190",
+      "secure": false,
+      "changeOrigin": true
+    },
     "/ext/vn-online-payment-bff": {
       "target": "https://sea-emt-dev-api.ap.manulife.com",
       "secure": false

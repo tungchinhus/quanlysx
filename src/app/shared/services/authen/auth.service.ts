@@ -50,6 +50,7 @@ export class AuthServices {
   // }
 
   logout() {
+    // Cập nhật state service trước
     this.stateService.setState(StorageKey.IS_LOGIN, false);
     
     // Xóa token và user info khỏi sessionStorage
@@ -68,6 +69,9 @@ export class AuthServices {
     localStorage.removeItem('rememberMe');
     localStorage.removeItem('idToken');
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('userId');
+    
+    console.log('Logout completed, all user data cleared');
     
     // Chuyển về trang landing mà không reload
     this.router.navigate(['/landing']);
@@ -242,5 +246,36 @@ export class AuthServices {
       }
     }
     return null;
+  }
+
+  // Thêm method để kiểm tra và cập nhật trạng thái đăng nhập
+  checkAndUpdateLoginState(): boolean {
+    const token = this.getToken();
+    const hasValidToken = !!token && token !== 'null' && token !== 'undefined';
+    
+    // Cập nhật state service
+    this.stateService.setState(StorageKey.IS_LOGIN, hasValidToken);
+    
+    console.log('Login state updated:', {
+      hasValidToken,
+      token: token ? 'exists' : 'none',
+      stateServiceValue: this.stateService.getState(StorageKey.IS_LOGIN)
+    });
+    
+    return hasValidToken;
+  }
+
+  // Thêm method để lấy thông tin user từ localStorage
+  getUserInfoFromStorage(): any {
+    return {
+      username: localStorage.getItem('username') || '',
+      firstName: localStorage.getItem('firstName') || '',
+      lastName: localStorage.getItem('lastName') || '',
+      hoten: localStorage.getItem('hoten') || '',
+      email: localStorage.getItem('email') || '',
+      role: localStorage.getItem('role') || '',
+      userId: localStorage.getItem('userId') || '',
+      khau_sx: localStorage.getItem('khau_sx') || ''
+    };
   }
 }

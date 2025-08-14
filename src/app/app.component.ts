@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import { Constant, Lang, Nav } from './constant/constant';
@@ -6,7 +6,7 @@ import { Title } from '@angular/platform-browser';
 import { CommonService } from './shared/services/common.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 import { LoginComponent } from './shared/components/login/login.component';
 import { AuthServices } from './shared/services/authen/auth.service';
@@ -22,7 +22,7 @@ export interface UserLoginDto {
   styleUrls: ['./app.component.scss'],
   standalone: false
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
 title: string = 'quanlysx';
   showFiller: boolean = false;
   isScrolled: boolean = false;
@@ -63,6 +63,9 @@ title: string = 'quanlysx';
   loggedInUser: string | null = null;
   isProfileMenuOpen: boolean = false;
 
+  // Event subscription để unsubscribe khi component destroy
+  private eventSubscription!: Subscription;
+
   private users = [
     { username: 'totruong', password: 'user123', email: 'totruong1@hh.com', role: 'totruong' },
     { username: 'boidayha', password: 'user123', email: 'boidayha@hh.com', role: 'boidayha' },
@@ -78,7 +81,7 @@ title: string = 'quanlysx';
     private router: Router,
     private route: ActivatedRoute,
     private localeService: BsLocaleService,
-    private authService: AuthServices
+    public authService: AuthServices
   ) { }
 
   @HostListener('window:click', ["$event"])
@@ -86,85 +89,132 @@ title: string = 'quanlysx';
   //@HostListener('mousemove', ["$event"])
   @HostListener('keypress', ["$event"])
   @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event) {
-    // Kiểm tra xem event.target có phải là HTMLElement không
-    if (!event.target || typeof (event.target as any).closest !== 'function') {
-      console.warn('Event target is not an HTMLElement or does not have closest method:', event.target);
-      return;
+  onDocumentClick(event: Event): void {
+    // Đóng dropdown user nếu click ra ngoài
+    if (this.showUserDropdown) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.user-profile-btn') && !target.closest('.user-dropdown-menu')) {
+        this.closeUserDropdown();
+      }
     }
     
-    const target = event.target as HTMLElement;
-    
-    // Chỉ đóng user dropdown khi click bên ngoài hoàn toàn
-    // Không đóng khi hover ra khỏi auth-section hoặc dropdown
-    if (target.closest('.user-dropdown-menu') || target.closest('.auth-section')) {
-      // Không làm gì - giữ dropdown mở
-      return;
+    // Đóng mobile menu nếu click ra ngoài
+    if (this.mobileMenuOpened) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.hamburger-menu') && !target.closest('.mobile-menu')) {
+        this.closeMobileMenu();
+      }
     }
-    
-    // Chỉ đóng khi click bên ngoài hoàn toàn
-    this.showUserDropdown = false;
   }
 
   ngOnInit(): void {
-    // Kiểm tra và khôi phục trạng thái đăng nhập từ localStorage
-    const remembered = localStorage.getItem('rememberMe');
-    const savedUser = localStorage.getItem('rememberedUsername');
-    const accessToken = localStorage.getItem('accessToken');
-
-    if (remembered === 'true' && savedUser && accessToken) {
-      // Khôi phục trạng thái đăng nhập
-      this.loggedInUser = savedUser;
-      this.username = savedUser;
-      this.password = localStorage.getItem('rememberedPassword') || '';
-      this.rememberMe = true;
-      this.isLoginFormOpen = false;
-      this.isRegisterFormVisible = false;
-      this.isProfileMenuOpen = true;
-      this.isLoggedIn = true;
-      
-      // Khôi phục tên hiển thị từ firstName và lastName
-      const firstName = localStorage.getItem('firstName') || '';
-      const lastName = localStorage.getItem('lastName') || '';
-      const hoten = localStorage.getItem('hoten') || '';
-      const username = localStorage.getItem('username') || '';
-      
-      if (firstName && lastName) {
-        this.loggedInUsername = `${firstName} ${lastName}`;
-      } else if (firstName) {
-        this.loggedInUsername = firstName;
-      } else if (lastName) {
-        this.loggedInUsername = lastName;
-      } else if (hoten) {
-        this.loggedInUsername = hoten;
-      } else if (username) {
-        this.loggedInUsername = username;
-      } else {
-        this.loggedInUsername = savedUser;
+    // Lắng nghe event từ các component con để mở popup đăng nhập
+    this.eventSubscription = this.commonService.getEvent().subscribe((event: any) => {
+      if (event && event.action === 'openLoginForm') {
+        this.openLoginForm();
       }
-      
-      console.log('Restored login state:', {
-        loggedInUser: this.loggedInUser,
-        loggedInUsername: this.loggedInUsername,
-        isLoggedIn: this.isLoggedIn,
-        accessToken: accessToken
-      });
-    }
+    });
+
+    // Kiểm tra và khôi phục trạng thái đăng nhập từ localStorage và auth service
+    this.checkAndRestoreLoginState();
+    
+    // Thiết lập ngôn ngữ và các cài đặt khác
     this.currentLanguage = this.languages.find(lang => lang.code === this.translateService.getDefaultLang()) as Lang;  
     const namePage = this.translateService.instant("page-title");
     this.pageTitle.setTitle(namePage);
-    //this.timeout = parseInt(localStorage.getItem('sessionTimeout') || Constant.sessionTimeout.toString());
-    //this.sessionTimeout();
+    
+    // Xử lý query params và route events
     this.route.queryParams.subscribe((params: any) => {
       if (params.source) {
         this.redirectFrom = params.source;
       }
     });
+    
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.currentRoute = event;
-    });   
+    });
+  }
+
+  // Thêm method mới để kiểm tra và khôi phục trạng thái đăng nhập
+  private checkAndRestoreLoginState(): void {
+    const accessToken = localStorage.getItem('accessToken');
+    const remembered = localStorage.getItem('rememberMe');
+    const savedUser = localStorage.getItem('rememberedUsername');
+    
+    // Kiểm tra token từ auth service
+    const isAuthServiceLoggedIn = this.authService.isLoggedIn();
+    const hasValidToken = this.authService.isTokenValid();
+    
+    // Cập nhật trạng thái đăng nhập trong auth service
+    this.authService.checkAndUpdateLoginState();
+    
+    console.log('Checking login state:', {
+      accessToken: !!accessToken,
+      remembered,
+      savedUser,
+      isAuthServiceLoggedIn,
+      hasValidToken
+    });
+
+    if (hasValidToken && (isAuthServiceLoggedIn || accessToken)) {
+      // Khôi phục trạng thái đăng nhập
+      this.isLoggedIn = true;
+      
+      // Lấy thông tin user từ auth service
+      const userInfo = this.authService.getUserInfoFromStorage();
+      
+      // Tạo tên hiển thị
+      if (userInfo.firstName && userInfo.lastName) {
+        this.loggedInUsername = `${userInfo.firstName} ${userInfo.lastName}`;
+      } else if (userInfo.firstName) {
+        this.loggedInUsername = userInfo.firstName;
+      } else if (userInfo.lastName) {
+        this.loggedInUsername = userInfo.lastName;
+      } else if (userInfo.hoten) {
+        this.loggedInUsername = userInfo.hoten;
+      } else if (userInfo.username) {
+        this.loggedInUsername = userInfo.username;
+      } else if (userInfo.email) {
+        this.loggedInUsername = userInfo.email;
+      } else {
+        this.loggedInUsername = 'User';
+      }
+      
+      // Khôi phục thông tin đăng nhập nếu có remember me
+      if (remembered === 'true' && savedUser) {
+        this.username = savedUser;
+        this.password = localStorage.getItem('rememberedPassword') || '';
+        this.rememberMe = true;
+      }
+      
+      console.log('Login state restored:', {
+        isLoggedIn: this.isLoggedIn,
+        loggedInUsername: this.loggedInUsername,
+        userInfo
+      });
+      
+      // Cập nhật UI
+      this.updateLoginUI();
+    } else {
+      // Đảm bảo trạng thái đăng xuất
+      this.isLoggedIn = false;
+      this.loggedInUsername = '';
+      this.isLoginFormOpen = false;
+      this.isProfileMenuOpen = false;
+      
+      // Xóa token không hợp lệ
+      if (accessToken) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('idToken');
+      }
+      
+      console.log('User not logged in, cleared invalid state');
+      
+      // Cập nhật UI
+      this.updateLoginUI();
+    }
   }
 
   onScroll() {
@@ -291,6 +341,10 @@ title: string = 'quanlysx';
           displayName = 'User';
         }
         this.loggedInUsername = displayName;
+        
+        // Cập nhật trạng thái đăng nhập
+        this.checkAndRestoreLoginState();
+        
         console.log('Mock login: Setting isLoginFormOpen to false');
         this.isLoginFormOpen = false;
         console.log('Mock login: isLoginFormOpen after setting to false:', this.isLoginFormOpen);
@@ -432,6 +486,10 @@ title: string = 'quanlysx';
           displayName = 'User';
         }
         this.loggedInUsername = displayName;
+        
+        // Cập nhật trạng thái đăng nhập
+        this.checkAndRestoreLoginState();
+        
         console.log('Setting isLoginFormOpen to false');
         this.isLoginFormOpen = false; // Đóng form
         console.log('isLoginFormOpen after setting to false:', this.isLoginFormOpen);
@@ -504,6 +562,8 @@ title: string = 'quanlysx';
   }
 
   logout(): void {
+    console.log('Logging out user:', this.loggedInUsername);
+    
     // Sử dụng auth service để logout
     this.authService.logout();
     
@@ -512,6 +572,12 @@ title: string = 'quanlysx';
     this.loggedInUsername = '';
     this.isLoginFormOpen = false;
     this.isProfileMenuOpen = false;
+    this.showUserDropdown = false;
+    
+    // Cập nhật trạng thái đăng nhập
+    this.checkAndRestoreLoginState();
+    
+    console.log('Logout completed, UI state updated');
   }
 
   toggleForm(): void {
@@ -542,9 +608,8 @@ title: string = 'quanlysx';
 
   toggleUserDropdown(showprofileMenu: boolean): void {
     // Toggle dropdown - nếu đang mở thì đóng, nếu đang đóng thì mở
-    this.showUserDropdown = !this.showUserDropdown;
+    this.showUserDropdown = showprofileMenu;
     
-    // Không cần thêm event listeners vì onDocumentClick đã xử lý hover
     console.log('Dropdown toggled:', this.showUserDropdown);
   }
 
@@ -578,5 +643,29 @@ title: string = 'quanlysx';
     
     console.log('Token after test save:', localStorage.getItem('accessToken'));
     console.log('Token from getToken():', this.authService.getToken());
+  }
+
+  // Thêm method để kiểm tra trạng thái đăng nhập từ bên ngoài
+  checkLoginStatus(): void {
+    this.checkAndRestoreLoginState();
+  }
+
+  // Thêm method để cập nhật UI khi trạng thái đăng nhập thay đổi
+  updateLoginUI(): void {
+    if (this.isLoggedIn) {
+      // Ẩn form đăng nhập nếu đang mở
+      this.isLoginFormOpen = false;
+      this.isRegisterFormVisible = false;
+      
+      // Đóng dropdown user nếu đang mở
+      this.showUserDropdown = false;
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe để tránh memory leak
+    if (this.eventSubscription) {
+      this.eventSubscription.unsubscribe();
+    }
   }
 }

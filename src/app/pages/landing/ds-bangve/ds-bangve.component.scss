@@ -140,108 +140,97 @@ mat-form-field {
   margin-top: 24px;
   overflow-x: auto;
   box-shadow: 0 2px 12px 0 #e0e0e0;
-}
-
-.mat-header-row, .mat-row {
-  min-height: 48px;
-}
-
-.mat-header-cell {
-  font-weight: 700 !important;
-  background: var(--mlf-green) !important;
-  color: var(--mlf-white) !important;
-  font-size: 1rem;
-  border-bottom: 2px solid var(--mlf-gray-border);
-  letter-spacing: 0.5px;
-}
-
-.mat-cell {
-  font-size: 0.98rem;
-  border-bottom: 1px solid var(--mlf-gray-border);
-  color: var(--mlf-gray-text);
-  vertical-align: middle;
-  background: transparent !important;
-  transition: none !important;
+  transition: box-shadow 0.2s;
   
-  &:hover {
-    background: transparent !important;
-    cursor: default !important;
+  .mat-table {
+    width: 100%;
+    
+    .mat-header-cell {
+      background-color: #f8f9fa !important;
+      color: #495057 !important;
+      font-weight: 600 !important;
+      font-size: 14px;
+      padding: 16px 12px;
+      border-bottom: 2px solid #dee2e6;
+      letter-spacing: 0.5px;
+    }
+    
+    .mat-cell {
+      padding: 16px 12px;
+      color: #333;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+      background: transparent !important;
+      transition: none !important;
+      
+      &:hover {
+        background: transparent !important;
+        cursor: default !important;
+      }
+    }
+    
+    .mat-row {
+      min-height: 48px;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background-color: #f8f9fa !important;
+        transition: background 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 193, 0.1) !important;
+      }
+    }
   }
 }
 
-.button, .mat-button, .mat-raised-button, .mat-fab {
-  background: #003e7e !important;
-  color: #fff !important;
-  border-radius: 24px !important;
-  font-weight: 500;
-  box-shadow: none !important;
-  padding: 0 18px;
-  min-width: 90px;
-  height: 36px;
-  transition: background 0.2s;
+// Paginator styling
+::ng-deep .mat-paginator {
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  
+  .mat-paginator-container {
+    padding: 16px 24px;
+    
+    .mat-paginator-page-size {
+      .mat-paginator-page-size-label {
+        color: #666;
+        font-size: 14px;
+        margin-right: 8px;
+      }
+      
+      .mat-paginator-page-size-select {
+        .mat-form-field {
+          width: 60px;
+          
+          .mat-form-field-wrapper {
+            padding-bottom: 0;
+          }
+        }
+      }
+    }
+    
+    .mat-paginator-range-actions {
+      .mat-paginator-range-label {
+        color: #666;
+        font-size: 14px;
+        margin: 0 16px;
+      }
+      
+      .mat-paginator-navigation-previous,
+      .mat-paginator-navigation-next {
+        color: #666;
+        
+        &:disabled {
+          color: #ccc;
+        }
+        
+        &:not(:disabled):hover {
+          color: var(--mlf-green);
+        }
+      }
+    }
+  }
 }
-
-.button:hover, .mat-button:hover, .mat-raised-button:hover, .mat-fab:hover {
-  background: #005bab !important;
-}
-
-.mat-icon {
-  color: #fff;
-}
-
-.spacer { flex: 1 1 auto; }
-  .table-wrapper {
-    transition: box-shadow 0.2s;
-  }
-  .table-row:hover {
-    background: #f0f8ff !important;
-    transition: background 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 193, 0.1) !important;
-  }
-  .mat-header-cell {
-    font-weight: 700 !important;
-    background: #1976d2 !important;
-    color: #fff !important;
-    font-size: 1rem;
-    border-bottom: 2px solid #e3e3e3;
-  }
-  .mat-cell {
-    font-size: 0.98rem;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-  }
-  .mat-chip {
-    font-size: 0.95em;
-    margin-left: 0;
-    margin-right: 0;
-    min-width: 120px;
-    justify-content: flex-start;
-  }
-  .mat-icon-button {
-    margin: 0 2px;
-    color: var(--mlf-green);
-  }
-  .mat-icon-button[color="warn"] {
-    color: #c62828;
-  }
-  .mat-paginator {
-    border-radius: 0 0 8px 8px;
-    background: var(--mlf-white);
-    box-shadow: 0 2px 8px 0 #e0e0e0;
-  }
-  .empty-table {
-    padding: 32px;
-    text-align: center;
-    color: #888;
-  }
-  @media (max-width: 900px) {
-    .container { max-width: 100%; margin: 8px; }
-    .table-wrapper { border-radius: 0; }
-    .search-bar { flex-direction: column; gap: 8px; padding: 12px 8px 8px 8px; }
-    .mat-header-cell, .mat-cell { font-size: 0.92rem; }
-}
-
-
 
 // Action links specific styles
 .action-link {
@@ -314,14 +303,24 @@ mat-form-field {
   line-height: 40px;
   border-radius: 50%;
   transition: all 0.2s ease;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-    transform: scale(1.1);
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
   
   &:active {
-    transform: scale(0.95);
+    background: transparent !important;
+    transform: none !important;
+  }
+  
+  &:focus {
+    background: transparent !important;
+    outline: none !important;
   }
   
   mat-icon {
@@ -567,5 +566,161 @@ mat-form-field {
       background-color: rgba(0, 0, 0, 0.1);
       transform: scale(0.95);
     }
+  }
+}
+
+// Custom action menu styling
+.action-menu-trigger {
+  color: #666;
+  transition: color 0.2s ease;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  
+  &:hover {
+    color: var(--mlf-green);
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  &:active {
+    background: transparent !important;
+    transform: none !important;
+  }
+  
+  &:focus {
+    background: transparent !important;
+    outline: none !important;
+  }
+  
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.custom-action-menu {
+  .mat-menu-panel {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    
+    .mat-menu-content {
+      padding: 8px 0;
+    }
+  }
+  
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .menu-icon {
+      color: #666;
+      margin-right: 12px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    
+    .menu-text {
+      color: #333;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+  }
+}
+
+// Additional styles for components
+.mat-chip {
+  font-size: 0.95em;
+  margin-left: 0;
+  margin-right: 0;
+  min-width: 120px;
+  justify-content: flex-start;
+}
+
+.mat-icon-button {
+  margin: 0 2px;
+  color: var(--mlf-green);
+  
+  &[color="warn"] {
+    color: #c62828;
+  }
+}
+
+.empty-table {
+  padding: 32px;
+  text-align: center;
+  color: #888;
+}
+
+// Responsive design
+@media (max-width: 900px) {
+  .container { 
+    max-width: 100%; 
+    margin: 8px; 
+  }
+  
+  .table-wrapper { 
+    border-radius: 0; 
+  }
+  
+  .search-bar { 
+    flex-direction: column; 
+    gap: 8px; 
+    padding: 12px 8px 8px 8px; 
+  }
+  
+  .mat-header-cell, .mat-cell { 
+    font-size: 0.92rem; 
+  }
+}
+
+// Global overrides for Material Design buttons to remove unwanted backgrounds
+::ng-deep .mat-icon-button {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  
+  &:hover {
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  &:active {
+    background: transparent !important;
+    transform: none !important;
+  }
+  
+  &:focus {
+    background: transparent !important;
+    outline: none !important;
+  }
+  
+  &.cdk-focused {
+    background: transparent !important;
+    outline: none !important;
+  }
+  
+  &.cdk-program-focused {
+    background: transparent !important;
+    outline: none !important;
   }
 }

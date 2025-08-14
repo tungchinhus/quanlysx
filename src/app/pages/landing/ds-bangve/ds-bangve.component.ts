@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
@@ -8,9 +8,10 @@ import { GiaCongPopupComponent } from './gia-cong-popup/gia-cong-popup.component
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonService } from 'src/app/shared/services/common.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthServices } from 'src/app/shared/services/authen/auth.service';
+import { MatTabChangeEvent } from '@angular/material/tabs';
 
 export interface BangVeData {
   id: number;
@@ -47,6 +48,9 @@ export class DsBangveComponent implements OnInit {
   drawings: BangVeData[] = [];
   processedDrawings: ProcessedBangVeData[] = [];
   inProgressDrawings: BangVeData[] = []; // Thêm danh sách bảng vẽ đang gia công
+  
+  // Authentication status
+  isAuthenticated: boolean = false;
 
   displayedColumns: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
   displayedColumnsInProgress: string[] = ['kyhieubangve', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions']; // Cột cho tab đang gia công
@@ -92,32 +96,49 @@ export class DsBangveComponent implements OnInit {
     private router:Router,
     private commonService: CommonService,
     private http: HttpClient,
-    private authService: AuthServices
+    private authService: AuthServices,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     // Lấy thông tin user từ getUserInfo() trước, sau đó fallback về localStorage
     const userInfo = this.authService.getUserInfo();
-    this.userRole = userInfo?.roles?.[0] || localStorage.getItem('userRole');
+    this.userRole = userInfo?.roles?.[0] || localStorage.getItem('userRole') || localStorage.getItem('role');
     this.username = userInfo?.username || localStorage.getItem('username');
     this.khau_sx = userInfo?.khau_sx || localStorage.getItem('khau_sx');
-    
-    console.log('User info from getUserInfo():', userInfo);
-    console.log('khau_sx from userInfo:', userInfo?.khau_sx);
-    console.log('khau_sx from localStorage:', localStorage.getItem('khau_sx'));
-    console.log('Final khau_sx value:', this.khau_sx);
     
     // Debug khau_sx functionality
     this.debugKhauSxFunctionality();
     
+    // Debug user permissions
+    this.debugUserPermissions();
+    
+    // Debug authentication
+    this.debugAuthentication();
+    
+    // Test logic filter
+    this.testFilterLogic();
+    
     // Kiểm tra authentication trước khi load data
     this.checkAuthentication();
     
-    // Test API connectivity
-    this.testApiConnectivity();
+    // Test API endpoint existence (safe method)
+    this.testApiEndpointExistence();
+    
+    // Test actual API call
+    this.testActualApiCall();
+    
+    // Kiểm tra user authentication và role
+    this.checkUserAuthAndRole();
     
     // Kiểm tra quyền của user
     this.checkUserPermissions();
+  }
+
+  // Method để mở popup đăng nhập
+  goToLogin(): void {
+    // Gửi event để mở popup đăng nhập thay vì redirect
+    this.commonService.pushEvent({ action: 'openLoginForm' });
   }
 
   // Method để debug khau_sx functionality
@@ -167,49 +188,61 @@ export class DsBangveComponent implements OnInit {
     console.log('All localStorage keys:', Object.keys(localStorage));
     
     if (!token || !isLoggedIn) {
-      console.log('User not authenticated, showing mock data');
-      this.thongbao('Vui lòng đăng nhập để xem dữ liệu thực tế', 'Đóng', 'warning');
-      // Load mock data thay vì gọi API
-      this.initializeMockDrawings();
-      this.initializeMockProcessedDrawings();
+      console.log('User not authenticated, showing warning');
+      this.isAuthenticated = false;
       
-      // Sau khi khởi tạo mock data, cần phân loại và filter
-      this.categorizeDrawings([...this.drawings, ...this.processedDrawings]);
-      this.filterNewDrawings();
-      this.filterInProgressDrawings();
-      this.filterProcessedDrawings();
-      this.updatePagedNewDrawings();
-      this.updatePagedInProgressDrawings();
-      this.updatePagedProcessedDrawings();
-    } else {
-      console.log('User authenticated, loading real data from API');
-      // Load data từ API - chỉ gọi loadDrawings vì nó đã xử lý tất cả
-      this.loadDrawings();
-      // Không cần gọi loadProcessedDrawings riêng vì loadDrawings đã xử lý
-      // this.loadProcessedDrawings();
+      // Khởi tạo với dữ liệu rỗng
+      this.initializeEmptyData();
+      return;
     }
+    
+    console.log('User authenticated, loading real data from API (ONCE)');
+    this.isAuthenticated = true;
+    // Load data từ API - chỉ gọi loadDrawings vì nó đã xử lý tất cả
+    this.loadDrawings();
   }
 
   // Method để kiểm tra quyền admin hoặc manager
   hasAdminOrManagerRole(): boolean {
     const userInfo = this.authService.getUserInfo();
     
+    console.log('=== hasAdminOrManagerRole check ===');
+    console.log('UserInfo:', userInfo);
+    console.log('UserInfo.roles:', userInfo?.roles);
+    console.log('Current userRole:', this.userRole);
+    console.log('Current khau_sx:', this.khau_sx);
+    
     // Kiểm tra từ userInfo trước
     if (userInfo?.roles) {
-      const hasAdminRole = userInfo.roles.includes('admin') || userInfo.roles.includes('manager');
+      const hasAdminRole = userInfo.roles.some((role: string) => 
+        role.toLowerCase() === 'admin' || 
+        role.toLowerCase() === 'manager' ||
+        role.toLowerCase() === 'administrator'
+      );
       if (hasAdminRole) {
+        console.log('Admin/Manager role found in userInfo.roles:', hasAdminRole);
         return true;
       }
     }
     
-    // Kiểm tra từ localStorage
+    // Kiểm tra từ localStorage với case-insensitive
     const role = localStorage.getItem('role');
-    const hasAdminRole = role === 'admin' || role === 'manager';
+    const userRole = localStorage.getItem('userRole');
+    console.log('Role from localStorage:', role);
+    console.log('UserRole from localStorage:', userRole);
+    
+    const hasAdminRole = !!(role && (role.toLowerCase() === 'admin' || role.toLowerCase() === 'manager')) ||
+                        !!(userRole && (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'manager'));
     
     // Kiểm tra thêm từ khau_sx
-    const hasAdminKhauSx = this.khau_sx === 'admin';
+    const hasAdminKhauSx = !!(this.khau_sx && this.khau_sx.toLowerCase() === 'admin');
     
-    return hasAdminRole || hasAdminKhauSx;
+    const finalResult = hasAdminRole || hasAdminKhauSx;
+    console.log('Final hasAdminOrManagerRole result:', finalResult);
+    console.log('hasAdminRole:', hasAdminRole);
+    console.log('hasAdminKhauSx:', hasAdminKhauSx);
+    
+    return finalResult;
   }
 
   // Method để hiển thị thông báo không có quyền
@@ -217,235 +250,387 @@ export class DsBangveComponent implements OnInit {
     this.thongbao('Bạn không có quyền thực hiện chức năng này. Chỉ admin hoặc manager mới có quyền thêm bảng vẽ mới.', 'Đóng', 'error');
   }
 
-  // Method để kiểm tra và hiển thị thông tin quyền của user
-  checkUserPermissions(): void {
+  // Method để debug quyền truy cập của user
+  private debugUserPermissions(): void {
+    console.log('=== DEBUG USER PERMISSIONS ===');
+    console.log('=== localStorage ===');
+    console.log('localStorage.getItem("userRole"):', localStorage.getItem('userRole'));
+    console.log('localStorage.getItem("role"):', localStorage.getItem('role'));
+    console.log('localStorage.getItem("username"):', localStorage.getItem('username'));
+    console.log('localStorage.getItem("khau_sx"):', localStorage.getItem('khau_sx'));
+    console.log('localStorage.getItem("accessToken"):', localStorage.getItem('accessToken'));
+    console.log('localStorage.getItem("idToken"):', localStorage.getItem('idToken'));
+    console.log('localStorage.getItem("userId"):', localStorage.getItem('userId'));
+    
+    console.log('=== sessionStorage ===');
+    console.log('sessionStorage.getItem("userRole"):', sessionStorage.getItem('userRole'));
+    console.log('sessionStorage.getItem("role"):', sessionStorage.getItem('role'));
+    console.log('sessionStorage.getItem("username"):', sessionStorage.getItem('username'));
+    console.log('sessionStorage.getItem("khau_sx"):', sessionStorage.getItem('khau_sx'));
+    console.log('sessionStorage.getItem("accessToken"):', sessionStorage.getItem('accessToken'));
+    console.log('sessionStorage.getItem("idToken"):', sessionStorage.getItem('idToken'));
+    console.log('sessionStorage.getItem("userId"):', sessionStorage.getItem('userId'));
+    
+    console.log('=== authService ===');
     const userInfo = this.authService.getUserInfo();
-    const userRole = localStorage.getItem('role');
-    const roles = userInfo?.roles || [];
+    const token = this.authService.getToken();
+    console.log('authService.getUserInfo():', userInfo);
+    console.log('authService.getToken():', token);
+    console.log('authService.isLoggedIn():', this.authService.isLoggedIn());
+    
+    console.log('=== Current component state ===');
+    console.log('this.userRole:', this.userRole);
+    console.log('this.username:', this.username);
+    console.log('this.khau_sx:', this.khau_sx);
+    console.log('this.hasAdminOrManagerRole():', this.hasAdminOrManagerRole());
+    
+    console.log('=== All localStorage keys ===');
+    console.log('localStorage keys:', Object.keys(localStorage));
+    console.log('=== All sessionStorage keys ===');
+    console.log('sessionStorage keys:', Object.keys(sessionStorage));
+    console.log('=== END DEBUG USER PERMISSIONS ===');
+  }
+
+  // Method để kiểm tra quyền của user
+  private checkUserPermissions(): void {
+    console.log('=== Checking User Permissions ===');
+    this.debugUserPermissions();
+    
+    // Kiểm tra xem user có quyền admin/manager không
+    const hasAdminRole = this.hasAdminOrManagerRole();
+    console.log('User has admin/manager role:', hasAdminRole);
+    
+    if (hasAdminRole) {
+      console.log('User is admin/manager - should see ALL data');
+    } else {
+      console.log('User is regular user - will see filtered data based on khau_sx:', this.khau_sx);
+    }
   }
 
   // Test API connectivity
   testApiConnectivity(): void {
-    console.log('Testing API connectivity...');
+    console.log('=== Testing API Connectivity ===');
     const token = this.authService.getToken();
-    
-    if (!token || token === 'null' || token === 'undefined' || token.trim() === '') {
-      console.log('No valid token available for API test');
+    if (!token) {
+      console.warn('No token available for API test');
       return;
     }
     
-    // Test basic connectivity to the API base URL
-    const testUrl = 'https://localhost:7190/api/Account/login';
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/health`;
     const headers = new HttpHeaders()
       .set('Authorization', `Bearer ${token}`)
       .set('Content-Type', 'application/json');
     
-    console.log('Testing connectivity to:', testUrl);
-    this.http.get(testUrl, { headers }).subscribe({
+    console.log('Testing API endpoint:', apiUrl);
+    
+    this.http.get(apiUrl, { headers }).subscribe({
       next: (response) => {
         console.log('API connectivity test successful:', response);
       },
       error: (error) => {
-        console.error('API connectivity test failed:', error);
+        console.warn('API connectivity test failed (this is normal if /api/health endpoint does not exist):', error);
       }
     });
+  }
+
+  // Method để kiểm tra kết nối server
+  private checkServerConnectivity(): Observable<boolean> {
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/health`;
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json');
+    
+    return this.http.get(apiUrl, { headers }).pipe(
+      map(() => true),
+      catchError(() => of(false))
+    );
+  }
+
+  // Method để kiểm tra kết nối server trước khi gọi API chính
+  private ensureServerConnection(): Observable<boolean> {
+    console.log('=== Ensuring Server Connection ===');
+    console.log('Skipping health endpoint check to avoid unnecessary errors');
+    console.log('Proceeding with API calls - server connectivity will be tested during actual API calls');
+    
+    // Luôn trả về true để tiếp tục gọi API chính
+    // Health endpoint có thể không tồn tại và không cần thiết để test
+    return of(true);
   }
 
   // API methods
   loadDrawings(): void {
     console.log('=== loadDrawings called ===');
-    this.getDrawings().subscribe({
-      next: (drawings) => {
-        console.log('=== API Response received ===');
-        console.log('Raw drawings data:', drawings);
-        console.log('Drawings type:', typeof drawings);
-        console.log('Is Array?', Array.isArray(drawings));
-        console.log('Drawings length:', drawings?.length);
-        
-        // Đảm bảo drawings là array
-        if (!Array.isArray(drawings)) {
-          console.warn('loadDrawings: API returned non-array data, using empty array');
-          drawings = [];
-        }
-        
-        // Phân loại bảng vẽ theo trang_thai
-        console.log('=== Before categorizeDrawings ===');
-        this.categorizeDrawings(drawings);
-        console.log('=== After categorizeDrawings ===');
-        
-        // Cập nhật filtered lists
-        console.log('=== Updating filtered lists ===');
-        this.filterNewDrawings();
-        this.filterInProgressDrawings();
-        this.filterProcessedDrawings();
-        
-        // Reset pagination về trang đầu tiên
-        this.pageIndex = 0;
-        this.pageIndexInProgress = 0;
-        
-        // Cập nhật paged lists
-        console.log('=== Updating paged lists ===');
-        this.updatePagedNewDrawings();
-        this.updatePagedInProgressDrawings();
-        this.updatePagedProcessedDrawings();
-        
-        console.log('=== Final state ===');
-        console.log('Drawings loaded and categorized:', {
-          total: drawings.length,
-          new: this.drawings.length,
-          inProgress: this.inProgressDrawings.length,
-          processed: this.processedDrawings.length
-        });
-        console.log('Filtered lists:', {
-          filteredNew: this.filteredDrawings.length,
-          filteredInProgress: this.filteredInProgressDrawings.length,
-          filteredProcessed: this.filteredProcessedDrawings.length
-        });
-        console.log('Paged lists:', {
-          pagedNew: this.pagedNewDrawings.length,
-          pagedInProgress: this.pagedInProgressDrawings.length,
-          pagedProcessed: this.pagedProcessedDrawings.length
-        });
-      },
-      error: (error) => {
-        console.error('Lỗi khi tải danh sách bảng vẽ:', error);
-        this.thongbao('Có lỗi xảy ra khi tải danh sách bảng vẽ. Vui lòng thử lại.', 'Đóng', 'error');
+    console.log('🔄 [loadDrawings] Starting data reload...');
+    
+    // Kiểm tra authentication trước
+    const token = this.authService.getToken();
+    if (!token) {
+      console.warn('No authentication token, initializing empty data');
+      this.initializeEmptyData();
+      return;
+    }
+    
+    // Kiểm tra kết nối server trước
+    this.ensureServerConnection().subscribe(isConnected => {
+      if (!isConnected) {
+        console.warn('Server not connected, skipping API call');
+        // Khởi tạo với dữ liệu rỗng
+        this.initializeEmptyData();
+        return;
       }
+      
+      // Nếu server kết nối được, gọi API CHỈ 1 LẦN để lấy tất cả data
+      this.getDrawings().subscribe({
+        next: (data: BangVeData[]) => {
+          console.log('=== API Response received ===');
+          console.log('Raw data length:', data?.length);
+          console.log('Data type:', typeof data);
+          console.log('Is Array:', Array.isArray(data));
+          
+          if (data && Array.isArray(data)) {
+            // Debug: Log first few items to see their structure
+            if (data.length > 0) {
+              console.log('First item structure:', data[0]);
+              console.log('First item trang_thai:', data[0].trang_thai);
+              console.log('First item trang_thai type:', typeof data[0].trang_thai);
+            }
+            
+            // Debug: Check for any items with null trang_thai
+            const nullTrangThaiItems = data.filter((item: any) => item.trang_thai === null);
+            if (nullTrangThaiItems.length > 0) {
+              console.warn('⚠️ Found items with null trang_thai:', nullTrangThaiItems.length);
+              console.warn('⚠️ First null trang_thai item:', nullTrangThaiItems[0]);
+            }
+            
+            // Debug: Log all unique trang_thai values
+            const uniqueTrangThaiValues = [...new Set(data.map((item: any) => item.trang_thai))];
+            console.log('All unique trang_thai values:', uniqueTrangThaiValues);
+            
+            // Phân loại dữ liệu vào các tab tương ứng
+            this.categorizeDrawingsByTrangThai(data);
+            
+            // Update filtered and paged lists
+            this.filteredDrawings = [...this.drawings];
+            this.filteredInProgressDrawings = [...this.inProgressDrawings];
+            this.filteredProcessedDrawings = [...this.processedDrawings];
+            
+            // Update autocomplete lists
+            this.filteredDrawingsForAutocomplete = [...this.drawings];
+            this.filteredProcessedDrawingsForAutocomplete = [...this.processedDrawings];
+            
+            this.updatePagedNewDrawings();
+            this.updatePagedInProgressDrawings();
+            this.updatePagedProcessedDrawings();
+            
+            console.log('Categorization completed. Counts:');
+            console.log('  - New drawings:', this.drawings.length);
+            console.log('  - In progress drawings:', this.inProgressDrawings.length);
+            console.log('  - Processed drawings:', this.processedDrawings.length);
+            console.log('🔄 [loadDrawings] Data reload completed successfully');
+          } else {
+            console.error('Invalid response structure:', data);
+            this.initializeEmptyData();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading drawings:', error);
+          this.handleApiError(error, 'tải danh sách bảng vẽ');
+          
+          // Clear data on error
+          this.initializeEmptyData();
+        }
+      });
     });
   }
 
-  // Method mới: Phân loại bảng vẽ theo trang_thai
-  private categorizeDrawings(drawings: BangVeData[]): void {
-    console.log('=== categorizeDrawings called ===');
-    console.log('Input drawings:', drawings);
-    console.log('Input drawings length:', drawings?.length);
+  categorizeDrawingsByTrangThai(drawings: BangVeData[]) {
+    console.log('🔍 [categorizeDrawingsByTrangThai] Starting categorization for', drawings.length, 'drawings');
     
-    // Đảm bảo drawings là array
-    if (!Array.isArray(drawings)) {
-      console.warn('categorizeDrawings: drawings is not an array, using empty array');
-      drawings = [];
-    }
+    // Reset arrays
+    this.drawings = [];
+    this.inProgressDrawings = [];
+    this.processedDrawings = [];
     
-    // Log từng drawing để kiểm tra trang_thai
     drawings.forEach((drawing, index) => {
-      console.log(`Drawing ${index}:`, {
-        id: drawing.id,
-        kyhieubangve: drawing.kyhieubangve,
-        trang_thai: drawing.trang_thai,
-        trang_thai_type: typeof drawing.trang_thai,
-        trang_thai_null_check: drawing.trang_thai === null,
-        trang_thai_undefined_check: drawing.trang_thai === undefined,
-        trang_thai_truthy_check: !!drawing.trang_thai
-      });
+      console.log(`🔍 [categorizeDrawingsByTrangThai] Processing item ${index + 1}:`);
+      console.log(`  - Drawing ID: ${drawing.id}`);
+      console.log(`  - Original trang_thai: ${drawing.trang_thai}`);
+      console.log(`  - Original trang_thai type: ${typeof drawing.trang_thai}`);
+      
+      // Convert to number for comparison
+      const trangThai = Number(drawing.trang_thai);
+      console.log(`  - Converted trang_thai: ${trangThai}`);
+      console.log(`  - Converted trang_thai type: ${typeof trangThai}`);
+      console.log(`  - Is NaN: ${isNaN(trangThai)}`);
+      
+      // Phân loại dựa vào trang_thai (xử lý cả string và number)
+      if (trangThai === 2) {
+        console.log(`  → Adding to PROCESSED drawings (trang_thai = ${trangThai})`);
+        const processedDrawing: ProcessedBangVeData = {
+          ...drawing,
+          user_process: drawing.user_create || 'Unknown',
+          process_date: drawing.created_at || new Date(),
+          process_status: 'Completed'
+        };
+        this.processedDrawings.push(processedDrawing);
+      } else if (trangThai === 1) {
+        console.log(`  → Adding to IN PROGRESS drawings (trang_thai = ${trangThai})`);
+        this.inProgressDrawings.push(drawing);
+      } else if (trangThai === 0) {
+        console.log(`  → Adding to NEW drawings (trang_thai = ${trangThai})`);
+        this.drawings.push(drawing);
+      } else if (drawing.trang_thai === null || drawing.trang_thai === undefined) {
+        // trang_thai = null/undefined → Tab "Bảng vẽ mới"
+        console.log(`  → Adding to NEW drawings (trang_thai = ${drawing.trang_thai})`);
+        this.drawings.push(drawing);
+      } else if (isNaN(trangThai)) {
+        // trang_thai is not a valid number → Tab "Bảng vẽ mới"
+        console.log(`  → Adding to NEW drawings (invalid trang_thai = ${drawing.trang_thai})`);
+        this.drawings.push(drawing);
+      } else {
+        // Other trang_thai values → Default to "Bảng vẽ mới" tab
+        console.log(`  → Adding to NEW drawings (unknown trang_thai = ${drawing.trang_thai})`);
+        this.drawings.push(drawing);
+      }
     });
     
-    // Bảng vẽ mới: trang_thai = null hoặc empty
-    this.drawings = drawings.filter(drawing => {
-      const isNew = !drawing.trang_thai || drawing.trang_thai === null || drawing.trang_thai === undefined;
-      console.log(`Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}): trang_thai = ${drawing.trang_thai}, isNew = ${isNew}`);
-      return isNew;
-    });
+    console.log('🔍 [categorizeDrawingsByTrangThai] Categorization completed:');
+    console.log('  - New drawings count:', this.drawings.length);
+    console.log('  - In progress drawings count:', this.inProgressDrawings.length);
+    console.log('  - Processed drawings count:', this.processedDrawings.length);
     
-    // Bảng vẽ đang gia công: trang_thai = 1
-    this.inProgressDrawings = drawings.filter(drawing => {
-      const isInProgress = drawing.trang_thai === 1;
-      console.log(`Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}): trang_thai = ${drawing.trang_thai}, isInProgress = ${isInProgress}`);
-      return isInProgress;
-    });
+    // Debug: Show sample items from each category
+    if (this.drawings.length > 0) {
+      console.log('🔍 [categorizeDrawingsByTrangThai] Sample new drawing:', this.drawings[0]);
+    }
+    if (this.inProgressDrawings.length > 0) {
+      console.log('🔍 [categorizeDrawingsByTrangThai] Sample in-progress drawing:', this.inProgressDrawings[0]);
+    }
+    if (this.processedDrawings.length > 0) {
+      console.log('🔍 [categorizeDrawingsByTrangThai] Sample processed drawing:', this.processedDrawings[0]);
+    }
+  }
+
+  // Method để force UI update
+  private forceUIUpdate(): void {
+    console.log('🔄 [forceUIUpdate] Forcing UI refresh...');
     
-    // Bảng vẽ đã xử lý: trang_thai = 2
-    this.processedDrawings = drawings.filter(drawing => {
-      const isProcessed = drawing.trang_thai === 2;
-      console.log(`Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}): trang_thai = ${drawing.trang_thai}, isProcessed = ${isProcessed}`);
-      return isProcessed;
-    }).map(drawing => ({
-      ...drawing,
-      user_process: drawing.user_create || 'Unknown',
-      process_date: drawing.created_at || new Date(),
-      process_status: 'Completed'
-    }));
+    // Trigger change detection manually
+    this.cdr.detectChanges();
     
-    // Đảm bảo tất cả đều là array
-    if (!Array.isArray(this.drawings)) this.drawings = [];
-    if (!Array.isArray(this.inProgressDrawings)) this.inProgressDrawings = [];
-    if (!Array.isArray(this.processedDrawings)) this.processedDrawings = [];
+    // Update all paged lists
+    this.updatePagedNewDrawings();
+    this.updatePagedInProgressDrawings();
+    this.updatePagedProcessedDrawings();
     
-    console.log('=== categorizeDrawings results ===');
-    console.log('Drawings categorized:', {
-      total: drawings.length,
-      new: this.drawings.length,
-      inProgress: this.inProgressDrawings.length,
-      processed: this.processedDrawings.length
-    });
-    console.log('New drawings:', this.drawings);
-    console.log('In progress drawings:', this.inProgressDrawings);
-    console.log('Processed drawings:', this.processedDrawings);
+    console.log('🔄 [forceUIUpdate] UI refresh completed');
+  }
+
+  // Method để khởi tạo dữ liệu rỗng
+  private initializeEmptyData(): void {
+    console.log('=== Initializing empty data ===');
+    
+    // Khởi tạo các mảng chính
+    this.drawings = [];
+    this.inProgressDrawings = [];
+    this.processedDrawings = [];
+    
+    // Khởi tạo các mảng filtered
+    this.filteredDrawings = [];
+    this.filteredInProgressDrawings = [];
+    this.filteredProcessedDrawings = [];
+    
+    // Khởi tạo các mảng paged
+    this.pagedNewDrawings = [];
+    this.pagedInProgressDrawings = [];
+    this.pagedProcessedDrawings = [];
+    
+    // Khởi tạo các mảng autocomplete
+    this.filteredDrawingsForAutocomplete = [];
+    this.filteredProcessedDrawingsForAutocomplete = [];
+    
+    console.log('=== Empty data initialized ===');
+    console.log('All arrays have been reset to empty');
   }
 
   // Method mới: Filter bảng vẽ mới
-  private filterNewDrawings(): void {
-    // Đảm bảo drawings là array
-    if (!Array.isArray(this.drawings)) {
-      console.warn('filterNewDrawings: drawings is not an array, using empty array');
-      this.drawings = [];
-    }
+  filterNewDrawings(): void {
+    console.log('=== Filtering NEW drawings ===');
+    console.log('Total new drawings before filter:', this.drawings.length);
+    console.log('Search term:', this.searchTerm);
     
-    if (!this.searchTerm) {
+    if (!this.searchTerm || this.searchTerm.trim() === '') {
+      // Nếu không có search term, hiển thị tất cả
       this.filteredDrawings = [...this.drawings];
+      console.log('No search term, showing all new drawings:', this.filteredDrawings.length);
     } else {
-      this.filteredDrawings = this.drawings.filter(drawing =>
-        drawing.kyhieubangve.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        drawing.tbkt.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        drawing.soboiday.toLowerCase().includes(this.searchTerm.toLowerCase())
+      // Nếu có search term, filter theo kyhieubangve
+      const searchLower = this.searchTerm.toLowerCase().trim();
+      this.filteredDrawings = this.drawings.filter(drawing => 
+        drawing.kyhieubangve?.toLowerCase().includes(searchLower)
       );
-    }
-  }
-
-  // Method mới: Filter bảng vẽ đang gia công
-  private filterInProgressDrawings(): void {
-    // Đảm bảo inProgressDrawings là array
-    if (!Array.isArray(this.inProgressDrawings)) {
-      console.warn('filterInProgressDrawings: inProgressDrawings is not an array, using empty array');
-      this.inProgressDrawings = [];
+      console.log('Filtered new drawings by search term:', this.filteredDrawings.length);
     }
     
-    if (!this.searchTermInProgress) {
+    // Cập nhật autocomplete
+    this.filteredDrawingsForAutocomplete = [...this.filteredDrawings];
+    
+    // Reset pagination về trang đầu tiên
+    this.pageIndex = 0;
+    
+    // Cập nhật paged data
+    this.updatePagedNewDrawings();
+  }
+
+  // Method để filter bảng vẽ đang gia công
+  filterInProgressDrawings(): void {
+    console.log('=== Filtering IN PROGRESS drawings ===');
+    console.log('Total in-progress drawings before filter:', this.inProgressDrawings.length);
+    console.log('Search term:', this.searchTermInProgress);
+    
+    if (!this.searchTermInProgress || this.searchTermInProgress.trim() === '') {
+      // Nếu không có search term, hiển thị tất cả
       this.filteredInProgressDrawings = [...this.inProgressDrawings];
+      console.log('No search term, showing all in-progress drawings:', this.filteredInProgressDrawings.length);
     } else {
-      this.filteredInProgressDrawings = this.inProgressDrawings.filter(drawing =>
-        drawing.kyhieubangve.toLowerCase().includes(this.searchTermInProgress.toLowerCase()) ||
-        drawing.tbkt.toLowerCase().includes(this.searchTermInProgress.toLowerCase()) ||
-        drawing.soboiday.toLowerCase().includes(this.searchTermInProgress.toLowerCase())
+      // Nếu có search term, filter theo kyhieubangve
+      const searchLower = this.searchTermInProgress.toLowerCase().trim();
+      this.filteredInProgressDrawings = this.inProgressDrawings.filter(drawing => 
+        drawing.kyhieubangve?.toLowerCase().includes(searchLower)
       );
+      console.log('Filtered in-progress drawings by search term:', this.filteredInProgressDrawings.length);
     }
+    
+    // Reset pagination về trang đầu tiên
+    this.pageIndexInProgress = 0;
+    
+    // Cập nhật paged data
+    this.updatePagedInProgressDrawings();
   }
 
-  // Method mới: Filter bảng vẽ đã xử lý
-  private filterProcessedDrawings(): void {
-    console.log('=== filterProcessedDrawings called ===');
-    console.log('this.processedDrawings:', this.processedDrawings);
-    console.log('this.processedDrawings length:', this.processedDrawings?.length);
-    console.log('this.searchTermProcessed:', this.searchTermProcessed);
+  // Method để filter bảng vẽ đã xử lý
+  filterProcessedDrawings(): void {
+    console.log('=== Filtering PROCESSED drawings ===');
+    console.log('Total processed drawings before filter:', this.processedDrawings.length);
+    console.log('Search term:', this.searchTermProcessed);
     
-    // Đảm bảo processedDrawings là array
-    if (!Array.isArray(this.processedDrawings)) {
-      console.warn('filterProcessedDrawings: processedDrawings is not an array, using empty array');
-      this.processedDrawings = [];
-    }
-    
-    if (!this.searchTermProcessed) {
+    if (!this.searchTermProcessed || this.searchTermProcessed.trim() === '') {
+      // Nếu không có search term, hiển thị tất cả
       this.filteredProcessedDrawings = [...this.processedDrawings];
-      console.log('No search term, filteredProcessedDrawings = processedDrawings:', this.filteredProcessedDrawings);
+      console.log('No search term, showing all processed drawings:', this.filteredProcessedDrawings.length);
     } else {
-      this.filteredProcessedDrawings = this.processedDrawings.filter(drawing =>
-        drawing.kyhieubangve.toLowerCase().includes(this.searchTermProcessed.toLowerCase()) ||
-        drawing.tbkt.toLowerCase().includes(this.searchTermProcessed.toLowerCase()) ||
-        drawing.soboiday.toLowerCase().includes(this.searchTermProcessed.toLowerCase())
+      // Nếu có search term, filter theo kyhieubangve
+      const searchLower = this.searchTermProcessed.toLowerCase().trim();
+      this.filteredProcessedDrawings = this.processedDrawings.filter(drawing => 
+        drawing.kyhieubangve?.toLowerCase().includes(searchLower)
       );
-      console.log('With search term, filteredProcessedDrawings:', this.filteredProcessedDrawings);
+      console.log('Filtered processed drawings by search term:', this.filteredProcessedDrawings.length);
     }
     
-    console.log('Final filteredProcessedDrawings length:', this.filteredProcessedDrawings.length);
+    // Cập nhật autocomplete
+    this.filteredProcessedDrawingsForAutocomplete = [...this.filteredProcessedDrawings];
+    
+    // Cập nhật paged data
+    this.updatePagedProcessedDrawings();
   }
 
   // Method mới: Cập nhật paged list cho bảng vẽ đang gia công
@@ -461,117 +646,187 @@ export class DsBangveComponent implements OnInit {
     this.pagedInProgressDrawings = this.filteredInProgressDrawings.slice(startIndex, endIndex);
   }
 
-  loadProcessedDrawings(): void {
-    // Debug: Kiểm tra token và thông tin user
-    const token = this.authService.getToken();
-    const isLoggedIn = this.authService.isLoggedIn();
-    console.log('Debug - Token (Processed):', token);
-    console.log('Debug - IsLoggedIn (Processed):', isLoggedIn);
 
-    // Kiểm tra token trước khi gọi API
-    if (!token) {
-      console.error('No authentication token found for processed drawings');
-      console.log('User needs to login first for processed drawings');
-      // Không hiển thị error message vì đã được xử lý trong checkAuthentication()
-      this.initializeMockProcessedDrawings();
-      return;
-    }
-
-    this.getProcessedDrawings().subscribe({
-      next: (data: ProcessedBangVeData[]) => {
-        // Đảm bảo data là array
-        this.processedDrawings = Array.isArray(data) ? data : [];
-        this.filteredProcessedDrawings = [...this.processedDrawings];
-        this.updatePagedProcessedDrawings();
-        this.filteredProcessedDrawingsForAutocomplete = [...this.processedDrawings];
-        console.log('Processed drawings loaded from API:', this.processedDrawings);
-      },
-      error: (error) => {
-        console.error('Error loading processed drawings:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.error);
-        
-        // Xử lý lỗi authentication
-        if (error.status === 401) {
-          this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
-          // Có thể redirect về trang login
-          this.router.navigate(['/landing']);
-        } else if (error.status === 400) {
-          console.error('Bad Request - Check API parameters for processed drawings');
-          this.thongbao('Lỗi tham số API khi tải danh sách bảng vẽ đã xử lý', 'Đóng', 'error');
-        } else if (error.status === 500) {
-          console.error('Internal Server Error - Server issue for processed drawings');
-          this.thongbao('Lỗi máy chủ khi tải danh sách bảng vẽ đã xử lý', 'Đóng', 'error');
-        } else {
-          this.thongbao('Lỗi khi tải danh sách bảng vẽ đã xử lý', 'Đóng', 'error');
-        }
-        
-        // Fallback to mock data
-        this.initializeMockProcessedDrawings();
-      }
-    });
-  }
 
   getDrawings(): Observable<BangVeData[]> {
+    // Kiểm tra authentication trước khi gọi API
+    const token = this.authService.getToken();
+    const userId = this.authService.getUserInfo()?.id || localStorage.getItem('userId');
+    
+    if (!token || !userId) {
+      console.error('No authentication token or user ID found');
+      return of([]);
+    }
+    
     // Replace with your actual API endpoint
     const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetDrawings`;
     const headers = new HttpHeaders()
-      .set('Authorization', `Bearer ${this.authService.getToken()}`)
+      .set('Authorization', `Bearer ${token}`)
       .set('Content-Type', 'application/json');
     
-    // Add common query parameters that might be expected
+    // Add user-specific query parameters để filter theo user đăng nhập
     const params = {
       page: '1',
-      pageSize: '10',
+      pageSize: '100', // Tăng page size để lấy tất cả dữ liệu
       sortBy: 'created_at',
-      sortOrder: 'desc'
+      sortOrder: 'desc',
+      userId: userId, // Thêm userId để filter theo user
+      userRole: this.userRole || '', // Thêm role để filter
+      khau_sx: this.khau_sx || '' // Thêm khau_sx để filter
     };
     
-    console.log('Calling GetDrawings API with token:', this.authService.getToken());
+    console.log('=== Calling GetDrawings API (ONCE) ===');
+    console.log('User ID:', userId);
+    console.log('User Role:', this.userRole);
+    console.log('Khau SX:', this.khau_sx);
     console.log('API URL:', apiUrl);
-    console.log('Headers:', headers);
     console.log('Params:', params);
+    console.log('Is Admin/Manager:', this.hasAdminOrManagerRole());
+    console.log('=== DEBUG: Before API call ===');
+    console.log('this.userRole value:', this.userRole);
+    console.log('this.userRole type:', typeof this.userRole);
+    console.log('this.userRole === "admin":', this.userRole === 'admin');
+    console.log('this.userRole === "manager":', this.userRole === 'manager');
+    console.log('this.userRole === "Admin":', this.userRole === 'Admin');
+    console.log('this.userRole === "Manager":', this.userRole === 'Manager');
+    console.log('this.userRole?.toLowerCase() === "admin":', this.userRole?.toLowerCase() === 'admin');
+    console.log('this.userRole?.toLowerCase() === "manager":', this.userRole?.toLowerCase() === 'manager');
     
-    // First try with parameters
-    return this.http.get<BangVeData[]>(apiUrl, { headers, params }).pipe(
+    // Gọi API CHỈ 1 LẦN
+    return this.http.get<any[]>(apiUrl, { headers, params }).pipe(
+      map((response: any[]) => {
+        console.log('=== API Response received ===');
+        console.log('Raw response length:', response?.length);
+        console.log('Response type:', typeof response);
+        console.log('Is Array:', Array.isArray(response));
+        
+        // Debug cấu trúc data từ API
+        this.debugApiResponseStructure(response);
+        this.debugApiResponse(response);
+        
+        // Debug trước khi filter
+        console.log('=== DEBUG: Before filterDataByUser ===');
+        console.log('userId to filter with:', userId);
+        console.log('this.userRole before filter:', this.userRole);
+        console.log('this.hasAdminOrManagerRole():', this.hasAdminOrManagerRole());
+        
+        // Filter dữ liệu theo user đăng nhập
+        const userSpecificData = this.filterDataByUser(response, userId);
+        console.log('Data after filterDataByUser:', userSpecificData.length);
+        console.log('Filtered data for user:', userSpecificData);
+        
+        // Safe type casting and data transformation
+        const transformedData = userSpecificData.map(item => this.transformDrawingData(item));
+        console.log('Final transformed data length:', transformedData.length);
+        
+        return transformedData;
+      }),
       catchError((error) => {
-        console.log('First attempt failed, trying without parameters...');
-        // If first attempt fails, try without parameters
-        return this.http.get<BangVeData[]>(apiUrl, { headers });
+        console.error('API call failed:', error);
+        console.error('Error details:', error);
+        
+        // Check if it's a server connection issue
+        if (error.status === 0 || error.status === 500) {
+          console.error('Server connection issue detected. Please check:');
+          console.error('1. Backend server is running on port 7190');
+          console.error('2. Database connection is working');
+          console.error('3. API endpoint /api/Drawings/GetDrawings exists');
+        }
+        
+        // Return empty array as fallback
+        return of([]);
       })
     );
   }
 
-  getProcessedDrawings(): Observable<ProcessedBangVeData[]> {
-    // Replace with your actual API endpoint
-    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetProcessedDrawings`;
-    const headers = new HttpHeaders()
-      .set('Authorization', `Bearer ${this.authService.getToken()}`)
-      .set('Content-Type', 'application/json');
-    
-    // Add common query parameters that might be expected
-    const params = {
-      page: '1',
-      pageSize: '10',
-      sortBy: 'process_date',
-      sortOrder: 'desc'
-    };
-    
-    console.log('Calling GetProcessedDrawings API with token:', this.authService.getToken());
-    console.log('API URL:', apiUrl);
-    console.log('Headers:', headers);
-    console.log('Params:', params);
-    
-    // First try with parameters
-    return this.http.get<ProcessedBangVeData[]>(apiUrl, { headers, params }).pipe(
-      catchError((error) => {
-        console.log('First attempt failed, trying without parameters...');
-        // If first attempt fails, try without parameters
-        return this.http.get<ProcessedBangVeData[]>(apiUrl, { headers });
-      })
-    );
-  }
+  // Method để lấy processed drawings - KHÔNG CÒN CẦN THIẾT vì đã load tất cả data 1 lần
+  // getProcessedDrawings(): Observable<ProcessedBangVeData[]> {
+  //   // Kiểm tra authentication trước khi gọi API
+  //   const token = this.authService.getToken();
+  //   const userId = this.authService.getUserInfo()?.id || localStorage.getItem('userId');
+  //   
+  //   if (!token || !userId) {
+  //     console.error('No authentication token or user ID found for processed drawings');
+  //     return of([]);
+  //   }
+  //   
+  //   // Replace with your actual API endpoint
+  //   const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetProcessedDrawings`;
+  //   const headers = new HttpHeaders()
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .set('Content-Type', 'application/json');
+  //   
+  //   // Add user-specific query parameters để filter theo user đăng nhập
+  //   const params = {
+  //     page: '1',
+  //     pageSize: '100', // Tăng page size để lấy tất cả dữ liệu
+  //     sortBy: 'process_date',
+  //     sortOrder: 'desc',
+  //     userId: userId, // Thêm userId để filter theo user
+  //     userRole: this.userRole || '', // Thêm role để filter
+  //     khau_sx: this.khau_sx || '' // Thêm khau_sx để filter
+  //   };
+  //   
+  //   console.log('Calling GetProcessedDrawings API with user context:');
+  //   console.log('User ID:', userId);
+  //   console.log('User Role:', this.userRole);
+  //   console.log('Khau SX:', this.khau_sx);
+  //   console.log('API URL:', apiUrl);
+  //   console.log('Params:', params);
+  //   
+  //   // First try with parameters
+  //   return this.http.get<any[]>(apiUrl, { headers, params }).pipe(
+  //     map((response: any[]) => {
+  //       console.log('API Response with params:', response);
+  //       // Filter dữ liệu theo user đăng nhập
+  //       const userSpecificData = this.filterDataByUser(response, userId);
+  //       console.log('Filtered processed data for user:', userSpecificData);
+  //       // Safe type casting and data transformation
+  //       return userSpecificData.map(item => this.transformProcessedDrawingData(item));
+  //     }),
+  //     catchError((error) => {
+  //       console.log('First attempt failed, trying without parameters...');
+  //       // If first attempt fails, try without parameters
+  //       return this.http.get<any[]>(apiUrl, { headers }).pipe(
+  //       map((response: any[]) => {
+  //       console.log('API Response without params:', response);
+  //       // Filter dữ liệu theo user context:');
+  //       console.log('User ID:', userId);
+  //       console.log('User Role:', this.userRole);
+  //       console.log('Khau SX:', this.khau_sx);
+  //       console.log('API URL:', apiUrl);
+  //       console.log('Params:', params);
+  //       
+  //       // First try with parameters
+  //       return this.http.get<any[]>(apiUrl, { headers, params }).pipe(
+  //         map((response: any[]) => {
+  //           console.log('API Response with params:', response);
+  //           // Filter dữ liệu theo user đăng nhập
+  //           const userSpecificData = this.filterDataByUser(response, userId);
+  //           console.log('Filtered processed data for user:', userSpecificData);
+  //           // Safe type casting and data transformation
+  //           return userSpecificData.map(item => this.transformProcessedDrawingData(item));
+  //         }),
+  //         catchError((error) => {
+  //           console.log('First attempt failed, trying without parameters...');
+  //           // If first attempt fails, try without parameters
+  //           return this.http.get<any[]>(apiUrl, { headers }).pipe(
+  //             map((response: any[]) => {
+  //               console.log('API Response without params:', response);
+  //               // Filter dữ liệu theo user đăng nhập
+  //               const userSpecificData = this.filterDataByUser(response, userId);
+  //               console.log('Filtered processed data for user:', userSpecificData);
+  //               // Safe type casting and data transformation
+  //               return userSpecificData.map(item => this.transformProcessedDrawingData(item));
+  //             })
+  //           );
+  //         })
+  //       );
+  //     }
+  //   );
+  // }
+
+
 
   // API method để thêm mới bảng vẽ
   addNewDrawing(drawingData: BangVeData): Observable<BangVeData> {
@@ -598,11 +853,11 @@ export class DsBangveComponent implements OnInit {
       bd_ep: drawingData.bd_ep,
       bung_bd: drawingData.bung_bd,
       user_create: currentUsername,
-      trang_thai: null, // Bảng vẽ mới có trang_thai = null
+      trang_thai: 0, // Bảng vẽ mới có trang_thai = 0
       created_at: new Date().toISOString(),
       username: currentUsername,
       email: userInfo?.email || '',
-      role_name: userInfo?.roles?.[0] || localStorage.getItem('role') || 'user'
+      role_name: userInfo?.roles?.[0] || 'user'
     };
     
     console.log('Calling AddDrawing API with data:', requestData);
@@ -804,29 +1059,35 @@ export class DsBangveComponent implements OnInit {
   }
 
   // Tab management
-  onTabChange(event: any): void {
-    this.currentTabIndex = event.index;
-    console.log('Tab changed to index:', this.currentTabIndex);
+  onTabChange(event: MatTabChangeEvent): void {
+    console.log('=== Tab change event ===');
+    console.log('Previous tab index:', this.currentTabIndex);
+    console.log('New tab index:', event.index);
+    console.log('New tab label:', event.tab.textLabel);
     
-    // Reset page index khi chuyển tab
+    // Cập nhật current tab index
+    this.currentTabIndex = event.index;
+    
+    // Reset pagination về trang đầu tiên khi chuyển tab
     if (this.currentTabIndex === 0) {
       // Tab "Bảng vẽ mới"
       this.pageIndex = 0;
+      console.log('Reset pageIndex to 0 for NEW drawings tab');
       this.updatePagedNewDrawings();
     } else if (this.currentTabIndex === 1) {
       // Tab "Đang gia công"
       this.pageIndexInProgress = 0;
+      console.log('Reset pageIndexInProgress to 0 for IN PROGRESS drawings tab');
       this.updatePagedInProgressDrawings();
     } else if (this.currentTabIndex === 2) {
-      // Tab "Bảng vẽ đã xử lý"
+      // Tab "Đã xử lý"
       this.pageIndex = 0;
+      console.log('Reset pageIndex to 0 for PROCESSED drawings tab');
       this.updatePagedProcessedDrawings();
     }
     
-    // Reset search terms khi chuyển tab
-    this.searchTerm = '';
-    this.searchTermInProgress = '';
-    this.searchTermProcessed = '';
+    console.log('=== Tab change completed ===');
+    console.log('Current tab index:', this.currentTabIndex);
   }
 
   // New drawings methods
@@ -863,8 +1124,19 @@ export class DsBangveComponent implements OnInit {
   }
 
   updatePagedNewDrawings() {
+    console.log('=== Updating paged NEW drawings ===');
+    console.log('Filtered drawings length:', this.filteredDrawings.length);
+    console.log('Page size:', this.pageSize);
+    console.log('Page index:', this.pageIndex);
+    
     const startIndex = this.pageIndex * this.pageSize;
-    this.pagedNewDrawings = this.filteredDrawings.slice(startIndex, startIndex + this.pageSize);
+    const endIndex = startIndex + this.pageSize;
+    
+    this.pagedNewDrawings = this.filteredDrawings.slice(startIndex, endIndex);
+    
+    console.log('Paged new drawings:', this.pagedNewDrawings.length);
+    console.log('Start index:', startIndex);
+    console.log('End index:', endIndex);
   }
 
   onNewDrawingsPageChange(event: PageEvent) {
@@ -907,22 +1179,19 @@ export class DsBangveComponent implements OnInit {
   }
 
   updatePagedProcessedDrawings() {
-    console.log('=== updatePagedProcessedDrawings called ===');
-    console.log('this.pageIndex:', this.pageIndex);
-    console.log('this.pageSize:', this.pageSize);
-    console.log('this.filteredProcessedDrawings:', this.filteredProcessedDrawings);
-    console.log('this.filteredProcessedDrawings length:', this.filteredProcessedDrawings?.length);
+    console.log('=== Updating paged PROCESSED drawings ===');
+    console.log('Filtered processed drawings length:', this.filteredProcessedDrawings.length);
+    console.log('Page size:', this.pageSize);
+    console.log('Page index:', this.pageIndex);
     
     const startIndex = this.pageIndex * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     
-    console.log('startIndex:', startIndex);
-    console.log('endIndex:', endIndex);
-    
     this.pagedProcessedDrawings = this.filteredProcessedDrawings.slice(startIndex, endIndex);
     
-    console.log('this.pagedProcessedDrawings:', this.pagedProcessedDrawings);
-    console.log('this.pagedProcessedDrawings length:', this.pagedProcessedDrawings.length);
+    console.log('Paged processed drawings:', this.pagedProcessedDrawings.length);
+    console.log('Start index:', startIndex);
+    console.log('End index:', endIndex);
   }
 
   onProcessedDrawingsPageChange(event: PageEvent) {
@@ -1031,17 +1300,30 @@ export class DsBangveComponent implements OnInit {
         // Cập nhật trạng thái bảng vẽ trong danh sách
         this.updateDrawingStatus(drawing.id, true);
         
-        // Cập nhật trạng thái thành "đang gia công" (1)
-        this.updateDrawingStatusToInProgress(drawing.id);
-        
-        // Refresh danh sách bảng vẽ
-        this.loadDrawings();
+        // Cập nhật trạng thái thành "đang gia công" (1) trong backend
+        // Và chỉ reload data sau khi backend update thành công
+        this.updateDrawingStatusToInProgressInBackend(drawing.id, () => {
+          console.log('🔄 [assignDrawingToUsers] Backend update successful, updating frontend...');
+          
+          // Cập nhật trạng thái thành "đang gia công" (1) trong frontend
+          this.updateDrawingStatusToInProgress(drawing.id);
+          
+          // Thêm delay nhỏ để đảm bảo backend đã xử lý xong
+          setTimeout(() => {
+            console.log('🔄 [assignDrawingToUsers] Reloading data after delay...');
+            // Refresh danh sách bảng vẽ sau khi backend đã được cập nhật
+            this.loadDrawings();
+            
+            // Force UI refresh để đảm bảo thay đổi được hiển thị
+            this.forceUIUpdate();
+          }, 500);
+        });
       },
       error: (error) => {
-        if(error.error.errors.length > 0) {
+        if(error.error && error.error.errors && error.error.errors.length > 0) {
           this.thongbao('Bảng vẽ đã được chuyển qua khâu sản xuất trước đó.', 'Đóng','info');
         } else {
-          this.thongbao('Có lỗi xảy ra khi gia công bảng vẽ. Vui lòng thử lại.', 'Đóng', 'error');
+          this.handleApiError(error, 'gia công bảng vẽ');
         }        
       }
     });
@@ -1073,10 +1355,14 @@ export class DsBangveComponent implements OnInit {
 
   // Method mới: Cập nhật trạng thái bảng vẽ thành "đang gia công" (1)
   private updateDrawingStatusToInProgress(drawingId: number): void {
+    console.log(`🔄 [updateDrawingStatusToInProgress] Updating drawing ${drawingId} to trang_thai = 1 in frontend`);
+    
     // Tìm bảng vẽ trong danh sách mới
     const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
     if (drawingIndex !== -1) {
       const drawing = this.drawings[drawingIndex];
+      console.log(`🔄 [updateDrawingStatusToInProgress] Found drawing in new drawings list:`, drawing);
+      
       drawing.trang_thai = 1;
       
       // Cập nhật filtered lists
@@ -1096,6 +1382,55 @@ export class DsBangveComponent implements OnInit {
       // Cập nhật paged lists
       this.updatePagedNewDrawings();
       this.updatePagedInProgressDrawings();
+      
+      console.log(`✅ [updateDrawingStatusToInProgress] Successfully moved drawing ${drawingId} from new to in-progress`);
+      console.log(`  - New drawings count: ${this.drawings.length}`);
+      console.log(`  - In progress drawings count: ${this.inProgressDrawings.length}`);
+    } else {
+      console.warn(`⚠️ [updateDrawingStatusToInProgress] Drawing ${drawingId} not found in new drawings list`);
+    }
+  }
+
+  // Method mới: Cập nhật trạng thái bảng vẽ thành "đang gia công" (1) trong backend
+  private updateDrawingStatusToInProgressInBackend(drawingId: number, onSuccess?: () => void): void {
+    // Tìm bảng vẽ trong danh sách để lấy thông tin hiện tại
+    const drawing = this.drawings.find(d => d.id === drawingId) || 
+                   this.inProgressDrawings.find(d => d.id === drawingId) || 
+                   this.processedDrawings.find(d => d.id === drawingId);
+    
+    if (drawing) {
+      // Tạo bản sao của drawing với trang_thai = 1
+      const updatedDrawing: BangVeData = {
+        ...drawing,
+        trang_thai: 1
+      };
+      
+      console.log(`🔄 [updateDrawingStatusToInProgressInBackend] Updating drawing ${drawingId} to trang_thai = 1`);
+      console.log('Updated drawing data:', updatedDrawing);
+      
+      // Gọi API UpdateDrawing để cập nhật backend
+      this.updateDrawing(updatedDrawing).subscribe({
+        next: (response) => {
+          console.log(`✅ [updateDrawingStatusToInProgressInBackend] Successfully updated drawing ${drawingId} in backend:`, response);
+          
+          // Gọi callback nếu có sau khi backend update thành công
+          if (onSuccess) {
+            onSuccess();
+          }
+        },
+        error: (error) => {
+          console.error(`❌ [updateDrawingStatusToInProgressInBackend] Failed to update drawing ${drawingId} in backend:`, error);
+          this.thongbao('Cập nhật trạng thái bảng vẽ trong backend thất bại!', 'Đóng', 'error');
+          
+          // Fallback: vẫn cập nhật frontend và reload data để đảm bảo UI được cập nhật
+          console.log('🔄 [updateDrawingStatusToInProgressInBackend] Fallback: updating frontend despite backend failure');
+          if (onSuccess) {
+            onSuccess();
+          }
+        }
+      });
+    } else {
+      console.warn(`⚠️ [updateDrawingStatusToInProgressInBackend] Drawing ${drawingId} not found in any list`);
     }
   }
 
@@ -1253,20 +1588,7 @@ export class DsBangveComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error processing drawing:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.error);
-        
-        if (error.status === 401) {
-          this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
-          this.router.navigate(['/landing']);
-        } else if (error.status === 400) {
-          this.thongbao('Dữ liệu không hợp lệ, vui lòng kiểm tra lại thông tin', 'Đóng', 'error');
-        } else if (error.status === 500) {
-          this.thongbao('Lỗi máy chủ, vui lòng thử lại sau', 'Đóng', 'error');
-        } else {
-          this.thongbao('Lỗi khi gia công bảng vẽ', 'Đóng', 'error');
-        }
+        this.handleApiError(error, 'gia công bảng vẽ');
         
         // Fallback: xử lý local nếu API thất bại
         this.drawings = this.drawings.filter(b => b.id !== drawing.id);
@@ -1374,22 +1696,7 @@ export class DsBangveComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error adding new drawing:', error);
-            console.error('Error status:', error.status);
-            console.error('Error message:', error.message);
-            console.error('Error details:', error.error);
-            
-            if (error.status === 401) {
-              this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
-              this.router.navigate(['/landing']);
-            } else if (error.status === 403) {
-              this.thongbao('Bạn không có quyền thực hiện chức năng này', 'Đóng', 'error');
-            } else if (error.status === 400) {
-              this.thongbao('Dữ liệu không hợp lệ, vui lòng kiểm tra lại thông tin', 'Đóng', 'error');
-            } else if (error.status === 500) {
-              this.thongbao('Lỗi máy chủ, vui lòng thử lại sau', 'Đóng', 'error');
-            } else {
-              this.thongbao('Lỗi khi thêm bảng vẽ mới', 'Đóng', 'error');
-            }
+            this.handleApiError(error, 'thêm bảng vẽ mới');
             
             // Fallback: thêm vào local nếu API thất bại
             const fallbackDrawing = {
@@ -1457,20 +1764,7 @@ export class DsBangveComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error updating drawing:', error);
-            console.error('Error status:', error.status);
-            console.error('Error message:', error.message);
-            console.error('Error details:', error.error);
-            
-            if (error.status === 401) {
-              this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
-              this.router.navigate(['/landing']);
-            } else if (error.status === 400) {
-              this.thongbao('Dữ liệu không hợp lệ, vui lòng kiểm tra lại thông tin', 'Đóng', 'error');
-            } else if (error.status === 500) {
-              this.thongbao('Lỗi máy chủ, vui lòng thử lại sau', 'Đóng', 'error');
-            } else {
-              this.thongbao('Lỗi khi cập nhật bảng vẽ', 'Đóng', 'error');
-            }
+            this.handleApiError(error, 'cập nhật bảng vẽ');
             
             // Fallback: cập nhật local nếu API thất bại
             const index = this.drawings.findIndex(b => b.id === result.id);
@@ -1520,20 +1814,7 @@ export class DsBangveComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error deleting drawing:', error);
-            console.error('Error status:', error.status);
-            console.error('Error message:', error.message);
-            console.error('Error details:', error.error);
-            
-            if (error.status === 401) {
-              this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
-              this.router.navigate(['/landing']);
-            } else if (error.status === 404) {
-              this.thongbao('Bảng vẽ không tồn tại', 'Đóng', 'error');
-            } else if (error.status === 500) {
-              this.thongbao('Lỗi máy chủ, vui lòng thử lại sau', 'Đóng', 'error');
-            } else {
-              this.thongbao('Lỗi khi xóa bảng vẽ', 'Đóng', 'error');
-            }
+            this.handleApiError(error, 'xóa bảng vẽ');
           }
         });
       }
@@ -1554,4 +1835,802 @@ export class DsBangveComponent implements OnInit {
     this.updatePagedInProgressDrawings();
   }
 
+  // Method để transform dữ liệu từ API response an toàn
+  private transformDrawingData(item: any): BangVeData {
+    return {
+      id: item.id || 0,
+      kyhieubangve: item.kyhieubangve || '',
+      congsuat: item.congsuat || 0,
+      tbkt: item.tbkt || '',
+      dienap: item.dienap || '',
+      soboiday: item.soboiday || '',
+      bd_ha_trong: item.bd_ha_trong || '',
+      bd_ha_ngoai: item.bd_ha_ngoai || '',
+      bd_cao: item.bd_cao || '',
+      bd_ep: item.bd_ep || '',
+      bung_bd: item.bung_bd || 0,
+      user_create: item.user_create || '',
+      // Safe type casting for trang_thai: handle both boolean and number
+      trang_thai: this.safeCastTrangThai(item.trang_thai),
+      created_at: item.created_at ? new Date(item.created_at) : new Date(),
+      username: item.username || '',
+      email: item.email || '',
+      role_name: item.role_name || ''
+    };
+  }
+
+  // Method để cast trang_thai an toàn
+  private safeCastTrangThai(value: any): number | null {
+    console.log(`🔧 [safeCastTrangThai] Input value: ${value} (type: ${typeof value})`);
+    
+    if (value === null || value === undefined) {
+      console.log(`🔧 [safeCastTrangThai] Value is null/undefined, returning null`);
+      return null;
+    }
+    
+    // Nếu là boolean, convert thành number
+    if (typeof value === 'boolean') {
+      const result = value ? 1 : 0;
+      console.log(`🔧 [safeCastTrangThai] Boolean ${value} converted to number ${result}`);
+      return result;
+    }
+    
+    // Nếu là number, đảm bảo là 0, 1, 2, hoặc null
+    if (typeof value === 'number') {
+      if (value === 0 || value === 1 || value === 2) {
+        console.log(`🔧 [safeCastTrangThai] Valid number ${value} preserved`);
+        return value;
+      }
+      // Nếu là số khác, có thể là lỗi từ backend, return null
+      console.warn(`🔧 [safeCastTrangThai] Unexpected trang_thai value: ${value}, converting to null`);
+      return null;
+    }
+    
+    // Nếu là string, thử parse
+    if (typeof value === 'string') {
+      const parsed = parseInt(value);
+      if (!isNaN(parsed) && (parsed === 0 || parsed === 1 || parsed === 2)) {
+        console.log(`🔧 [safeCastTrangThai] String "${value}" parsed to number ${parsed}`);
+        return parsed;
+      }
+      console.warn(`🔧 [safeCastTrangThai] String "${value}" could not be parsed to valid trang_thai`);
+    }
+    
+    // Fallback: return null
+    console.warn(`🔧 [safeCastTrangThai] Cannot cast trang_thai value: ${value} (type: ${typeof value}), converting to null`);
+    return null;
+  }
+
+  // Method để transform dữ liệu processed drawings từ API response an toàn
+  private transformProcessedDrawingData(item: any): ProcessedBangVeData {
+    return {
+      ...this.transformDrawingData(item),
+      user_process: item.user_process || '',
+      process_date: item.process_date ? new Date(item.process_date) : new Date(),
+      process_status: item.process_status || ''
+    };
+  }
+
+  // Method để xử lý lỗi API một cách nhất quán
+  private handleApiError(error: any, operation: string): void {
+    console.error(`Error in ${operation}:`, error);
+    
+    if (error.status === 0) {
+      // Network error - server không thể kết nối
+      this.thongbao('Không thể kết nối đến máy chủ. Vui lòng kiểm tra:\n1. Backend server đang chạy\n2. Kết nối mạng\n3. URL API chính xác', 'Đóng', 'error');
+    } else if (error.status === 401) {
+      this.thongbao('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'Đóng', 'error');
+      this.router.navigate(['/landing']);
+    } else if (error.status === 400) {
+      this.thongbao('Dữ liệu không hợp lệ, vui lòng kiểm tra lại thông tin', 'Đóng', 'error');
+    } else if (error.status === 500) {
+      // Xử lý lỗi type casting từ backend
+      if (error.error && error.error.includes('Data type casting error')) {
+        this.thongbao('Lỗi dữ liệu từ máy chủ: Vui lòng liên hệ quản trị viên để kiểm tra cấu trúc dữ liệu', 'Đóng', 'error');
+      } else {
+        this.thongbao('Lỗi máy chủ (500): Vui lòng kiểm tra:\n1. Backend server đang chạy bình thường\n2. Database connection\n3. API endpoint tồn tại\n4. Server logs để biết chi tiết lỗi', 'Đóng', 'error');
+      }
+    } else if (error.status === 404) {
+      this.thongbao('Không tìm thấy dữ liệu yêu cầu hoặc API endpoint không tồn tại', 'Đóng', 'error');
+    } else if (error.status === 503) {
+      this.thongbao('Dịch vụ tạm thời không khả dụng, vui lòng thử lại sau', 'Đóng', 'error');
+    } else {
+      this.thongbao(`Lỗi khi ${operation}: ${error.message || 'Không xác định'} (Status: ${error.status})`, 'Đóng', 'error');
+    }
+  }
+
+  // Method để filter dữ liệu theo user đăng nhập
+  private filterDataByUser(data: any[], userId: string): any[] {
+    if (!data || !Array.isArray(data)) {
+      console.warn('filterDataByUser: data is not a valid array');
+      return [];
+    }
+    if (!userId) {
+      console.warn('filterDataByUser: userId is not provided');
+      return [];
+    }
+    console.log('=== filterDataByUser called ===');
+    console.log('User ID:', userId);
+    console.log('User Role:', this.userRole);
+    console.log('User Role type:', typeof this.userRole);
+    console.log('Total data items before filtering:', data.length);
+    console.log('=== ROLE CHECKING DETAILS ===');
+    console.log('this.userRole === "admin":', this.userRole === 'admin');
+    console.log('this.userRole === "manager":', this.userRole === 'manager');
+    console.log('this.userRole === "Admin":', this.userRole === 'Admin');
+    console.log('this.userRole === "Manager":', this.userRole === 'Manager');
+    console.log('this.userRole?.toLowerCase() === "admin":', this.userRole?.toLowerCase() === 'admin');
+    console.log('this.userRole?.toLowerCase() === "manager":', this.userRole?.toLowerCase() === 'manager');
+    console.log('this.hasAdminOrManagerRole():', this.hasAdminOrManagerRole());
+
+    // Kiểm tra role với case-insensitive comparison
+    const userRoleLower = this.userRole?.toLowerCase();
+    const isAdminOrManager = userRoleLower === 'admin' || 
+                            userRoleLower === 'manager' || 
+                            userRoleLower === 'administrator' ||
+                            this.hasAdminOrManagerRole();
+
+    if (isAdminOrManager) {
+      console.log('User is admin/manager, returning ALL data without filtering');
+      console.log('Admin/Manager can see all drawings regardless of tbl_user_bangve assignments');
+      return data;
+    }
+
+    console.log('User is regular user, filtering data based on tbl_user_bangve assignments');
+    // Với user thường, chỉ lấy bảng vẽ được assign trong tbl_user_bangve
+    const userAssignedData = data.filter(item => {
+      const assignedUsers = item.assigned_users || item.user_bangve || [];
+      console.log(`Drawing ${item.kyhieubangve} (ID: ${item.id}):`);
+      console.log('  - Assigned users:', assignedUsers);
+      console.log('  - Current user ID:', userId);
+      const isAssigned = assignedUsers.some((assignedUser: any) => {
+        const assignedUserId = assignedUser.user_id || assignedUser.userId;
+        const isMatch = assignedUserId && assignedUserId.toString() === userId.toString();
+        console.log(`    - Assigned user ID: ${assignedUserId}, matches current user: ${isMatch}`);
+        return isMatch;
+      });
+      console.log(`  - Is assigned to current user: ${isAssigned}`);
+      return isAssigned;
+    });
+    console.log('=== filterDataByUser results ===');
+    console.log('Data filtered by tbl_user_bangve assignments:', userAssignedData.length);
+    console.log('Filtered data for user:', userAssignedData);
+    return userAssignedData;
+  }
+
+  // Method để test logic filter với dữ liệu mẫu
+  private testFilterLogic(): void {
+    console.log('=== Testing Filter Logic ===');
+    const mockData = [
+      { id: 1, kyhieubangve: 'BV-001', user_create: 'user1', trang_thai: null, assigned_users: [{ user_id: 'user1', permission_type: 'read' }, { user_id: 'user2', permission_type: 'read' }] },
+      { id: 2, kyhieubangve: 'BV-002', user_create: 'user2', trang_thai: 1, assigned_users: [{ user_id: 'user2', permission_type: 'read' }] },
+      { id: 3, kyhieubangve: 'BV-003', user_create: 'manager1', trang_thai: 2, assigned_users: [{ user_id: 'user3', permission_type: 'read' }] }
+    ];
+    console.log('Mock data for testing:', mockData);
+    
+    // Test với role khác nhau
+    console.log('=== Testing with different roles ===');
+    
+    // Test user thường
+    this.userRole = 'user';
+    const user1Filtered = this.filterDataByUser(mockData, 'user1');
+    console.log('Filtered for regular user (user1):', user1Filtered);
+    console.log('Expected: Should see BV-001 (assigned)');
+    
+    const user2Filtered = this.filterDataByUser(mockData, 'user2');
+    console.log('Filtered for regular user (user2):', user2Filtered);
+    console.log('Expected: Should see BV-001 (assigned) and BV-002 (assigned)');
+    
+    // Test manager
+    this.userRole = 'manager';
+    const managerFiltered = this.filterDataByUser(mockData, 'manager1');
+    console.log('Filtered for manager:', managerFiltered);
+    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
+    
+    // Test admin
+    this.userRole = 'admin';
+    const adminFiltered = this.filterDataByUser(mockData, 'admin1');
+    console.log('Filtered for admin:', adminFiltered);
+    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
+    
+    // Test case variations
+    this.userRole = 'Manager';
+    const managerUpperFiltered = this.filterDataByUser(mockData, 'manager1');
+    console.log('Filtered for Manager (capital M):', managerUpperFiltered);
+    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
+    
+    this.userRole = 'ADMIN';
+    const adminUpperFiltered = this.filterDataByUser(mockData, 'admin1');
+    console.log('Filtered for ADMIN (all caps):', adminUpperFiltered);
+    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
+    
+    // Reset về role thực tế
+    this.userRole = localStorage.getItem('role') || localStorage.getItem('userRole') || 'user';
+    console.log('Reset userRole to:', this.userRole);
+  }
+
+  // Test API connectivity đơn giản hơn
+  private testSimpleApiConnectivity(): void {
+    console.log('=== Testing Simple API Connectivity ===');
+    
+    // Test với endpoint chính mà chúng ta cần
+    const drawingsApiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetDrawings`;
+    console.log('Testing main API endpoint:', drawingsApiUrl);
+    
+    // Sử dụng GET request với token để kiểm tra endpoint
+    const token = this.authService.getToken();
+    if (!token) {
+      console.log('No token available for API test');
+      return;
+    }
+    
+    const headers = new HttpHeaders()
+      .set('Authorization', `Bearer ${token}`)
+      .set('Content-Type', 'application/json');
+    
+    // Sử dụng GET request thay vì HEAD để tránh 405 Method Not Allowed
+    this.http.get(drawingsApiUrl, { headers }).subscribe({
+      next: (response) => {
+        console.log('✅ Main API endpoint is accessible and returns data:', response);
+      },
+      error: (error) => {
+        if (error.status === 401) {
+          console.log('✅ API endpoint exists but requires valid authentication');
+        } else if (error.status === 404) {
+          console.warn('⚠️ API endpoint not found - check backend implementation');
+        } else if (error.status === 405) {
+          console.warn('⚠️ API endpoint exists but method not allowed - this should not happen with GET');
+        } else {
+          console.warn('⚠️ API connectivity issue:', error.status, error.statusText);
+        }
+      }
+    });
+  }
+
+  // Method để kiểm tra trạng thái API và hiển thị thông tin
+  private checkApiStatus(): void {
+    console.log('=== Checking API Status ===');
+    
+    const baseUrl = this.commonService.getServerAPIURL();
+    console.log('Base API URL:', baseUrl);
+    
+    // Kiểm tra các endpoint chính
+    const endpoints = [
+      'api/Drawings/GetDrawings',
+      'api/Account/users-by-role-public'
+    ];
+    
+    const token = this.authService.getToken();
+    if (!token) {
+      console.log('No token available for API status check');
+      return;
+    }
+    
+    endpoints.forEach(endpoint => {
+      const fullUrl = `${baseUrl}${endpoint}`;
+      console.log(`Checking endpoint: ${endpoint}`);
+      
+      // Test với GET request và token để kiểm tra endpoint
+      const headers = new HttpHeaders()
+        .set('Authorization', `Bearer ${token}`)
+        .set('Content-Type', 'application/json');
+      
+      this.http.get(fullUrl, { headers }).subscribe({
+        next: (response) => {
+          console.log(`✅ ${endpoint}: Accessible and returns data`);
+        },
+        error: (error) => {
+          if (error.status === 401) {
+            console.log(`✅ ${endpoint}: Exists but requires valid authentication`);
+          } else if (error.status === 404) {
+            console.warn(`⚠️ ${endpoint}: Not found`);
+          } else if (error.status === 405) {
+            console.warn(`⚠️ ${endpoint}: Method not allowed - unexpected for GET`);
+          } else {
+            console.warn(`⚠️ ${endpoint}: Error ${error.status} - ${error.statusText}`);
+          }
+        }
+      });
+    });
+  }
+
+  // Method để kiểm tra endpoint có tồn tại không một cách an toàn
+  private testApiEndpointExistence(): void {
+    console.log('=== Testing API Endpoint Existence ===');
+    
+    const baseUrl = this.commonService.getServerAPIURL();
+    console.log('Base API URL:', baseUrl);
+    
+    // Danh sách endpoint cần kiểm tra
+    const endpoints = [
+      { path: 'api/Drawings/GetDrawings', method: 'GET', description: 'Lấy danh sách bảng vẽ' },
+      { path: 'api/Account/users-by-role-public', method: 'GET', description: 'Lấy danh sách user theo role' },
+      { path: 'api/health', method: 'GET', description: 'Health check endpoint' }
+    ];
+    
+    console.log('Testing endpoints for existence:');
+    endpoints.forEach(endpoint => {
+      console.log(`- ${endpoint.path} (${endpoint.method}): ${endpoint.description}`);
+    });
+    
+    console.log('Note: Endpoints will be tested when actual API calls are made');
+    console.log('This prevents unnecessary network requests and potential errors');
+  }
+
+  // Method để debug cấu trúc data từ API response
+  private debugApiResponseStructure(data: any[]): void {
+    console.log('=== Debug API Response Structure ===');
+    
+    if (!data || data.length === 0) {
+      console.log('No data to analyze');
+      return;
+    }
+    
+    // Lấy sample item để phân tích cấu trúc
+    const sampleItem = data[0];
+    console.log('Sample item structure:', sampleItem);
+    
+    // Kiểm tra các field quan trọng
+    console.log('Key fields analysis:');
+    console.log('- id:', sampleItem.id);
+    console.log('- kyhieubangve:', sampleItem.kyhieubangve);
+    console.log('- user_create:', sampleItem.user_create);
+    console.log('- trang_thai:', sampleItem.trang_thai);
+    
+    // Kiểm tra field assigned_users
+    console.log('- assigned_users:', sampleItem.assigned_users);
+    if (sampleItem.assigned_users && Array.isArray(sampleItem.assigned_users)) {
+      console.log('  - assigned_users is array with length:', sampleItem.assigned_users.length);
+      if (sampleItem.assigned_users.length > 0) {
+        console.log('  - First assigned user:', sampleItem.assigned_users[0]);
+        console.log('  - user_id field:', sampleItem.assigned_users[0].user_id);
+        console.log('  - permission_type field:', sampleItem.assigned_users[0].permission_type);
+      }
+    }
+    
+    // Kiểm tra field user_bangve (alternative field name)
+    console.log('- user_bangve:', sampleItem.user_bangve);
+    if (sampleItem.user_bangve && Array.isArray(sampleItem.user_bangve)) {
+      console.log('  - user_bangve is array with length:', sampleItem.user_bangve.length);
+    }
+    
+    // Kiểm tra các field khác có thể chứa thông tin user
+    console.log('- userId:', sampleItem.userId);
+    console.log('- user_id:', sampleItem.user_id);
+    console.log('- khau_sx:', sampleItem.khau_sx);
+    
+    console.log('=== End Structure Analysis ===');
+  }
+
+  // Method để kiểm tra data flow
+  private debugDataFlow(): void {
+    console.log('=== DEBUG DATA FLOW ===');
+    console.log('Current drawings array length:', this.drawings?.length);
+    console.log('Current inProgressDrawings array length:', this.inProgressDrawings?.length);
+    console.log('Current processedDrawings array length:', this.processedDrawings?.length);
+    console.log('Current filteredDrawings array length:', this.filteredDrawings?.length);
+    console.log('Current filteredInProgressDrawings array length:', this.filteredInProgressDrawings?.length);
+    console.log('Current filteredProcessedDrawings array length:', this.filteredProcessedDrawings?.length);
+    console.log('Current pagedNewDrawings array length:', this.pagedNewDrawings?.length);
+    console.log('Current pagedInProgressDrawings array length:', this.pagedInProgressDrawings?.length);
+    console.log('Current pagedProcessedDrawings array length:', this.pagedProcessedDrawings?.length);
+    
+    if (this.drawings && this.drawings.length > 0) {
+      console.log('Sample drawing data:', this.drawings[0]);
+    }
+    
+    if (this.inProgressDrawings && this.inProgressDrawings.length > 0) {
+      console.log('Sample in-progress drawing data:', this.inProgressDrawings[0]);
+    }
+    
+    if (this.processedDrawings && this.processedDrawings.length > 0) {
+      console.log('Sample processed drawing data:', this.processedDrawings[0]);
+    }
+    
+    console.log('=== END DEBUG DATA FLOW ===');
+  }
+
+  // Method để kiểm tra API response
+  private debugApiResponse(response: any[]): void {
+    console.log('=== DEBUG API RESPONSE ===');
+    console.log('Response type:', typeof response);
+    console.log('Is Array:', Array.isArray(response));
+    console.log('Response length:', response?.length);
+    
+    if (response && Array.isArray(response) && response.length > 0) {
+      console.log('First item structure:', response[0]);
+      console.log('First item keys:', Object.keys(response[0]));
+      
+      // Kiểm tra các field quan trọng
+      const firstItem = response[0];
+      console.log('Has assigned_users field:', 'assigned_users' in firstItem);
+      console.log('Has user_bangve field:', 'user_bangve' in firstItem);
+      console.log('Has user_create field:', 'user_create' in firstItem);
+      console.log('Has khau_sx field:', 'khau_sx' in firstItem);
+      
+      if (firstItem.assigned_users) {
+        console.log('assigned_users structure:', firstItem.assigned_users);
+        console.log('assigned_users type:', typeof firstItem.assigned_users);
+        console.log('assigned_users is array:', Array.isArray(firstItem.assigned_users));
+      }
+      
+      if (firstItem.user_bangve) {
+        console.log('user_bangve structure:', firstItem.user_bangve);
+        console.log('user_bangve type:', typeof firstItem.user_bangve);
+        console.log('user_bangve is array:', Array.isArray(firstItem.user_bangve));
+      }
+    } else {
+      console.log('Response is empty or not an array');
+    }
+    
+    console.log('=== END DEBUG API RESPONSE ===');
+  }
+
+  // Method để kiểm tra authentication status
+  private debugAuthentication(): void {
+    console.log('=== DEBUG AUTHENTICATION ===');
+    
+    // Kiểm tra token
+    const token = this.authService.getToken();
+    console.log('Token exists:', !!token);
+    console.log('Token length:', token?.length);
+    console.log('Token starts with Bearer:', token?.startsWith('Bearer '));
+    
+    // Kiểm tra user info
+    const userInfo = this.authService.getUserInfo();
+    console.log('User info exists:', !!userInfo);
+    console.log('User info:', userInfo);
+    
+    // Kiểm tra login status
+    const isLoggedIn = this.authService.isLoggedIn();
+    console.log('Is logged in:', isLoggedIn);
+    
+    // Kiểm tra localStorage
+    console.log('localStorage accessToken:', localStorage.getItem('accessToken'));
+    console.log('localStorage idToken:', localStorage.getItem('idToken'));
+    console.log('localStorage userRole:', localStorage.getItem('userRole'));
+    console.log('localStorage role:', localStorage.getItem('role'));
+    
+    // Kiểm tra sessionStorage
+    console.log('sessionStorage accessToken:', sessionStorage.getItem('accessToken'));
+    console.log('sessionStorage idToken:', sessionStorage.getItem('idToken'));
+    console.log('sessionStorage userRole:', sessionStorage.getItem('userRole'));
+    console.log('sessionStorage role:', sessionStorage.getItem('role'));
+    
+    console.log('=== END DEBUG AUTHENTICATION ===');
+  }
+
+  // Method để test API call thực tế
+  private testActualApiCall(): void {
+    console.log('=== TESTING ACTUAL API CALL ===');
+    const token = this.authService.getToken();
+    const userId = this.authService.getUserInfo()?.id || localStorage.getItem('userId');
+    
+    if (!token || !userId) {
+      console.warn('No token or userId available for API test');
+      return;
+    }
+    
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetDrawings`;
+    const headers = new HttpHeaders()
+      .set('Authorization', `Bearer ${token}`)
+      .set('Content-Type', 'application/json');
+    
+    console.log('Making actual API call to:', apiUrl);
+    console.log('With userId:', userId);
+    console.log('With userRole:', this.userRole);
+    
+    this.http.get<any[]>(apiUrl, { headers }).subscribe({
+      next: (response) => {
+        console.log('=== ACTUAL API RESPONSE ===');
+        console.log('Response received:', response);
+        console.log('Response type:', typeof response);
+        console.log('Is Array:', Array.isArray(response));
+        console.log('Response length:', response?.length);
+        
+        if (response && Array.isArray(response) && response.length > 0) {
+          console.log('First item:', response[0]);
+          console.log('First item keys:', Object.keys(response[0]));
+          
+          // Test filtering logic với data thực tế
+          console.log('=== TESTING FILTER WITH REAL DATA ===');
+          const filteredData = this.filterDataByUser(response, userId);
+          console.log('Filtered data length:', filteredData.length);
+          console.log('Filtered data:', filteredData);
+        }
+      },
+      error: (error) => {
+        console.error('API call failed:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+      }
+    });
+  }
+
+  // Method để kiểm tra user authentication và role
+  private checkUserAuthAndRole(): void {
+    console.log('=== CHECKING USER AUTH AND ROLE ===');
+    
+    // Kiểm tra authentication
+    const token = this.authService.getToken();
+    const isLoggedIn = this.authService.isLoggedIn();
+    
+    if (!token || !isLoggedIn) {
+      console.error('User is not authenticated');
+      return;
+    }
+    
+    console.log('User is authenticated');
+    
+    // Kiểm tra user info
+    const userInfo = this.authService.getUserInfo();
+    console.log('User info:', userInfo);
+    
+    // Kiểm tra role từ các nguồn khác nhau
+    const roleFromUserInfo = userInfo?.roles?.[0];
+    const roleFromLocalStorage = localStorage.getItem('role');
+    const roleFromUserRole = localStorage.getItem('userRole');
+    const khauSxFromUserInfo = userInfo?.khau_sx;
+    const khauSxFromLocalStorage = localStorage.getItem('khau_sx');
+    
+    console.log('Role sources:');
+    console.log('  - From userInfo.roles[0]:', roleFromUserInfo);
+    console.log('  - From localStorage role:', roleFromLocalStorage);
+    console.log('  - From localStorage userRole:', roleFromUserRole);
+    console.log('  - From userInfo.khau_sx:', khauSxFromUserInfo);
+    console.log('  - From localStorage khau_sx:', khauSxFromLocalStorage);
+    
+    // Kiểm tra role hiện tại
+    console.log('Current this.userRole:', this.userRole);
+    console.log('Current this.khau_sx:', this.khau_sx);
+    
+    // Kiểm tra quyền admin/manager
+    const hasAdminRole = this.hasAdminOrManagerRole();
+    console.log('Has admin/manager role:', hasAdminRole);
+    
+    // Kiểm tra xem có phải admin/manager không
+    const userRoleLower = this.userRole?.toLowerCase();
+    const isAdminOrManager = userRoleLower === 'admin' || 
+                            userRoleLower === 'manager' || 
+                            userRoleLower === 'administrator';
+    
+    console.log('Is admin/manager (direct check):', isAdminOrManager);
+    console.log('=== END CHECKING USER AUTH AND ROLE ===');
+  }
+
+  // Method để kiểm tra API hoạt động
+  private checkApiWorking(): void {
+    console.log('=== CHECKING API WORKING ===');
+    
+    const token = this.authService.getToken();
+    if (!token) {
+      console.warn('No token available for API check');
+      return;
+    }
+    
+    const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetDrawings`;
+    const headers = new HttpHeaders()
+      .set('Authorization', `Bearer ${token}`)
+      .set('Content-Type', 'application/json');
+    
+    console.log('Checking API:', apiUrl);
+    
+    // Sử dụng HEAD request để kiểm tra endpoint có tồn tại không
+    this.http.head(apiUrl, { headers }).subscribe({
+      next: () => {
+        console.log('API endpoint exists and is accessible');
+        
+        // Nếu endpoint tồn tại, thử gọi GET để xem có data không
+        this.http.get<any[]>(apiUrl, { headers }).subscribe({
+          next: (response) => {
+            console.log('API GET call successful');
+            console.log('Response type:', typeof response);
+            console.log('Is Array:', Array.isArray(response));
+            console.log('Response length:', response?.length);
+            
+            if (response && Array.isArray(response) && response.length > 0) {
+              console.log('API is returning data');
+              console.log('Sample data:', response[0]);
+            } else {
+              console.log('API is not returning data or returning empty array');
+            }
+          },
+          error: (error) => {
+            console.error('API GET call failed:', error);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('API endpoint not accessible:', error);
+        console.error('This might mean:');
+        console.error('1. Backend server is not running');
+        console.error('2. API endpoint does not exist');
+        console.error('3. Authentication failed');
+      }
+    });
+  }
+
+  // Method để xử lý thay đổi trang
+  onPageChange(event: PageEvent): void {
+    console.log('=== Page change event ===');
+    console.log('Page index:', event.pageIndex);
+    console.log('Page size:', event.pageSize);
+    console.log('Current tab index:', this.currentTabIndex);
+    
+    // Cập nhật page size nếu có thay đổi
+    this.pageSize = event.pageSize;
+    
+    // Cập nhật page index theo tab hiện tại
+    if (this.currentTabIndex === 0) {
+      // Tab "Bảng vẽ mới"
+      this.pageIndex = event.pageIndex;
+      console.log('Updated pageIndex for NEW drawings:', this.pageIndex);
+      this.updatePagedNewDrawings();
+    } else if (this.currentTabIndex === 1) {
+      // Tab "Đang gia công"
+      this.pageIndexInProgress = event.pageIndex;
+      console.log('Updated pageIndexInProgress for IN PROGRESS drawings:', this.pageIndexInProgress);
+      this.updatePagedInProgressDrawings();
+    } else if (this.currentTabIndex === 2) {
+      // Tab "Đã xử lý"
+      this.pageIndex = event.pageIndex;
+      console.log('Updated pageIndex for PROCESSED drawings:', this.pageIndex);
+      this.updatePagedProcessedDrawings();
+    }
+    
+    console.log('=== Page change completed ===');
+  }
+
+  // Method để refresh data
+  refreshData(): void {
+    console.log('=== Refreshing data ===');
+    console.log('Current tab index:', this.currentTabIndex);
+    
+    // Kiểm tra authentication trước
+    const token = this.authService.getToken();
+    if (!token) {
+      console.warn('No authentication token, cannot refresh data');
+      return;
+    }
+    
+    // Load lại tất cả data từ API (chỉ 1 lần gọi)
+    this.loadDrawings();
+    
+    console.log('=== Data refresh completed ===');
+  }
+
+  // Method để xử lý search
+  onSearch(): void {
+    console.log('=== Search triggered ===');
+    console.log('Current tab index:', this.currentTabIndex);
+    
+    // Xử lý search theo tab hiện tại
+    if (this.currentTabIndex === 0) {
+      // Tab "Bảng vẽ mới"
+      console.log('Searching in NEW drawings tab');
+      this.filterNewDrawings();
+    } else if (this.currentTabIndex === 1) {
+      // Tab "Đang gia công"
+      console.log('Searching in IN PROGRESS drawings tab');
+      this.filterInProgressDrawings();
+    } else if (this.currentTabIndex === 2) {
+      // Tab "Đã xử lý"
+      console.log('Searching in PROCESSED drawings tab');
+      this.filterProcessedDrawings();
+    }
+    
+    console.log('=== Search completed ===');
+  }
+
+  // Method để xử lý clear search
+  onSearchClear(): void {
+    console.log('=== Search clear triggered ===');
+    console.log('Current tab index:', this.currentTabIndex);
+    
+    // Clear search theo tab hiện tại
+    if (this.currentTabIndex === 0) {
+      // Tab "Bảng vẽ mới"
+      console.log('Clearing search in NEW drawings tab');
+      this.searchTerm = '';
+      this.filterNewDrawings();
+    } else if (this.currentTabIndex === 1) {
+      // Tab "Đang gia công"
+      console.log('Clearing search in IN PROGRESS drawings tab');
+      this.searchTermInProgress = '';
+      this.filterInProgressDrawings();
+    } else if (this.currentTabIndex === 2) {
+      // Tab "Đã xử lý"
+      console.log('Clearing search in PROCESSED drawings tab');
+      this.searchTermProcessed = '';
+      this.filterProcessedDrawings();
+    }
+    
+    console.log('=== Search clear completed ===');
+  }
+
+  // Method để xử lý search input
+  onSearchInput(): void {
+    console.log('=== Search input triggered ===');
+    console.log('Current tab index:', this.currentTabIndex);
+    
+    // Xử lý search input theo tab hiện tại
+    if (this.currentTabIndex === 0) {
+      // Tab "Bảng vẽ mới"
+      console.log('Search input in NEW drawings tab');
+      this.filterNewDrawings();
+    } else if (this.currentTabIndex === 1) {
+      // Tab "Đang gia công"
+      console.log('Search input in IN PROGRESS drawings tab');
+      this.filterInProgressDrawings();
+    } else if (this.currentTabIndex === 2) {
+      // Tab "Đã xử lý"
+      console.log('Search input in PROCESSED drawings tab');
+      this.filterProcessedDrawings();
+    }
+    
+    console.log('=== Search input completed ===');
+  }
+
+  // Method để xử lý search input cho tab đang gia công
+  onSearchInputInProgress(): void {
+    console.log('=== Search input IN PROGRESS triggered ===');
+    // Sử dụng method chung
+    this.onSearchInput();
+  }
+
+  // Method để xử lý search input cho tab đã xử lý
+  onSearchInputProcessed(): void {
+    console.log('=== Search input PROCESSED triggered ===');
+    // Sử dụng method chung
+    this.onSearchInput();
+  }
+
+  // Method để xử lý clear search cho tab đang gia công
+  onSearchClearInProgress(): void {
+    console.log('=== Search clear IN PROGRESS triggered ===');
+    // Sử dụng method chung
+    this.onSearchClear();
+  }
+
+  // Method để xử lý clear search cho tab đã xử lý
+  onSearchClearProcessed(): void {
+    console.log('=== Search clear PROCESSED triggered ===');
+    // Sử dụng method chung
+    this.onSearchClear();
+  }
+
+  // Method để xử lý search cho tab đang gia công
+  onSearchInProgress(): void {
+    console.log('=== Search IN PROGRESS triggered ===');
+    // Sử dụng method chung
+    this.onSearch();
+  }
+
+  // Method để xử lý search cho tab đã xử lý
+  onSearchProcessed(): void {
+    console.log('=== Search PROCESSED triggered ===');
+    // Sử dụng method chung
+    this.onSearch();
+  }
+
+  // Method để xử lý clear search cho tab bảng vẽ mới
+  onSearchClearNew(): void {
+    console.log('=== Search clear NEW triggered ===');
+    // Sử dụng method chung
+    this.onSearchClear();
+  }
+
+  // Method để xử lý search cho tab bảng vẽ mới
+  onSearchNew(): void {
+    console.log('=== Search NEW triggered ===');
+    // Sử dụng method chung
+    this.onSearch();
+  }
+
+  // Method để xử lý search input cho tab bảng vẽ mới
+  onSearchInputNew(): void {
+    console.log('=== Search input NEW triggered ===');
+    // Sử dụng method chung
+    this.onSearchInput();
+  }
 }

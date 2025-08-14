@@ -1,6 +1,17 @@
 <div class="container" style="max-width: 1200px;">
+  <!-- Authentication Check -->
+  <div *ngIf="!isAuthenticated" class="auth-warning mat-elevation-z2" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <mat-icon style="color: #f39c12; font-size: 48px; width: 48px; height: 48px;">warning</mat-icon>
+    <h3 style="color: #856404; margin: 16px 0;">Yêu cầu đăng nhập</h3>
+    <p style="color: #856404; margin: 16px 0;">Bạn cần đăng nhập để xem danh sách bảng vẽ.</p>
+    <button mat-raised-button color="primary" (click)="goToLogin()" style="margin-top: 16px;">
+      <mat-icon>login</mat-icon>
+      Đăng nhập ngay
+    </button>
+  </div>
+
   <!-- Tab Navigation -->
-  <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;">
+  <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;" *ngIf="isAuthenticated">
     <mat-tab label="Bảng vẽ mới">
       <div class="tab-content">
         <!-- Search Bar -->
@@ -74,9 +85,9 @@
             <ng-container matColumnDef="trang_thai">
               <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
               <mat-cell *matCellDef="let d">
-                <mat-chip [color]="d.trang_thai ? 'primary' : 'warn'" selected>
-                  <mat-icon>{{d.trang_thai ? 'check_circle' : 'cancel'}}</mat-icon>
-                  {{d.trang_thai ? 'Đang hoạt động' : 'Ngừng'}}
+                <mat-chip [color]="(d.trang_thai === 1 || d.trang_thai === true) ? 'primary' : 'warn'" selected>
+                  <mat-icon>{{(d.trang_thai === 1 || d.trang_thai === true) ? 'check_circle' : 'cancel'}}</mat-icon>
+                  {{(d.trang_thai === 1 || d.trang_thai === true) ? 'Đang hoạt động' : 'Ngừng'}}
                 </mat-chip>
               </mat-cell>
             </ng-container>
@@ -87,22 +98,22 @@
             <ng-container matColumnDef="actions">
               <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
               <mat-cell *matCellDef="let d">
-                <button mat-icon-button [matMenuTriggerFor]="actionMenu" aria-label="Menu hành động">
-                  ...
+                <button mat-icon-button [matMenuTriggerFor]="actionMenu" aria-label="Menu hành động" class="action-menu-trigger">
+                  <mat-icon>more_vert</mat-icon>
                 </button>
 
-                <mat-menu #actionMenu="matMenu">
-                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')">
-                    <span>Xem</span>
+                <mat-menu #actionMenu="matMenu" class="custom-action-menu">
+                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')" class="menu-item">
+                    <mat-icon class="menu-icon">visibility</mat-icon>
+                    <span class="menu-text">Xem thông tin bảng vẽ</span>
                   </button>
-                  <button *ngIf="hasAdminOrManagerRole()" mat-menu-item (click)="openBangVeDetailDialog(d,'edit')">
-                    <span>Sửa</span>
+                  <button *ngIf="hasAdminOrManagerRole()" mat-menu-item (click)="openBangVeDetailDialog(d,'edit')" class="menu-item">
+                    <mat-icon class="menu-icon">edit</mat-icon>
+                    <span class="menu-text">Sửa</span>
                   </button>
-                  <button *ngIf="hasAdminOrManagerRole()" mat-menu-item (click)="deleteBangVe(d)">
-                    <span>Xóa</span>
-                  </button>
-                  <button mat-menu-item (click)="onGiaCong(d)">
-                     <span>Gia công</span>
+                  <button mat-menu-item (click)="onGiaCong(d)" class="menu-item">
+                     <mat-icon class="menu-icon">build</mat-icon>
+                     <span class="menu-text">Thao tác quấn dây</span>
                   </button>
                 </mat-menu>
               </mat-cell>
@@ -163,16 +174,18 @@
             <ng-container matColumnDef="actions">
               <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
               <mat-cell *matCellDef="let d">
-                <button mat-icon-button [matMenuTriggerFor]="actionMenuInProgress" aria-label="Menu hành động">
-                  ...
+                <button mat-icon-button [matMenuTriggerFor]="actionMenuInProgress" aria-label="Menu hành động" class="action-menu-trigger">
+                  <mat-icon>more_vert</mat-icon>
                 </button>
 
-                <mat-menu #actionMenuInProgress="matMenu">
-                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')">
-                    <span>Xem</span>
+                <mat-menu #actionMenuInProgress="matMenu" class="custom-action-menu">
+                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')" class="menu-item">
+                    <mat-icon class="menu-icon">visibility</mat-icon>
+                    <span class="menu-text">Xem thông tin bảng vẽ</span>
                   </button>
-                  <button mat-menu-item (click)="onGiaCong(d)">
-                    <span>Gia công</span>
+                  <button mat-menu-item (click)="onGiaCong(d)" class="menu-item">
+                    <mat-icon class="menu-icon">build</mat-icon>
+                    <span class="menu-text">Thao tác quấn dây</span>
                   </button>
                 </mat-menu>
               </mat-cell>
@@ -278,16 +291,18 @@
             <ng-container matColumnDef="actions">
               <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
               <mat-cell *matCellDef="let d">
-                <button mat-icon-button [matMenuTriggerFor]="actionMenuProcessed" aria-label="Menu hành động">
-                  ...
+                <button mat-icon-button [matMenuTriggerFor]="actionMenuProcessed" aria-label="Menu hành động" class="action-menu-trigger">
+                  <mat-icon>more_vert</mat-icon>
                 </button>
 
-                <mat-menu #actionMenuProcessed="matMenu">
-                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')">
-                    <span>Xem</span>
+                <mat-menu #actionMenuProcessed="matMenu" class="custom-action-menu">
+                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')" class="menu-item">
+                    <mat-icon class="menu-icon">visibility</mat-icon>
+                    <span class="menu-text">Xem thông tin bảng vẽ</span>
                   </button>
-                  <button mat-menu-item (click)="onViewProcessedDetails(d)">
-                     <span>Chi tiết xử lý</span>
+                  <button mat-menu-item (click)="onViewProcessedDetails(d)" class="menu-item">
+                     <mat-icon class="menu-icon">info</mat-icon>
+                     <span class="menu-text">Chi tiết xử lý</span>
                   </button>
                 </mat-menu>
               </mat-cell>
