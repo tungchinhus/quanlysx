@@ -215,6 +215,12 @@ export class Constant {
     off: 'off',
     message: 'MAINTENANCE MODE ON'
   };
+
+  public static manufacturers = [
+    { name: 'GM', value: 'GM' },
+    { name: 'CADIVI', value: 'CADIVI' }
+  ];
+
 }
 
 export interface ParamsHandleError {

@@ -1,11 +1,12 @@
 <div class="ds-quan-day-container">
   
-  <div class="content-section">
+ <div class="content-section">
     <mat-tab-group (selectedTabChange)="onTabChange($event)" [selectedIndex]="currentTabIndex">
       
       <!-- Tab: Danh sách mới -->
       <mat-tab label="Danh sách mới">
         <div class="tab-content">
+
           <div class="table-section">
             <table mat-table [dataSource]="pagedNewQuanDays" class="quan-day-table">
               
@@ -52,18 +53,18 @@
                       <span>Xem chi tiết</span>
                     </button>
                     
-                    <!-- Hiển thị nút gia công hạ nếu user có quyền -->
+                    <!-- Hiển thị nút gia công hạ nếu user có quyền và trạng thái phù hợp -->
                     <button mat-menu-item 
-                            *ngIf="isGiaCongHa" 
+                            *ngIf="canShowGiaCongHa(element)" 
                             (click)="onGiaCongHa(element)"
                             class="gia-cong-ha-button">
                       <mat-icon>build</mat-icon>
                       <span>Quấn dây hạ</span>
                     </button>
                     
-                    <!-- Hiển thị nút gia công cao nếu user có quyền -->
+                    <!-- Hiển thị nút gia công cao nếu user có quyền và trạng thái phù hợp -->
                     <button mat-menu-item 
-                            *ngIf="isGiaCongCao" 
+                            *ngIf="canShowGiaCongCao(element)" 
                             (click)="onGiaCongCao(element)"
                             class="gia-cong-cao-button">
                       <mat-icon>build</mat-icon>
@@ -90,7 +91,7 @@
             </div>
 
             <div class="no-data" *ngIf="filteredQuanDays.length === 0">
-              <p>Không có dữ liệu quấn dây nào</p>
+              <p>Không có dữ liệu</p>
             </div>
           </div>
         </div>
@@ -99,6 +100,7 @@
       <!-- Tab: Đã hoàn thành -->
       <mat-tab label="Đã hoàn thành">
         <div class="tab-content">
+
           <div class="table-section">
             <table mat-table [dataSource]="pagedCompletedQuanDays" class="quan-day-table">
               
@@ -169,7 +171,7 @@
             </div>
 
             <div class="no-data" *ngIf="filteredCompletedQuanDays.length === 0">
-              <p>Không có dữ liệu quấn dây nào đã hoàn thành</p>
+              <p>Không có dữ liệu</p>
             </div>
           </div>
         </div>

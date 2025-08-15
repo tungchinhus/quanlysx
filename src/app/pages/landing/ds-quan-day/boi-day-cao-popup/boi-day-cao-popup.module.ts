@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 
 import { BoiDayCaoPopupComponent } from './boi-day-cao-popup.component';
 
@@ -28,11 +29,12 @@ import { BoiDayCaoPopupComponent } from './boi-day-cao-popup.component';
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-            MatDividerModule,
-        MatIconModule,
-        MatProgressSpinnerModule,
-        MatSnackBarModule,
-        MatRadioModule
+    MatDividerModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatRadioModule,
+    MatSelectModule
   ],
   exports: [
     BoiDayCaoPopupComponent
