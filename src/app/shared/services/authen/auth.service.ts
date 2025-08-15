@@ -148,7 +148,7 @@ export class AuthServices {
     }
     
     // Kiểm tra accessToken có tồn tại không
-    const accessToken = response.accessToken || response.token || response.access_token;
+    const accessToken = response.accessToken || response.AccessToken || response.token || response.Token || response.access_token;
     if (!accessToken) {
       console.error('No access token found in response:', response);
       throw new Error('Invalid token specified: No access token found in response');
@@ -157,20 +157,21 @@ export class AuthServices {
     console.log('Response accessToken:', accessToken);
     
     // Tự động xác định khau_sx dựa trên email nếu API không trả về
-    let khau_sx = response.khau_sx || response.khauSx;
-    if (!khau_sx && response.email) {
-      khau_sx = this.determineKhauSxFromEmail(response.email);
+    let khau_sx = response.khau_sx || response.Khau_sx || response.khauSx || response.KhauSx;
+    if (!khau_sx && (response.email || response.Email)) {
+      const emailToCheck = response.email || response.Email;
+      khau_sx = this.determineKhauSxFromEmail(emailToCheck);
       console.log('Auto-determined khau_sx from email:', khau_sx);
     }
     
     // Lưu thông tin user - sử dụng cấu trúc response thực tế
-    localStorage.setItem('role', response.roles?.[0] || 'user');
-    localStorage.setItem('email', response.email || '');
-    localStorage.setItem('username', response.username || '');
-    localStorage.setItem('firstName', response.firstName || '');
-    localStorage.setItem('lastName', response.lastName || '');
-    localStorage.setItem('hoten', response.hoten || '');
-    localStorage.setItem('userId', response.userId?.toString() || '');
+    localStorage.setItem('role', response.roles?.[0] || response.Roles?.[0] || 'user');
+    localStorage.setItem('email', response.email || response.Email || '');
+    localStorage.setItem('username', response.username || response.userName || response.UserName || '');
+    localStorage.setItem('firstName', response.firstName || response.FirstName || '');
+    localStorage.setItem('lastName', response.lastName || response.LastName || '');
+    localStorage.setItem('hoten', response.hoten || response.Hoten || '');
+    localStorage.setItem('userId', response.userId || response.UserId || '');
     localStorage.setItem('khau_sx', khau_sx || '');
     localStorage.setItem('idToken', accessToken);
     localStorage.setItem('accessToken', accessToken);

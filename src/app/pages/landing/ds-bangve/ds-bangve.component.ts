@@ -1266,8 +1266,8 @@ export class DsBangveComponent implements OnInit {
     
     // Tạo request body theo format API yêu cầu
     const requestBody = {
-      userId_boidayha: boiDayHa.userId?.toString() || boiDayHa.id?.toString(),
-      userId_boidaycao: boiDayCao.userId?.toString() || boiDayCao.id?.toString(),
+      userId_boidayha: boiDayHa.userId || boiDayHa.id,
+      userId_boidaycao: boiDayCao.userId || boiDayCao.id,
       bangVeId: drawing.id,
       permissionType: "gia_cong", // Loại quyền
       status: true, // Trạng thái active
@@ -1985,7 +1985,7 @@ export class DsBangveComponent implements OnInit {
       console.log('  - Current user ID:', userId);
       const isAssigned = assignedUsers.some((assignedUser: any) => {
         const assignedUserId = assignedUser.user_id || assignedUser.userId;
-        const isMatch = assignedUserId && assignedUserId.toString() === userId.toString();
+        const isMatch = assignedUserId && (assignedUserId === userId || assignedUserId.toString() === userId.toString());
         console.log(`    - Assigned user ID: ${assignedUserId}, matches current user: ${isMatch}`);
         return isMatch;
       });

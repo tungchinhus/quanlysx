@@ -11,9 +11,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
 
 import { BoiDayHaPopupComponent } from './boi-day-ha-popup.component';
-import { MatRadioModule } from '@angular/material/radio';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { MatRadioModule } from '@angular/material/radio';
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatSelectModule,
     MatRadioModule
   ],
   exports: [

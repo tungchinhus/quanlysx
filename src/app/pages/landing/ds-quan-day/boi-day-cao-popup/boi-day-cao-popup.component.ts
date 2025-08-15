@@ -1,12 +1,13 @@
 import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonService } from 'src/app/shared/services/common.service';
 import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 import { QuanDayData } from '../ds-quan-day.component';
 import { Constant } from 'src/app/constant/constant';
+import { DialogComponent } from 'src/app/shared/dialogs/dialog/dialog.component';
 
 export interface BoiDayCaoData {
   id?: number;
@@ -62,6 +63,76 @@ export interface BoiDayCaoData {
   updated_at?: Date;
 }
 
+// Interface cho việc submit data lên API (không bao gồm timestamp fields)
+export interface BoiDayCaoSubmitData {
+  quan_day_id: number;
+  ky_hieu_bv: string;
+  cong_suat: number;
+  tbkt: string;
+  dien_ap: string;
+  so_boi_day: string;
+  quy_cach_day: string;
+  so_soi_day: number;
+  nha_san_xuat: string;
+  nha_san_xuat_name?: string;
+  ngay_san_xuat: string; // ISO date string
+  chu_vi_khuon: number;
+  ghi_chu?: string;
+  trang_thai: number;
+  chieu_cao_day?: number;
+  so_lop_day?: number;
+  khoang_cach_day?: number;
+  chat_lieu_cach_dien?: string;
+  do_day_cach_dien?: number;
+  nhiet_do_lam_viec?: number;
+  do_am_moi_truong?: number;
+  ap_luc_lam_viec?: number;
+  toc_do_quay?: number;
+  thoi_gian_quay?: number;
+  loai_may_quay?: string;
+  kt_bung_bd_truoc?: number;
+  bung_bd_sau?: number;
+  chieu_quan_day?: string;
+  may_quan_day?: string;
+  xung_quanh_day?: number;
+  hai_dau_day?: number;
+  kt_bd_ha_trong_bv?: string;
+  chu_vi_bd_ha_trong_1p?: number;
+  chu_vi_bd_ha_trong_2p?: number;
+  chu_vi_bd_ha_trong_3p?: number;
+  kt_bd_ha_ngoai_bv?: string;
+  kt_bd_ha_ngoai_bv_1p?: number;
+  kt_bd_ha_ngoai_bv_2p?: number;
+  kt_bd_ha_ngoai_bv_3p?: number;
+  dien_tro_ha_ra?: number;
+  dien_tro_ha_rb?: number;
+  dien_tro_ha_rc?: number;
+  do_lech_dien_tro_giua_cac_pha?: number;
+}
+
+// Interface mới cho API save-bd-cao theo specification
+export interface BoiDayCaoApiRequest {
+  masothe_bd_cao: string;
+  kyhieubangve: string;
+  ngaygiacong: string; // ISO date string
+  nguoigiacong: string;
+  quycachday: string;
+  sosoiday: number;
+  ngaysanxuat: string; // ISO date string
+  nhasanxuat: string;
+  chieuquanday: number;
+  mayquanday: string;
+  xungquanh: number;
+  haidau: number;
+  bd_tt: number;
+  chuvi_bd_tt: number;
+  dientroRa: number;
+  dientroRb: number;
+  dientroRc: number;
+  //user_update: string;
+  trang_thai: number;
+}
+
 @Component({
   selector: 'app-boi-day-cao-popup',
   templateUrl: './boi-day-cao-popup.component.html',
@@ -80,6 +151,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
     private http: HttpClient,
     private snackBar: MatSnackBar,
     private dialogRef: MatDialogRef<BoiDayCaoPopupComponent>,
+    private dialog: MatDialog,
     private commonService: CommonService,
     private authService: AuthServices,
     private changeDetectorRef: ChangeDetectorRef,
@@ -306,6 +378,93 @@ export class BoiDayCaoPopupComponent implements OnInit {
     this.onFormValueChange();
   }
 
+  // Validate dữ liệu trước khi gửi API
+  private validateSubmitData(data: BoiDayCaoSubmitData | BoiDayCaoApiRequest): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    console.log('validateSubmitData: Validating data:', data);
+    
+    // Type guard để kiểm tra loại data
+    const isSubmitData = (data: any): data is BoiDayCaoSubmitData => {
+      return 'quy_cach_day' in data;
+    };
+    
+    const isApiRequest = (data: any): data is BoiDayCaoApiRequest => {
+      return 'quycachday' in data;
+    };
+    
+    // Kiểm tra các field bắt buộc
+    if (isSubmitData(data)) {
+      if (!data.quy_cach_day) {
+        errors.push('Quy cách dây là bắt buộc');
+      }
+      if (!data.so_soi_day || data.so_soi_day <= 0) {
+        errors.push('Số sợi dây phải lớn hơn 0');
+      }
+      if (!data.nha_san_xuat) {
+        errors.push('Nhà sản xuất là bắt buộc');
+      }
+      if (!data.ngay_san_xuat) {
+        errors.push('Ngày sản xuất là bắt buộc');
+      }
+    } else if (isApiRequest(data)) {
+      if (!data.quycachday) {
+        errors.push('Quy cách dây là bắt buộc');
+      }
+      if (!data.sosoiday || data.sosoiday <= 0) {
+        errors.push('Số sợi dây phải lớn hơn 0');
+      }
+      if (!data.nhasanxuat) {
+        errors.push('Nhà sản xuất là bắt buộc');
+      }
+      if (!data.ngaysanxuat) {
+        errors.push('Ngày sản xuất là bắt buộc');
+      }
+    }
+    
+    const isValid = errors.length === 0;
+    console.log('validateSubmitData: Validation result:', { isValid, errors });
+    
+    return { isValid, errors };
+  }
+
+  // Log chi tiết dữ liệu để debug
+  private logSubmitData(data: BoiDayCaoSubmitData | BoiDayCaoApiRequest): void {
+    console.log('=== SUBMIT DATA DETAILS ===');
+    
+    // Type guard để kiểm tra loại data
+    const isSubmitData = (data: any): data is BoiDayCaoSubmitData => {
+      return 'quy_cach_day' in data;
+    };
+    
+    const isApiRequest = (data: any): data is BoiDayCaoApiRequest => {
+      return 'quycachday' in data;
+    };
+    
+    if (isSubmitData(data)) {
+      console.log('Data type: BoiDayCaoSubmitData');
+      console.log('Key fields:', {
+        quy_cach_day: data.quy_cach_day,
+        so_soi_day: data.so_soi_day,
+        nha_san_xuat: data.nha_san_xuat,
+        ngay_san_xuat: data.ngay_san_xuat
+      });
+    } else if (isApiRequest(data)) {
+      console.log('Data type: BoiDayCaoApiRequest');
+      console.log('Key fields:', {
+        quycachday: data.quycachday,
+        sosoiday: data.sosoiday,
+        nhasanxuat: data.nhasanxuat,
+        ngaysanxuat: data.ngaysanxuat
+      });
+    } else {
+      console.log('Data type: Unknown');
+    }
+    
+    console.log('Full data object:', data);
+    console.log('=== END SUBMIT DATA DETAILS ===');
+  }
+
   onSubmit(): void {
     console.log('Bắt đầu submit form...');
     
@@ -319,34 +478,31 @@ export class BoiDayCaoPopupComponent implements OnInit {
     // Lấy dữ liệu từ form
     const formData = this.boiDayCaoForm.value;
     
-    // Xử lý nhà sản xuất
-    let nhaSanXuat = formData.nha_san_xuat;
-    let nhaSanXuatName = '';
+    // Map data sang API request format
+    const apiRequest = this.mapToApiRequest(formData, this.data.quanDay);
     
-    if (nhaSanXuat === 'OTHER') {
-      nhaSanXuat = formData.nha_san_xuat_other;
-      nhaSanXuatName = formData.nha_san_xuat_other;
-    } else {
-      nhaSanXuatName = this.getManufacturerName(nhaSanXuat);
+    console.log('API Request data:', apiRequest);
+
+    // Log chi tiết dữ liệu để debug
+    this.logSubmitData(apiRequest);
+
+    // Validate dữ liệu trước khi gửi API
+    const validation = this.validateSubmitData(apiRequest);
+    if (!validation.isValid) {
+      console.error('Dữ liệu không hợp lệ:', validation.errors);
+      this.snackBar.open(`Dữ liệu không hợp lệ: ${validation.errors.join(', ')}`, 'Đóng', {
+        duration: 5000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['error-snackbar']
+      });
+      return;
     }
 
-    // Chuẩn bị dữ liệu để gửi API
-    const submitData: BoiDayCaoData = {
-      ...formData,
-      nha_san_xuat: nhaSanXuat,
-      nha_san_xuat_name: nhaSanXuatName,
-      ngay_san_xuat: formData.ngay_san_xuat instanceof Date ? 
-        formData.ngay_san_xuat.toISOString().split('T')[0] : 
-        formData.ngay_san_xuat
-    };
-
-    console.log('Dữ liệu sẽ gửi:', submitData);
-
     this.isLoading = true;
-    // this.changeDetectorRef.detectChanges(); // This line was removed as per the new_code
 
     // Gọi API để lưu dữ liệu
-    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/BoiDayCao/Create`, submitData, {
+    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-cao`, apiRequest, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.authToken}`
@@ -355,7 +511,6 @@ export class BoiDayCaoPopupComponent implements OnInit {
       next: (response) => {
         console.log('Lưu thành công:', response);
         this.isLoading = false;
-        // this.changeDetectorRef.detectChanges(); // This line was removed as per the new_code
         
         // Hiển thị thông báo thành công
         this.snackBar.open('Lưu thông tin bối dây cao thành công!', 'Đóng', {
@@ -364,16 +519,20 @@ export class BoiDayCaoPopupComponent implements OnInit {
           verticalPosition: 'top'
         });
         
-        // Đóng popup và trả về dữ liệu
+        // Hiển thị thông báo thành công
+        this.showSuccess('Lưu thông tin bối dây cao thành công!');
+        
+        // Đóng popup và trả về dữ liệu để reload ds-quan-day
         this.dialogRef.close({
           success: true,
-          data: submitData
+          data: apiRequest,
+          reloadData: true,
+          message: 'Lưu thông tin bối dây cao thành công!'
         });
       },
       error: (error) => {
         console.error('Lỗi khi lưu:', error);
         this.isLoading = false;
-        // this.changeDetectorRef.detectChanges(); // This line was removed as per the new_code
         
         let errorMessage = 'Có lỗi xảy ra khi lưu thông tin';
         
@@ -388,6 +547,17 @@ export class BoiDayCaoPopupComponent implements OnInit {
           errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
         }
         
+        // Log chi tiết lỗi để debug
+        if (error.error) {
+          console.error('Error details:', error.error);
+          if (error.error.details) {
+            console.error('Error details:', error.error.details);
+          }
+          if (error.error.message) {
+            console.error('Error message:', error.error.message);
+          }
+        }
+        
         this.snackBar.open(errorMessage, 'Đóng', {
           duration: 5000,
           horizontalPosition: 'center',
@@ -396,6 +566,50 @@ export class BoiDayCaoPopupComponent implements OnInit {
         });
       }
     });
+  }
+
+  // Method để map data từ form sang API request format
+  private mapToApiRequest(formData: any, quanDayData: any): BoiDayCaoApiRequest {
+    console.log('mapToApiRequest: Mapping form data to API format');
+    
+    // Xử lý nhà sản xuất
+    let nhaSanXuat = formData.nha_san_xuat;
+    if (nhaSanXuat === 'OTHER') {
+      nhaSanXuat = formData.nha_san_xuat_other;
+    }
+    
+    // Xử lý ngày giờ
+    const currentDate = new Date();
+    const ngayGiaCong = currentDate.toISOString();
+    const ngaySanXuat = formData.ngay_san_xuat instanceof Date ? 
+      formData.ngay_san_xuat.toISOString() : 
+      formData.ngay_san_xuat;
+    
+    // Map sang API format
+    const apiRequest: BoiDayCaoApiRequest = {
+      masothe_bd_cao: quanDayData.kyhieuquanday || 'BDC_' + Date.now(), // Mã số thẻ bối dây cao
+      kyhieubangve: quanDayData.kyhieuquanday || '',
+      ngaygiacong: ngayGiaCong,
+      nguoigiacong: this.currentUser?.username || this.currentUser?.email || 'Unknown',
+      quycachday: formData.quy_cach_day || '',
+      sosoiday: formData.so_soi_day || 1,
+      ngaysanxuat: ngaySanXuat,
+      nhasanxuat: nhaSanXuat || '',
+      chieuquanday: formData.chieu_quan_day === 'trái' ? 1 : 2, // 1 = trái, 2 = phải
+      mayquanday: formData.may_quan_day || '',
+      xungquanh: formData.xung_quanh_day || 2,
+      haidau: formData.hai_dau_day || 2,
+      bd_tt: formData.kt_bung_bd_truoc || 0, // Kích thước bụng bối dây trước
+      chuvi_bd_tt: formData.chu_vi_khuon || 0, // Chu vi bối dây theo thiết kế
+      dientroRa: formData.dien_tro_ha_ra || 0,
+      dientroRb: formData.dien_tro_ha_rb || 0,
+      dientroRc: formData.dien_tro_ha_rc || 0,
+      //user_update: this.currentUser?.username || this.currentUser?.email || 'Unknown',
+      trang_thai: 1 // 1 = đang làm, 2 = hoàn thành
+    };
+    
+    console.log('mapToApiRequest: Mapped API request:', apiRequest);
+    return apiRequest;
   }
 
   // Lấy tên nhà sản xuất từ value
@@ -413,9 +627,21 @@ export class BoiDayCaoPopupComponent implements OnInit {
   onCancel() {
     if (this.hasUnsavedChanges()) {
       // Nếu có thay đổi chưa lưu, hỏi user có muốn hủy không
-      if (confirm('Bạn có thay đổi chưa lưu. Bạn có chắc muốn hủy?')) {
-        this.dialogRef.close();
-      }
+      const confirmDialog = this.dialog.open(DialogComponent, {
+        width: '400px',
+        data: {
+          title: 'Xác nhận hủy',
+          message: 'Bạn có thay đổi chưa lưu. Bạn có chắc muốn hủy?',
+          confirmText: 'Hủy',
+          cancelText: 'Tiếp tục'
+        }
+      });
+
+      confirmDialog.afterClosed().subscribe((result: boolean) => {
+        if (result) {
+          this.dialogRef.close();
+        }
+      });
     } else {
       // Nếu không có thay đổi, đóng popup ngay
       this.dialogRef.close();

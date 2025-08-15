@@ -1,6 +1,6 @@
-<div class="boi-day-cao-popup">
+<div class="boi-day-ha-popup">
   <div class="popup-header">
-    <h2 mat-dialog-title>Bối dây cao - {{ data.quanDay.kyhieuquanday }}</h2>
+    <h2 mat-dialog-title>Bối dây hạ - {{ data.quanDay.kyhieuquanday }}</h2>
     <button mat-icon-button (click)="onCancel()" class="close-button">
       <mat-icon>close</mat-icon>
     </button>
@@ -32,21 +32,21 @@
         </div>
       </div>
 
-      <!-- Form nhập thông tin bối dây cao -->
+      <!-- Form nhập thông tin bối dây hạ -->
       <div class="form-section">
-        <h3>Thông tin bối dây cao</h3>
+        <h3>Thông tin bối dây hạ</h3>
         
         <div class="form-grid">
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Quy cách dây *</mat-label>
-            <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm²">
+            <mat-label>Quy cách dây</mat-label>
+            <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm²" (input)="onFormValueChange()">
             <mat-error *ngIf="boiDayHaForm.get('quy_cach_day')?.hasError('required') && boiDayHaForm.get('quy_cach_day')?.touched">
               Quy cách dây là bắt buộc
             </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Số sợi chập *</mat-label>
+            <mat-label>Số sợi chập</mat-label>
             <input matInput type="number" formControlName="so_soi_day" placeholder="Nhập số sợi dây">
             <mat-error *ngIf="boiDayHaForm.get('so_soi_day')?.hasError('required') && boiDayHaForm.get('so_soi_day')?.touched">
               Số sợi dây là bắt buộc
@@ -57,15 +57,30 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Nhà sản xuất *</mat-label>
-            <input matInput formControlName="nha_san_xuat" placeholder="Nhập nhà sản xuất">
+            <mat-label>Nhà sản xuất</mat-label>
+            <mat-select formControlName="nha_san_xuat" placeholder="Chọn nhà sản xuất" (selectionChange)="onManufacturerChange($event)">
+              <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.value">
+                {{ manufacturer.name }}
+              </mat-option>
+              <mat-option value="OTHER">Khác</mat-option>
+            </mat-select>
             <mat-error *ngIf="boiDayHaForm.get('nha_san_xuat')?.hasError('required') && boiDayHaForm.get('nha_san_xuat')?.touched">
               Nhà sản xuất là bắt buộc
             </mat-error>
           </mat-form-field>
 
+          <!-- Input cho nhà sản xuất khác -->
+          <mat-form-field appearance="outline" class="form-field other-manufacturer" 
+                         [class.hidden]="boiDayHaForm.get('nha_san_xuat')?.value !== 'OTHER'">
+            <mat-label>Tên nhà sản xuất khác</mat-label>
+            <input matInput formControlName="nha_san_xuat_other" placeholder="Nhập tên nhà sản xuất">
+            <mat-error *ngIf="boiDayHaForm.get('nha_san_xuat_other')?.hasError('required') && boiDayHaForm.get('nha_san_xuat_other')?.touched">
+              Tên nhà sản xuất là bắt buộc
+            </mat-error>
+          </mat-form-field>
+
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Ngày sản xuất *</mat-label>
+            <mat-label>Ngày sản xuất</mat-label>
             <input matInput [matDatepicker]="pickerNgaySanXuat" formControlName="ngay_san_xuat">
             <mat-datepicker-toggle matSuffix [for]="pickerNgaySanXuat"></mat-datepicker-toggle>
             <mat-datepicker #pickerNgaySanXuat></mat-datepicker>
@@ -76,33 +91,24 @@
 
 
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Chu vi khuôn (mm) *</mat-label>
+            <mat-label>Chu vi khuôn (mm)</mat-label>
             <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi khuôn">
-            <mat-error *ngIf="boiDayHaForm.get('chu_vi_khuon')?.hasError('required') && boiDayHaForm.get('chu_vi_khuon')?.touched">
-              Chu vi khuôn là bắt buộc
-            </mat-error>
             <mat-error *ngIf="boiDayHaForm.get('chu_vi_khuon')?.hasError('min') && boiDayHaForm.get('chu_vi_khuon')?.touched">
               Chu vi khuôn phải lớn hơn hoặc bằng 0
             </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>KT bụng bd trước (mm) *</mat-label>
+            <mat-label>KT bụng bd trước (mm)</mat-label>
             <input matInput type="number" formControlName="kt_bung_bd_truoc" placeholder="Nhập KT bụng bd trước">
-            <mat-error *ngIf="boiDayHaForm.get('kt_bung_bd_truoc')?.hasError('required') && boiDayHaForm.get('kt_bung_bd_truoc')?.touched">
-              KT bụng bd trước là bắt buộc
-            </mat-error>
             <mat-error *ngIf="boiDayHaForm.get('kt_bung_bd_truoc')?.hasError('min') && boiDayHaForm.get('kt_bung_bd_truoc')?.touched">
               KT bụng bd trước phải lớn hơn hoặc bằng 0
             </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Bụng bd sau (mm) *</mat-label>
+            <mat-label>Bụng bd sau (mm)</mat-label>
             <input matInput type="number" formControlName="bung_bd_sau" placeholder="Nhập bụng bd sau">
-            <mat-error *ngIf="boiDayHaForm.get('bung_bd_sau')?.hasError('required') && boiDayHaForm.get('bung_bd_sau')?.touched">
-              Bụng bd sau là bắt buộc
-            </mat-error>
             <mat-error *ngIf="boiDayHaForm.get('bung_bd_sau')?.hasError('min') && boiDayHaForm.get('bung_bd_sau')?.touched">
               Bụng bd sau phải lớn hơn hoặc bằng 0
             </mat-error>
@@ -116,9 +122,9 @@
                  <div class="form-grid">
 
           <div class="form-field">
-            <label class="mat-label">Chiều quấn dây *</label>
+            <label class="mat-label">Chiều quấn dây</label>
             <div class="radio-group">
-              <mat-radio-group formControlName="chieu_quan_day">
+              <mat-radio-group formControlName="chieu_quan_day" (change)="onFormValueChange()">
                 <mat-radio-button value="trái" class="radio-button">Trái</mat-radio-button>
                 <mat-radio-button value="phải" class="radio-button">Phải</mat-radio-button>
               </mat-radio-group>
@@ -126,37 +132,37 @@
           </div>
 
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Máy quấn dây *</mat-label>
-            <input matInput formControlName="may_quan_day" placeholder="Nhập máy quấn dây">
+            <mat-label>Máy quấn dây</mat-label>
+            <input matInput formControlName="may_quan_day" placeholder="Nhập máy quấn dây" (input)="onFormValueChange()">
             <mat-error *ngIf="boiDayHaForm.get('may_quan_day')?.hasError('required') && boiDayHaForm.get('may_quan_day')?.touched">
               Máy quấn dây là bắt buộc
             </mat-error>
           </mat-form-field>
 
           <div class="form-field">
-            <label class="mat-label">Xung quanh, dày (mm) *</label>
+            <label class="mat-label">Xung quanh, dày (mm)</label>
             <div class="button-group">
               <button type="button" 
                       [class.selected]="boiDayHaForm.get('xung_quanh_day')?.value === 2"
-                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 2})"
+                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 2}); onFormValueChange()"
                       class="thickness-button">
                 2mm
               </button>
               <button type="button" 
                       [class.selected]="boiDayHaForm.get('xung_quanh_day')?.value === 3"
-                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 3})"
+                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 3}); onFormValueChange()"
                       class="thickness-button">
                 3mm
               </button>
               <button type="button" 
                       [class.selected]="boiDayHaForm.get('xung_quanh_day')?.value === 4"
-                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 4})"
+                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 4}); onFormValueChange()"
                       class="thickness-button">
                 4mm
               </button>
               <button type="button" 
                       [class.selected]="boiDayHaForm.get('xung_quanh_day')?.value === 6"
-                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 6})"
+                      (click)="boiDayHaForm.patchValue({xung_quanh_day: 6}); onFormValueChange()"
                       class="thickness-button">
                 6mm
               </button>
@@ -164,7 +170,7 @@
           </div>
 
           <div class="form-field">
-            <label class="mat-label">Hai đầu, dày (mm) *</label>
+            <label class="mat-label">Hai đầu, dày (mm)</label>
             <div class="button-group">
               <button type="button" 
                       [class.selected]="boiDayHaForm.get('hai_dau_day')?.value === 2"
@@ -323,7 +329,7 @@
              </div>
              <div class="input-group">
                <mat-form-field appearance="outline" class="small-input">
-                 <mat-label>(%) *</mat-label>
+                 <mat-label>(%)</mat-label>
                  <input matInput type="number" formControlName="do_lech_dien_tro_giua_cac_pha" placeholder="Nhập độ lệch" max="2" min="0" step="0.1">
                  <mat-error *ngIf="boiDayHaForm.get('do_lech_dien_tro_giua_cac_pha')?.hasError('required') && boiDayHaForm.get('do_lech_dien_tro_giua_cac_pha')?.touched">
                    Độ lệch điện trở giữa các pha là bắt buộc
@@ -371,10 +377,10 @@
     <button mat-raised-button 
             color="primary" 
             (click)="onSubmit()" 
-            [disabled]="!boiDayHaForm.valid || isLoading"
+            [disabled]="!canSubmitForm()"
             class="submit-button">
       <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
-      <span *ngIf="!isLoading">Lưu thông tin</span>
+      <span *ngIf="!isLoading">Hoàn thành</span>
     </button>
   </mat-dialog-actions>
 </div>

@@ -30,7 +30,7 @@ export interface WindingData {
   phuong_phap_ep?: string;
   kt_ngoai_bd_sau_ep?: string;
   trang_thai: number; // 0: new, 1: completed, 2: in progress
-  user_update?: string;
+  //user_update?: string;
   created_at: Date;
   // Additional fields for display
   congsuat?: string;

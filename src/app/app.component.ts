@@ -153,14 +153,15 @@ title: string = 'quanlysx';
     const hasValidToken = this.authService.isTokenValid();
     
     // Cập nhật trạng thái đăng nhập trong auth service
-    this.authService.checkAndUpdateLoginState();
+    const loginStateUpdated = this.authService.checkAndUpdateLoginState();
     
     console.log('Checking login state:', {
       accessToken: !!accessToken,
       remembered,
       savedUser,
       isAuthServiceLoggedIn,
-      hasValidToken
+      hasValidToken,
+      loginStateUpdated
     });
 
     if (hasValidToken && (isAuthServiceLoggedIn || accessToken)) {
@@ -353,6 +354,20 @@ title: string = 'quanlysx';
         console.log('Mock login: Setting isLoginFormOpen to false');
         this.isLoginFormOpen = false;
         console.log('Mock login: isLoginFormOpen after setting to false:', this.isLoginFormOpen);
+        
+        // Lưu thông tin remember me trước khi clear
+        if (this.rememberMe) {
+          localStorage.setItem('rememberedUsername', this.loggedInUsername);
+          const passwordToRemember = this.password;
+          localStorage.setItem('rememberedPassword', passwordToRemember);
+          localStorage.setItem('rememberMe', 'true');          
+        } else {
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberedPassword');
+          localStorage.removeItem('rememberMe');
+        }
+        
+        // Clear form fields sau khi lưu remember me
         this.username = '';
         this.password = '';
         this.toggleUserDropdown(false);
@@ -364,16 +379,6 @@ title: string = 'quanlysx';
             this.isLoginFormOpen = false;
           }
         }, 100);
-        
-        if (this.rememberMe) {
-          localStorage.setItem('rememberedUsername', this.loggedInUsername);
-          localStorage.setItem('rememberedPassword', this.password);
-          localStorage.setItem('rememberMe', 'true');          
-        } else {
-          localStorage.removeItem('rememberedUsername');
-          localStorage.removeItem('rememberedPassword');
-          localStorage.removeItem('rememberMe');
-        }
         
         this.router.navigate(['/landing']);
         return;
@@ -392,6 +397,8 @@ title: string = 'quanlysx';
         // Xử lý khi đăng nhập thành công
         console.log('Đăng nhập thành công:', response);
         console.log('Response structure:', JSON.stringify(response, null, 2));
+        console.log('Response type:', typeof response);
+        console.log('Response keys:', response ? Object.keys(response) : 'No response');
         
         // Kiểm tra xem response có hợp lệ không
         if (!response) {
@@ -412,18 +419,72 @@ title: string = 'quanlysx';
           }, 3000);
           return;
         }
+        
+        // Kiểm tra xem response có phải là array không (nếu có thì lấy phần tử đầu tiên)
+        if (Array.isArray(response)) {
+          console.log('Response is an array, taking first element');
+          if (response.length > 0) {
+            response = response[0];
+          } else {
+            console.error('Response array is empty');
+            this.loginError = true;
+            setTimeout(() => {
+              this.loginError = false;
+            }, 3000);
+            return;
+          }
+        }
 
         // Handle different response structures
-        let accessToken = response.accessToken;
+        let accessToken = response.accessToken || response.AccessToken;
+        console.log('Initial accessToken check:', accessToken);
+        
         if (!accessToken && response.token) {
           accessToken = response.token;
+          console.log('Found token in response.token:', accessToken);
+        }
+        if (!accessToken && response.Token) {
+          accessToken = response.Token;
+          console.log('Found token in response.Token:', accessToken);
         }
         if (!accessToken && response.access_token) {
           accessToken = response.access_token;
+          console.log('Found token in response.access_token:', accessToken);
         }
         if (!accessToken && response.data && response.data.accessToken) {
           accessToken = response.data.accessToken;
+          console.log('Found token in response.data.accessToken:', accessToken);
         }
+        if (!accessToken && response.data && response.data.AccessToken) {
+          accessToken = response.data.AccessToken;
+          console.log('Found token in response.data.AccessToken:', accessToken);
+        }
+        if (!accessToken && response.data && response.data.token) {
+          accessToken = response.data.token;
+          console.log('Found token in response.data.token:', accessToken);
+        }
+        if (!accessToken && response.data && response.data.Token) {
+          accessToken = response.data.Token;
+          console.log('Found token in response.data.Token:', accessToken);
+        }
+        if (!accessToken && response.result && response.result.accessToken) {
+          accessToken = response.result.accessToken;
+          console.log('Found token in response.result.accessToken:', accessToken);
+        }
+        if (!accessToken && response.result && response.result.AccessToken) {
+          accessToken = response.result.AccessToken;
+          console.log('Found token in response.result.AccessToken:', accessToken);
+        }
+        if (!accessToken && response.result && response.result.token) {
+          accessToken = response.result.token;
+          console.log('Found token in response.result.token:', accessToken);
+        }
+        if (!accessToken && response.result && response.result.Token) {
+          accessToken = response.result.Token;
+          console.log('Found token in response.result.Token:', accessToken);
+        }
+
+        console.log('Final accessToken value:', accessToken);
 
         if (!accessToken) {
           console.error('Response không có accessToken:', response);
@@ -438,17 +499,21 @@ title: string = 'quanlysx';
         // Normalize response structure
         const normalizedResponse = {
           accessToken: accessToken,
-          username: response.username || response.userName || response.user || '',
-          firstName: response.firstName || response.first_name || response.firstName || '',
-          lastName: response.lastName || response.last_name || response.lastName || '',
-          hoten: response.hoten || response.fullName || response.name || response.username || '',
-          email: response.email || '',
-          userId: response.userId || response.id || 0,
-          roles: response.roles || response.role || ['user']
+          username: response.username || response.userName || response.UserName || response.user || response.User || response.email || response.Email || '',
+          firstName: response.firstName || response.FirstName || response.first_name || response.firstName || response.name || response.Name || '',
+          lastName: response.lastName || response.LastName || response.last_name || response.lastName || response.surname || response.Surname || '',
+          hoten: response.hoten || response.Hoten || response.fullName || response.FullName || response.name || response.Name || response.username || response.UserName || response.email || response.Email || '',
+          email: response.email || response.Email || response.username || response.UserName || '',
+          userId: response.userId || response.UserId || response.id || response.Id || response.user_id || 0,
+          roles: response.roles || response.Roles || response.role || response.Role || response.userRoles || response.UserRoles || ['user']
         };
+        
+        console.log('Normalized response:', normalizedResponse);
+        console.log('Response keys available:', Object.keys(response));
         
         // Sử dụng auth service để xử lý login success
         try {
+          console.log('Calling authService.handleLoginSuccess with:', normalizedResponse);
           this.authService.handleLoginSuccess(normalizedResponse);
           
           // Debug: Check if token was saved
@@ -465,6 +530,8 @@ title: string = 'quanlysx';
             }, 3000);
             return;
           }
+          
+          console.log('Token successfully saved, proceeding with login completion');
         } catch (error) {
           console.error('Login success handling failed:', error);
           this.loginError = true;
@@ -475,6 +542,8 @@ title: string = 'quanlysx';
         }
         
         this.isLoggedIn = true;
+        console.log('Login state set to true');
+        
         // Tạo tên hiển thị từ firstName và lastName
         let displayName = '';
         if (normalizedResponse.firstName && normalizedResponse.lastName) {
@@ -490,18 +559,41 @@ title: string = 'quanlysx';
         } else {
           displayName = 'User';
         }
+        
         this.loggedInUsername = displayName;
+        console.log('Display name set to:', displayName);
         
         // Cập nhật trạng thái đăng nhập
+        console.log('Calling checkAndRestoreLoginState...');
         this.checkAndRestoreLoginState();
         
         console.log('Setting isLoginFormOpen to false');
         this.isLoginFormOpen = false; // Đóng form
         console.log('isLoginFormOpen after setting to false:', this.isLoginFormOpen);
+        // Lưu thông tin remember me
+        if (this.rememberMe) {
+          console.log('Saving remember me information...');
+          localStorage.setItem('rememberedUsername', this.loggedInUsername);
+          // Lưu password trước khi clear
+          const passwordToRemember = this.password;
+          localStorage.setItem('rememberedPassword', passwordToRemember);
+          localStorage.setItem('rememberMe', 'true');
+          console.log('Remember me information saved');
+        } else {
+          console.log('Clearing remember me information...');
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberedPassword');
+          localStorage.removeItem('rememberMe');
+          console.log('Remember me information cleared');
+        }
+
+        // Clear form fields sau khi lưu remember me
         this.username = ''; // Clear form fields
         this.password = ''; // Clear form fields
+        console.log('Form fields cleared');
 
         this.toggleUserDropdown(false);
+        console.log('User dropdown toggled to false');
         
         // Force close form after a short delay if it doesn't close automatically
         setTimeout(() => {
@@ -511,32 +603,28 @@ title: string = 'quanlysx';
           }
         }, 100);
         
-        // Lưu thông tin remember me
-        if (this.rememberMe) {
-          localStorage.setItem('rememberedUsername', this.loggedInUsername);
-          localStorage.setItem('rememberedPassword', this.password);
-          localStorage.setItem('rememberMe', 'true');          
-        } else {
-          localStorage.removeItem('rememberedUsername');
-          localStorage.removeItem('rememberedPassword');
-          localStorage.removeItem('rememberMe');
-        }
-
         // Chuyển về trang landing mà không reload
+        console.log('Navigating to /landing...');
         this.router.navigate(['/landing']);
+        console.log('Navigation completed');
 
       },
       error => {
         // Xử lý khi đăng nhập thất bại
         console.error('Đăng nhập thất bại:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error structure:', JSON.stringify(error, null, 2));
         
         // Xử lý các loại lỗi khác nhau
         let errorMessage = 'Đăng nhập thất bại';
         if (error.error) {
           errorMessage = error.error.message || error.error || errorMessage;
+          console.error('Error from error.error:', error.error);
         } else if (error.message) {
           errorMessage = error.message;
+          console.error('Error from error.message:', error.message);
         } else if (error.status) {
+          console.error('Error status:', error.status);
           switch (error.status) {
             case 401:
               errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng';
@@ -555,7 +643,7 @@ title: string = 'quanlysx';
           }
         }
         
-        console.error('Error details:', errorMessage);
+        console.error('Final error message:', errorMessage);
         this.loginError = true;
         
         // Hiển thị lỗi cụ thể từ backend nếu có
