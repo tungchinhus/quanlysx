@@ -425,6 +425,10 @@ export class DsBangveComponent implements OnInit {
             console.log('  - New drawings:', this.drawings.length);
             console.log('  - In progress drawings:', this.inProgressDrawings.length);
             console.log('  - Processed drawings:', this.processedDrawings.length);
+            
+            // Kiểm tra và log thông tin về bảng vẽ đã có thi công boidayha hoặc boidaycao
+            this.logBoidayInfo();
+            
             console.log('🔄 [loadDrawings] Data reload completed successfully');
           } else {
             console.error('Invalid response structure:', data);
@@ -453,8 +457,14 @@ export class DsBangveComponent implements OnInit {
     drawings.forEach((drawing, index) => {
       console.log(`🔍 [categorizeDrawingsByTrangThai] Processing item ${index + 1}:`);
       console.log(`  - Drawing ID: ${drawing.id}`);
+      console.log(`  - Ký hiệu: ${drawing.kyhieubangve}`);
       console.log(`  - Original trang_thai: ${drawing.trang_thai}`);
       console.log(`  - Original trang_thai type: ${typeof drawing.trang_thai}`);
+      
+      // Log thông tin boiday nếu có
+      if (drawing.bd_ha_trong || drawing.bd_ha_ngoai || drawing.bd_cao || drawing.bd_ep) {
+        console.log(`  - Boiday info: HA_trong=${drawing.bd_ha_trong}, HA_ngoai=${drawing.bd_ha_ngoai}, CAO=${drawing.bd_cao}, EP=${drawing.bd_ep}`);
+      }
       
       // Convert to number for comparison
       const trangThai = Number(drawing.trang_thai);
@@ -508,6 +518,9 @@ export class DsBangveComponent implements OnInit {
     if (this.processedDrawings.length > 0) {
       console.log('🔍 [categorizeDrawingsByTrangThai] Sample processed drawing:', this.processedDrawings[0]);
     }
+    
+    // Log thông tin chi tiết về bảng vẽ có boiday
+    // this.logBoidayCategorization();
   }
 
   // Method để force UI update
@@ -522,7 +535,38 @@ export class DsBangveComponent implements OnInit {
     this.updatePagedInProgressDrawings();
     this.updatePagedProcessedDrawings();
     
+    // Force refresh của tất cả các tab
+    this.refreshAllTabs();
+    
     console.log('🔄 [forceUIUpdate] UI refresh completed');
+  }
+
+  // Method mới: Refresh tất cả các tab
+  private refreshAllTabs(): void {
+    console.log('🔄 [refreshAllTabs] Refreshing all tabs...');
+    
+    // Refresh tab bảng vẽ mới
+    if (this.currentTabIndex === 0) {
+      console.log('🔄 [refreshAllTabs] Refreshing new drawings tab...');
+      this.updatePagedNewDrawings();
+    }
+    
+    // Refresh tab đang gia công
+    if (this.currentTabIndex === 1) {
+      console.log('🔄 [refreshAllTabs] Refreshing in-progress drawings tab...');
+      this.updatePagedInProgressDrawings();
+    }
+    
+    // Refresh tab hoàn thành
+    if (this.currentTabIndex === 2) {
+      console.log('🔄 [refreshAllTabs] Refreshing processed drawings tab...');
+      this.updatePagedProcessedDrawings();
+    }
+    
+    // Force change detection cho tất cả các tab
+    this.cdr.detectChanges();
+    
+    console.log('🔄 [refreshAllTabs] All tabs refreshed');
   }
 
   // Method để khởi tạo dữ liệu rỗng
@@ -1311,11 +1355,26 @@ export class DsBangveComponent implements OnInit {
           // Thêm delay nhỏ để đảm bảo backend đã xử lý xong
           setTimeout(() => {
             console.log('🔄 [assignDrawingToUsers] Reloading data after delay...');
+            
             // Refresh danh sách bảng vẽ sau khi backend đã được cập nhật
+            // Đảm bảo load lại cả 3 tab: mới, đang gia công, và hoàn thành
             this.loadDrawings();
             
             // Force UI refresh để đảm bảo thay đổi được hiển thị
             this.forceUIUpdate();
+            
+            // Thêm delay thêm để đảm bảo data được load hoàn toàn
+            setTimeout(() => {
+              console.log('🔄 [assignDrawingToUsers] Final UI refresh after data load...');
+              
+              // Kiểm tra xem bảng vẽ đã được chuyển đúng tab chưa
+              this.verifyDrawingStatusUpdate(drawing.id);
+              
+              // Force UI update lần nữa để đảm bảo mọi thay đổi được hiển thị
+              this.forceUIUpdate();
+              
+              console.log('✅ [assignDrawingToUsers] Complete UI refresh completed');
+            }, 300);
           }, 500);
         });
       },
@@ -1432,6 +1491,119 @@ export class DsBangveComponent implements OnInit {
     } else {
       console.warn(`⚠️ [updateDrawingStatusToInProgressInBackend] Drawing ${drawingId} not found in any list`);
     }
+  }
+
+  // Method mới: Kiểm tra xem bảng vẽ đã được cập nhật trạng thái đúng chưa
+  private verifyDrawingStatusUpdate(drawingId: number): void {
+    console.log(`🔍 [verifyDrawingStatusUpdate] Verifying drawing ${drawingId} status update...`);
+    
+    // Kiểm tra trong từng danh sách
+    const inNewList = this.drawings.find(d => d.id === drawingId);
+    const inProgressList = this.inProgressDrawings.find(d => d.id === drawingId);
+    const inProcessedList = this.processedDrawings.find(d => d.id === drawingId);
+    
+    console.log(`🔍 [verifyDrawingStatusUpdate] Drawing ${drawingId} status check:`);
+    console.log(`  - In new drawings list: ${!!inNewList}`);
+    console.log(`  - In in-progress drawings list: ${!!inProgressList}`);
+    console.log(`  - In processed drawings list: ${!!inProcessedList}`);
+    
+    if (inNewList) {
+      console.warn(`⚠️ [verifyDrawingStatusUpdate] Drawing ${drawingId} still in new drawings list!`);
+      console.warn(`  - Current trang_thai: ${inNewList.trang_thai}`);
+      
+      // Nếu vẫn ở tab mới, thử chuyển sang tab đang gia công
+      if (inNewList.trang_thai === 1) {
+        console.log(`🔄 [verifyDrawingStatusUpdate] Moving drawing ${drawingId} from new to in-progress...`);
+        this.moveDrawingToInProgress(drawingId);
+      }
+    } else if (inProgressList) {
+      console.log(`✅ [verifyDrawingStatusUpdate] Drawing ${drawingId} correctly moved to in-progress list`);
+      console.log(`  - Current trang_thai: ${inProgressList.trang_thai}`);
+    } else if (inProcessedList) {
+      console.log(`✅ [verifyDrawingStatusUpdate] Drawing ${drawingId} correctly moved to processed list`);
+      console.log(`  - Current trang_thai: ${inProcessedList.trang_thai}`);
+    } else {
+      console.warn(`⚠️ [verifyDrawingStatusUpdate] Drawing ${drawingId} not found in any list!`);
+    }
+  }
+
+  // Method mới: Di chuyển bảng vẽ từ tab mới sang tab đang gia công
+  private moveDrawingToInProgress(drawingId: number): void {
+    console.log(`🔄 [moveDrawingToInProgress] Moving drawing ${drawingId} to in-progress...`);
+    
+    // Tìm bảng vẽ trong danh sách mới
+    const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
+    if (drawingIndex !== -1) {
+      const drawing = this.drawings[drawingIndex];
+      
+      // Cập nhật trạng thái
+      drawing.trang_thai = 1;
+      
+      // Chuyển từ danh sách mới sang danh sách đang gia công
+      this.drawings.splice(drawingIndex, 1);
+      this.inProgressDrawings.push(drawing);
+      
+      // Cập nhật filtered lists
+      const filteredIndex = this.filteredDrawings.findIndex(d => d.id === drawingId);
+      if (filteredIndex !== -1) {
+        this.filteredDrawings.splice(filteredIndex, 1);
+        this.filteredInProgressDrawings.push(drawing);
+      }
+      
+      // Cập nhật paged lists
+      this.updatePagedNewDrawings();
+      this.updatePagedInProgressDrawings();
+      
+      console.log(`✅ [moveDrawingToInProgress] Successfully moved drawing ${drawingId} to in-progress`);
+      console.log('  - New drawings count:', this.drawings.length);
+      console.log('  - In progress drawings count:', this.inProgressDrawings.length);
+    } else {
+      console.warn(`⚠️ [moveDrawingToInProgress] Drawing ${drawingId} not found in new drawings list`);
+    }
+  }
+
+  // Method mới: Log thông tin về bảng vẽ đã có thi công boidayha hoặc boidaycao
+  private logBoidayInfo(): void {
+    console.log('🔍 [logBoidayInfo] Checking boiday information for all drawings...');
+    
+    // Kiểm tra bảng vẽ mới
+    if (this.drawings.length > 0) {
+      console.log('🔍 [logBoidayInfo] New drawings (trang_thai = null/0):');
+      this.drawings.forEach((drawing, index) => {
+        console.log(`  ${index + 1}. ID: ${drawing.id}, Ký hiệu: ${drawing.kyhieubangve}, Trạng thái: ${drawing.trang_thai}`);
+      });
+    }
+    
+    // Kiểm tra bảng vẽ đang gia công
+    if (this.inProgressDrawings.length > 0) {
+      console.log('🔍 [logBoidayInfo] In-progress drawings (trang_thai = 1):');
+      this.inProgressDrawings.forEach((drawing, index) => {
+        console.log(`  ${index + 1}. ID: ${drawing.id}, Ký hiệu: ${drawing.kyhieubangve}, Trạng thái: ${drawing.trang_thai}`);
+        // Log thông tin về boiday nếu có
+        if (drawing.bd_ha_trong || drawing.bd_ha_ngoai || drawing.bd_cao || drawing.bd_ep) {
+          console.log(`     - Boiday info: HA_trong=${drawing.bd_ha_trong}, HA_ngoai=${drawing.bd_ha_ngoai}, CAO=${drawing.bd_cao}, EP=${drawing.bd_ep}`);
+        }
+      });
+    }
+    
+    // Kiểm tra bảng vẽ hoàn thành
+    if (this.processedDrawings.length > 0) {
+      console.log('🔍 [logBoidayInfo] Processed drawings (trang_thai = 2):');
+      this.processedDrawings.forEach((drawing, index) => {
+        console.log(`  ${index + 1}. ID: ${drawing.id}, Ký hiệu: ${drawing.kyhieubangve}, Trạng thái: ${drawing.trang_thai}`);
+        // Log thông tin về boiday nếu có
+        if (drawing.bd_ha_trong || drawing.bd_ha_ngoai || drawing.bd_cao || drawing.bd_ep) {
+          console.log(`     - Boiday info: HA_trong=${drawing.bd_ha_trong}, HA_ngoai=${drawing.bd_ha_ngoai}, CAO=${drawing.bd_cao}, EP=${drawing.bd_ep}`);
+        }
+      });
+    }
+    
+    // Tổng kết
+    const totalDrawings = this.drawings.length + this.inProgressDrawings.length + this.processedDrawings.length;
+    console.log(`🔍 [logBoidayInfo] Total drawings: ${totalDrawings}`);
+    console.log(`  - New: ${this.drawings.length}`);
+    console.log(`  - In Progress: ${this.inProgressDrawings.length}`);
+    console.log(`  - Processed: ${this.processedDrawings.length}`);
   }
 
   // Phương thức mới: Tự động chuyển trang dựa trên khau_sx của user

@@ -1,0 +1,100 @@
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { CommonService } from 'src/app/shared/services/common.service';
+import { AuthServices } from 'src/app/shared/services/authen/auth.service';
+
+@Component({
+  selector: 'app-ep-boi-day-popup',
+  templateUrl: './ep-boi-day-popup.component.html',
+  styleUrls: ['./ep-boi-day-popup.component.scss']
+})
+export class EpBoiDayPopupComponent implements OnInit {
+  epForm: FormGroup;
+  isLoading: boolean = false;
+  errorMessage: string = '';
+  successMessage: string = '';
+  constructor(
+    private fb: FormBuilder,
+    private dialogRef: MatDialogRef<EpBoiDayPopupComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { quanDay: any },
+    private http: HttpClient,
+    private commonService: CommonService,
+    private authService: AuthServices) { 
+      this.epForm = this.fb.group({
+        bd_ep: ['', Validators.required],
+        bung_bd: [0, Validators.required],
+        ghi_chu: [''],
+        ngay_hoan_thanh: [new Date(), Validators.required]
+      });
+    }
+
+    ngOnInit(): void {
+      if (this.data.quanDay) {
+        this.epForm.patchValue({
+          bd_ep: this.data.quanDay.bd_ep || '',
+          bung_bd: this.data.quanDay.bung_bd || 0
+        });
+      }
+    }
+  
+    onSubmit(): void {
+      if (this.epForm.valid) {
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+  
+        const formData = this.epForm.value;
+        const userId = this.authService.getUserInfo().id;
+        const token = this.authService.getToken();
+  
+        if (userId && token) {
+          const headers = new HttpHeaders({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          });
+  
+          const requestBody = {
+            user_id: userId,
+            bangve_id: this.data.quanDay.id,
+            bd_ep: formData.bd_ep,
+            bung_bd: formData.bung_bd,
+            ghi_chu: formData.ghi_chu,
+            ngay_hoan_thanh: formData.ngay_hoan_thanh,
+            trang_thai_bd_ep: 2 // Đã hoàn thành
+          };
+  
+          const apiUrl = `${this.commonService.getServerAPIURL()}api/UserBangVe/save-ep-boiday`;
+  
+          this.http.post(apiUrl, requestBody, { headers }).subscribe({
+            next: (response: any) => {
+              this.isLoading = false;
+              this.successMessage = 'Lưu thông tin bối dây ép thành công!';
+              
+              setTimeout(() => {
+                this.dialogRef.close({
+                  success: true,
+                  reloadData: true,
+                  message: 'Thông tin bối dây ép đã được lưu thành công!',
+                  data: response
+                });
+              }, 1500);
+            },
+            error: (error) => {
+              this.isLoading = false;
+              this.errorMessage = 'Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.';
+              console.error('Error saving ep boiday:', error);
+            }
+          });
+        } else {
+          this.isLoading = false;
+          this.errorMessage = 'Không thể xác thực người dùng. Vui lòng đăng nhập lại.';
+        }
+      }
+    }
+  
+    onCancel(): void {
+      this.dialogRef.close();
+    }
+  }

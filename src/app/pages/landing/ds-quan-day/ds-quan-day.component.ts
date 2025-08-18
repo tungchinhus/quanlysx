@@ -12,6 +12,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
+import { EpBoiDayPopupComponent } from './ep-boi-day-popup/ep-boi-day-popup.component';
 
 export interface QuanDayData {
   id: number;
@@ -27,9 +28,13 @@ export interface QuanDayData {
   bung_bd: number;
   user_create: string;
   trang_thai: number | null;
+  trang_thai_bv: number | null; // Trạng thái tổng thể bảng vẽ: 1=đang xử lý, 2=đã hoàn thành
   trang_thai_bd_cao: number | null; // Trạng thái bối dây cao: 1=đang làm, 2=đã hoàn thành
   trang_thai_bd_ha: number | null; // Trạng thái bối dây hạ: 1=đang làm, 2=đã hoàn thành
   trang_thai_bd_ep: number | null; // Trạng thái bối dây ép: 1=đang làm, 2=đã hoàn thành
+  bd_ha_id?: number | null; // ID của bối dây hạ từ tbl_bd_ha
+  bd_cao_id?: number | null; // ID của bối dây cao từ tbl_bd_cao
+  bd_ep_id?: number | null; // ID của bối dây ép từ tbl_bd_ep
   created_at: Date;
   username: string;
   email: string;
@@ -78,6 +83,7 @@ export class DsQuanDayComponent implements OnInit {
   userRole: UserRole | null = null;
   isGiaCongHa: boolean = false;
   isGiaCongCao: boolean = false;
+  isGiaCongEp: boolean = false; 
 
   displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
   displayedColumnsCompleted: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'completed_date', 'actions'];
@@ -294,19 +300,55 @@ export class DsQuanDayComponent implements OnInit {
           console.log('Data after permission filter:', filteredData.length);
           console.log('Sample filtered data:', filteredData.slice(0, 2));
           
-          // Phân loại dữ liệu dựa trên trang_thai_bd_cao
-          this.quanDays = filteredData.filter(item => 
-            item.trang_thai_bd_cao === 1 || item.trang_thai_bd_cao === null || item.trang_thai_bd_cao === 0
-          );
+          // Phân loại dữ liệu dựa trên cấu trúc database thực tế
+          // Tab "Mới" - hiển thị bảng vẽ đang được thi công (có bd_ha_id/bd_cao_id nhưng chưa hoàn thành)
+          this.quanDays = filteredData.filter(item => {
+            if (this.isGiaCongHa) {
+              // User là boidayha - hiển thị bảng vẽ có bd_ha_id nhưng trang_thai_bd_ha chưa = 2
+              return item.trang_thai_bd_ha !== 2;
+            } else if (this.isGiaCongCao) {
+              // User là boidaycao - hiển thị bảng vẽ có bd_cao_id nhưng trang_thai_bd_cao chưa = 2
+              return item.trang_thai_bd_cao !== 2;
+            }
+            return false;
+          });
           
-          this.completedQuanDays = filteredData.filter(item => 
-            item.trang_thai_bd_cao === 2
-          ).map(item => ({
-            ...item,
-            completed_date: item.created_at, // Sử dụng created_at làm completed_date tạm thời
-            completed_by: item.user_create || 'Unknown',
-            completion_notes: 'Hoàn thành bối dây cao'
-          }));
+          // Tab "Đã hoàn thành" - hiển thị bảng vẽ đã hoàn thành (có bd_ha_id/bd_cao_id và trang_thai = 2)
+          let completedData: any[] = [];
+          
+          if (this.isGiaCongHa) {
+            // User là boidayha - lấy những item có bd_ha_id và trang_thai_bd_ha = 2
+            const completedHa = filteredData.filter(item => 
+              item.bd_ha_id && item.trang_thai_bd_ha === 2
+            ).map(item => ({
+              ...item,
+              completed_date: item.created_at,
+              completed_by: item.user_create || 'Unknown',
+              completion_notes: 'Hoàn thành bối dây hạ'
+            }));
+            completedData = [...completedData, ...completedHa];
+          }
+          
+          if (this.isGiaCongCao) {
+            // User là boidaycao - lấy những item có bd_cao_id và trang_thai_bd_cao = 2
+            const completedCao = filteredData.filter(item => 
+              item.bd_cao_id && item.trang_thai_bd_cao === 2
+            ).map(item => ({
+              ...item,
+              completed_date: item.created_at,
+              completed_by: item.user_create || 'Unknown',
+              completion_notes: 'Hoàn thành bối dây cao'
+            }));
+            completedData = [...completedData, ...completedCao];
+          }
+          
+          // Loại bỏ trùng lặp dựa trên id
+          this.completedQuanDays = this.removeDuplicateCompletedData(completedData);
+          
+          console.log('Completed data processing:', {
+            completedDataCount: completedData.length,
+            finalCompletedCount: this.completedQuanDays.length
+          });
           
           console.log('Final quanDays length:', this.quanDays.length);
           console.log('Final completedQuanDays length:', this.completedQuanDays.length);
@@ -315,6 +357,16 @@ export class DsQuanDayComponent implements OnInit {
           
           // Debug toàn bộ quá trình xử lý data
           this.debugDataFlow(drawingsData, mappedData, filteredData, this.quanDays, this.completedQuanDays);
+          
+          // Debug chi tiết dữ liệu đã hoàn thành
+          console.log('=== DEBUG COMPLETED DATA ===');
+          console.log('completedQuanDays length:', this.completedQuanDays.length);
+          if (this.completedQuanDays.length > 0) {
+            console.log('Sample completed item:', this.completedQuanDays[0]);
+            console.log('Sample completed item trang_thai_bd_ha:', this.completedQuanDays[0].trang_thai_bd_ha);
+            console.log('Sample completed item trang_thai_bd_cao:', this.completedQuanDays[0].trang_thai_bd_cao);
+          }
+          console.log('=== END DEBUG COMPLETED DATA ===');
           
           // Cập nhật filtered data và paged data
           this.filteredQuanDays = [...this.quanDays];
@@ -328,6 +380,9 @@ export class DsQuanDayComponent implements OnInit {
           
           // Hiển thị thông báo nếu không có dữ liệu được assign
           this.showNoDataMessage();
+          
+          // Kiểm tra và hiển thị thông báo cho tab đã hoàn thành
+          this.checkCompletedTabData();
           
           // Kiểm tra trạng thái data source
           this.checkDataSourceStatus();
@@ -365,13 +420,17 @@ export class DsQuanDayComponent implements OnInit {
       // Sử dụng API mới để lấy dữ liệu từ tbl_user_bangve
       const apiUrl = `${this.commonService.getServerAPIURL()}api/ProductionData/get-completed-bangve`;
       
-      const requestBody = {
-        user_id: userId,
-        // Filter theo các cột trong tbl_user_bangve
-        trang_thai_bd_ha: [2], // 2 = đã hoàn thành bối dây hạ
-        trang_thai_bd_cao: [2], // 2 = đã hoàn thành bối dây cao
-        trang_thai_bd_ep: [2]  // 2 = đã hoàn thành bối dây ép
-      };
+             const requestBody = {
+         user_id: userId,
+         // Filter theo các cột trong tbl_user_bangve - lấy tất cả các loại đã hoàn thành
+         trang_thai_bd_ha: [2], // 2 = đã hoàn thành bối dây hạ
+         trang_thai_bd_cao: [2], // 2 = đã hoàn thành bối dây cao
+         trang_thai_bd_ep: [2], // 2 = đã hoàn thành bối dây ép
+         // Thêm filter để đảm bảo chỉ lấy dữ liệu của user hiện tại
+         status: true, // Chỉ lấy các bản ghi có status = true
+         // Thêm filter để chỉ lấy những bản ghi có bd_ha_id hoặc bd_cao_id
+         has_bd_id: true
+       };
 
       console.log('loadCompletedQuanDayData: Request body:', requestBody);
 
@@ -400,8 +459,19 @@ export class DsQuanDayComponent implements OnInit {
               completedData = data.bangve;
             } else if (Array.isArray(data)) {
               completedData = data;
+            } else if ('result' in data && Array.isArray(data.result)) {
+              completedData = data.result;
             }
           }
+          
+          // Log chi tiết để debug
+          console.log('loadCompletedQuanDayData: Response structure:', {
+            hasData: !!data,
+            dataType: typeof data,
+            isArray: Array.isArray(data),
+            keys: data ? Object.keys(data) : [],
+            completedDataLength: completedData.length
+          });
           
           console.log('loadCompletedQuanDayData: Completed data to process:', completedData.length, 'items');
           
@@ -419,7 +489,23 @@ export class DsQuanDayComponent implements OnInit {
           
           console.log('loadCompletedQuanDayData: Final completed data length:', this.completedQuanDays.length);
           
+          // Debug chi tiết dữ liệu đã hoàn thành
+          if (this.completedQuanDays.length > 0) {
+            console.log('loadCompletedQuanDayData: Sample completed data:', this.completedQuanDays[0]);
+            console.log('loadCompletedQuanDayData: All completed data:', this.completedQuanDays);
+          } else {
+            console.log('loadCompletedQuanDayData: No completed data found. Checking API response...');
+            console.log('loadCompletedQuanDayData: Raw API response:', data);
+          }
+          
+          // Force update UI và change detection
           this.cdr.detectChanges();
+          
+          // Thêm delay nhỏ để đảm bảo UI được cập nhật
+          setTimeout(() => {
+            this.cdr.detectChanges();
+            console.log('loadCompletedQuanDayData: UI update completed with delay');
+          }, 100);
         });
 
     } catch (error) {
@@ -618,6 +704,12 @@ export class DsQuanDayComponent implements OnInit {
                           khauSx.includes('cao') ||
                           roleName.includes('boidaycao') ||
                           roleName.includes('quandaycao');
+
+      this.isGiaCongEp = khauSx.includes('epboiday') || 
+                          khauSx.includes('boidayep') || 
+                          khauSx.includes('ep') ||
+                          roleName.includes('epboiday') ||
+                          roleName.includes('boidayep');  
       
       console.log('determineUserRole: User role determined:', this.userRole);
       console.log('determineUserRole: Is gia cong ha:', this.isGiaCongHa);
@@ -679,33 +771,62 @@ export class DsQuanDayComponent implements OnInit {
     return filteredData;
   }
 
+  // Loại bỏ dữ liệu trùng lặp cho completed data dựa trên id
+  private removeDuplicateCompletedData(data: any[]): any[] {
+    if (!Array.isArray(data)) {
+      console.warn('removeDuplicateCompletedData: data is not an array, returning empty array');
+      return [];
+    }
+    
+    console.log('removeDuplicateCompletedData: Input data length:', data.length);
+    
+    const seen = new Set();
+    const filteredData = data.filter(item => {
+      if (!item || !item.id) {
+        console.warn('removeDuplicateCompletedData: Item missing id:', item);
+        return false;
+      }
+      
+      const duplicate = seen.has(item.id);
+      seen.add(item.id);
+      return !duplicate;
+    });
+    
+    console.log('removeDuplicateCompletedData: Output data length:', filteredData.length);
+    return filteredData;
+  }
+
   // Map dữ liệu từ tbl_bangve sang QuanDayData
   private mapBangVeToQuanDay(bangVe: any): QuanDayData {
     console.log('mapBangVeToQuanDay: Input bangVe:', bangVe);
     
-    const mappedData = {
-      id: bangVe.id,
-      kyhieuquanday: bangVe.kyhieubangve || '',
-      congsuat: bangVe.congsuat || 0,
-      tbkt: bangVe.tbkt || '',
-      dienap: bangVe.dienap || '',
-      soboiday: bangVe.soboiday || '',
-      bd_ha_trong: bangVe.bd_ha_trong || '',
-      bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
-      bd_cao: bangVe.bd_cao || '',
-      bd_ep: bangVe.bd_ep || '',
-      bung_bd: bangVe.bung_bd || 0,
-      user_create: bangVe.user_create || '',
-      trang_thai: bangVe.trang_thai || 0,
-      trang_thai_bd_cao: bangVe.trang_thai_bd_cao || 0,
-      trang_thai_bd_ha: bangVe.trang_thai_bd_ha || 0,
-      trang_thai_bd_ep: bangVe.trang_thai_bd_ep || 0,
-      created_at: new Date(bangVe.created_at) || new Date(),
-      username: bangVe.username || '',
-      email: bangVe.email || '',
-      role_name: bangVe.role_name || '',
-      khau_sx: bangVe.khau_sx || ''
-    };
+         const mappedData = {
+       id: bangVe.id || bangVe.Id,
+       kyhieuquanday: bangVe.kyhieubangve || '',
+       congsuat: bangVe.congsuat || 0,
+       tbkt: bangVe.tbkt || '',
+       dienap: bangVe.dienap || '',
+       soboiday: bangVe.soboiday || '',
+       bd_ha_trong: bangVe.bd_ha_trong || '',
+       bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
+       bd_cao: bangVe.bd_cao || '',
+       bd_ep: bangVe.bd_ep || '',
+       bung_bd: bangVe.bung_bd || 0,
+       user_create: bangVe.user_create || '',
+       trang_thai: bangVe.trang_thai || 0,
+       trang_thai_bv: bangVe.trang_thai_bv || 0,
+       trang_thai_bd_cao: bangVe.trang_thai_bd_cao || 0,
+       trang_thai_bd_ha: bangVe.trang_thai_bd_ha || 0,
+       trang_thai_bd_ep: bangVe.trang_thai_bd_ep || 0,
+       bd_ha_id: bangVe.bd_ha_id || null,
+       bd_cao_id: bangVe.bd_cao_id || null,
+       bd_ep_id: bangVe.bd_ep_id || null,
+       created_at: new Date(bangVe.created_at) || new Date(),
+       username: bangVe.username || '',
+       email: bangVe.email || '',
+       role_name: bangVe.role_name || '',
+       khau_sx: bangVe.khau_sx || ''
+     };
     
     console.log('mapBangVeToQuanDay: Mapped data:', mappedData);
     return mappedData;
@@ -715,32 +836,36 @@ export class DsQuanDayComponent implements OnInit {
   private mapCompletedBangVeToQuanDay(bangVe: any): CompletedQuanDayData {
     console.log('mapCompletedBangVeToQuanDay: Input bangVe:', bangVe);
     
-    const mappedData = {
-      id: bangVe.id,
-      kyhieuquanday: bangVe.kyhieubangve || '',
-      congsuat: bangVe.congsuat || 0,
-      tbkt: bangVe.tbkt || '',
-      dienap: bangVe.dienap || '',
-      soboiday: bangVe.soboiday || '',
-      bd_ha_trong: bangVe.bd_ha_trong || '',
-      bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
-      bd_cao: bangVe.bd_cao || '',
-      bd_ep: bangVe.bd_ep || '',
-      bung_bd: bangVe.bung_bd || 0,
-      user_create: bangVe.user_create || '',
-      trang_thai: bangVe.trang_thai || 0,
-      trang_thai_bd_cao: bangVe.trang_thai_bd_cao || 0,
-      trang_thai_bd_ha: bangVe.trang_thai_bd_ha || 0,
-      trang_thai_bd_ep: bangVe.trang_thai_bd_ep || 0,
-      created_at: new Date(bangVe.created_at) || new Date(),
-      username: bangVe.username || '',
-      email: bangVe.email || '',
-      role_name: bangVe.role_name || '',
-      khau_sx: bangVe.khau_sx || '',
-      completed_date: new Date(bangVe.completed_date) || new Date(),
-      completed_by: bangVe.completed_by || '',
-      completion_notes: bangVe.completion_notes || ''
-    };
+         const mappedData = {
+       id: bangVe.id,
+       kyhieuquanday: bangVe.kyhieubangve || '',
+       congsuat: bangVe.congsuat || 0,
+       tbkt: bangVe.tbkt || '',
+       dienap: bangVe.dienap || '',
+       soboiday: bangVe.soboiday || '',
+       bd_ha_trong: bangVe.bd_ha_trong || '',
+       bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
+       bd_cao: bangVe.bd_cao || '',
+       bd_ep: bangVe.bd_ep || '',
+       bung_bd: bangVe.bung_bd || 0,
+       user_create: bangVe.user_create || '',
+       trang_thai: bangVe.trang_thai || 0,
+       trang_thai_bv: bangVe.trang_thai_bv || 0,
+       trang_thai_bd_cao: bangVe.trang_thai_bd_cao || 0,
+       trang_thai_bd_ha: bangVe.trang_thai_bd_ha || 0,
+       trang_thai_bd_ep: bangVe.trang_thai_bd_ep || 0,
+       bd_ha_id: bangVe.bd_ha_id || null,
+       bd_cao_id: bangVe.bd_cao_id || null,
+       bd_ep_id: bangVe.bd_ep_id || null,
+       created_at: new Date(bangVe.created_at) || new Date(),
+       username: bangVe.username || '',
+       email: bangVe.email || '',
+       role_name: bangVe.role_name || '',
+       khau_sx: bangVe.khau_sx || '',
+       completed_date: new Date(bangVe.completed_date) || new Date(),
+       completed_by: bangVe.completed_by || '',
+       completion_notes: bangVe.completion_notes || ''
+     };
     
     console.log('mapCompletedBangVeToQuanDay: Mapped data:', mappedData);
     return mappedData;
@@ -755,52 +880,60 @@ export class DsQuanDayComponent implements OnInit {
     console.log('getMockData: Current username:', currentUsername);
     
     const mockData = [
-      {
-        id: 1, 
-        kyhieuquanday: 'QD001', 
-        congsuat: 212, 
-        tbkt: 'Máy biến áp 1', 
-        dienap: '220V', 
-        soboiday: '5',
-        bd_ha_trong: '10mm', 
-        bd_ha_ngoai: '12mm', 
-        bd_cao: '15mm', 
-        bd_ep: '2mm', 
-        bung_bd: 1,
-        user_create: currentUsername, // Sử dụng username hiện tại
-        trang_thai: 0, 
-        trang_thai_bd_cao: 1, // Đang làm bối dây cao
-        trang_thai_bd_ha: 0,
-        trang_thai_bd_ep: 0,
-        created_at: new Date('2025-08-11'), 
-        username: currentUsername, // Sử dụng username hiện tại
-        email: `${currentUsername}@example.com`, 
-        role_name: 'operator',
-        khau_sx: 'Khâu 1'
-      },
-      {
-        id: 2, 
-        kyhieuquanday: 'QD002', 
-        congsuat: 234, 
-        tbkt: 'Máy biến áp 2', 
-        dienap: '380V', 
-        soboiday: '3',
-        bd_ha_trong: '8mm', 
-        bd_ha_ngoai: '10mm', 
-        bd_cao: '12mm', 
-        bd_ep: '1.5mm', 
-        bung_bd: 1,
-        user_create: currentUsername, // Sử dụng username hiện tại
-        trang_thai: 0, 
-        trang_thai_bd_cao: 0, // Chưa làm bối dây cao
-        trang_thai_bd_ha: 0,
-        trang_thai_bd_ep: 0,
-        created_at: new Date('2025-08-11'), 
-        username: currentUsername, // Sử dụng username hiện tại
-        email: `${currentUsername}@example.com`, 
-        role_name: 'operator',
-        khau_sx: 'Khâu 2'
-      }
+             {
+         id: 1, 
+         kyhieuquanday: 'QD001', 
+         congsuat: 212, 
+         tbkt: 'Máy biến áp 1', 
+         dienap: '220V', 
+         soboiday: '5',
+         bd_ha_trong: '10mm', 
+         bd_ha_ngoai: '12mm', 
+         bd_cao: '15mm', 
+         bd_ep: '2mm', 
+         bung_bd: 1,
+         user_create: currentUsername, // Sử dụng username hiện tại
+         trang_thai: 0, 
+         trang_thai_bv: 1, // Đang xử lý
+         trang_thai_bd_cao: 1, // Đang làm bối dây cao
+         trang_thai_bd_ha: 0,
+         trang_thai_bd_ep: 0,
+         bd_ha_id: 5, // Có bd_ha_id nhưng chưa hoàn thành
+         bd_cao_id: null,
+         bd_ep_id: null,
+         created_at: new Date('2025-08-11'), 
+         username: currentUsername, // Sử dụng username hiện tại
+         email: `${currentUsername}@example.com`, 
+         role_name: 'operator',
+         khau_sx: 'Khâu 1'
+       },
+       {
+         id: 2, 
+         kyhieuquanday: 'QD002', 
+         congsuat: 234, 
+         tbkt: 'Máy biến áp 2', 
+         dienap: '380V', 
+         soboiday: '3',
+         bd_ha_trong: '8mm', 
+         bd_ha_ngoai: '10mm', 
+         bd_cao: '12mm', 
+         bd_ep: '1.5mm', 
+         bung_bd: 1,
+         user_create: currentUsername, // Sử dụng username hiện tại
+         trang_thai: 0, 
+         trang_thai_bv: 1, // Đang xử lý
+         trang_thai_bd_cao: 0, // Chưa làm bối dây cao
+         trang_thai_bd_ha: 0,
+         trang_thai_bd_ep: 0,
+         bd_ha_id: null, // Chưa có bd_ha_id
+         bd_cao_id: null,
+         bd_ep_id: null,
+         created_at: new Date('2025-08-11'), 
+         username: currentUsername, // Sử dụng username hiện tại
+         email: `${currentUsername}@example.com`, 
+         role_name: 'operator',
+         khau_sx: 'Khâu 2'
+       }
     ];
     
     console.log('getMockData: Generated mock data length:', mockData.length);
@@ -815,58 +948,66 @@ export class DsQuanDayComponent implements OnInit {
     console.log('getMockCompletedData: Current username:', currentUsername);
     
     const mockCompletedData = [
-      {
-        id: 3, 
-        kyhieuquanday: 'QD003', 
-        congsuat: 100, 
-        tbkt: 'Máy biến áp 3', 
-        dienap: '220V', 
-        soboiday: '5',
-        bd_ha_trong: '10mm', 
-        bd_ha_ngoai: '12mm', 
-        bd_cao: '15mm', 
-        bd_ep: '2mm', 
-        bung_bd: 1,
-        user_create: currentUsername, // Sử dụng username hiện tại
-        trang_thai: 2, 
-        trang_thai_bd_cao: 2, // Đã hoàn thành bối dây cao
-        trang_thai_bd_ha: 2,
-        trang_thai_bd_ep: 2,
-        created_at: new Date('2025-08-01'), 
-        username: currentUsername, // Sử dụng username hiện tại
-        email: `${currentUsername}@example.com`, 
-        role_name: 'operator',
-        khau_sx: 'Khâu 1',
-        completed_date: new Date('2025-08-10'), 
-        completed_by: currentUsername, // Sử dụng username hiện tại
-        completion_notes: 'Hoàn thành đúng tiến độ'
-      },
-      {
-        id: 4, 
-        kyhieuquanday: 'QD004', 
-        congsuat: 150, 
-        tbkt: 'Máy biến áp 4', 
-        dienap: '380V', 
-        soboiday: '4',
-        bd_ha_trong: '12mm', 
-        bd_ha_ngoai: '14mm', 
-        bd_cao: '18mm', 
-        bd_ep: '2.5mm', 
-        bung_bd: 1,
-        user_create: currentUsername, // Sử dụng username hiện tại
-        trang_thai: 2, 
-        trang_thai_bd_cao: 2, // Đã hoàn thành bối dây cao
-        trang_thai_bd_ha: 2,
-        trang_thai_bd_ep: 2,
-        created_at: new Date('2025-08-02'), 
-        username: currentUsername, // Sử dụng username hiện tại
-        email: `${currentUsername}@example.com`, 
-        role_name: 'operator',
-        khau_sx: 'Khâu 2',
-        completed_date: new Date('2025-08-12'), 
-        completed_by: currentUsername, // Sử dụng username hiện tại
-        completion_notes: 'Hoàn thành đúng tiến độ'
-      }
+             {
+         id: 3, 
+         kyhieuquanday: 'QD003', 
+         congsuat: 100, 
+         tbkt: 'Máy biến áp 3', 
+         dienap: '220V', 
+         soboiday: '5',
+         bd_ha_trong: '10mm', 
+         bd_ha_ngoai: '12mm', 
+         bd_cao: '15mm', 
+         bd_ep: '2mm', 
+         bung_bd: 1,
+         user_create: currentUsername, // Sử dụng username hiện tại
+         trang_thai: 2, 
+         trang_thai_bv: 2, // Đã hoàn thành
+         trang_thai_bd_cao: 2, // Đã hoàn thành bối dây cao
+         trang_thai_bd_ha: 2,
+         trang_thai_bd_ep: 2,
+         bd_ha_id: 6, // Có bd_ha_id và đã hoàn thành
+         bd_cao_id: 7, // Có bd_cao_id và đã hoàn thành
+         bd_ep_id: 8, // Có bd_ep_id và đã hoàn thành
+         created_at: new Date('2025-08-01'), 
+         username: currentUsername, // Sử dụng username hiện tại
+         email: `${currentUsername}@example.com`, 
+         role_name: 'operator',
+         khau_sx: 'Khâu 1',
+         completed_date: new Date('2025-08-10'), 
+         completed_by: currentUsername, // Sử dụng username hiện tại
+         completion_notes: 'Hoàn thành đúng tiến độ'
+       },
+       {
+         id: 4, 
+         kyhieuquanday: 'QD004', 
+         congsuat: 150, 
+         tbkt: 'Máy biến áp 4', 
+         dienap: '380V', 
+         soboiday: '4',
+         bd_ha_trong: '12mm', 
+         bd_ha_ngoai: '14mm', 
+         bd_cao: '18mm', 
+         bd_ep: '2.5mm', 
+         bung_bd: 1,
+         user_create: currentUsername, // Sử dụng username hiện tại
+         trang_thai: 2, 
+         trang_thai_bv: 2, // Đã hoàn thành
+         trang_thai_bd_cao: 2, // Đã hoàn thành bối dây cao
+         trang_thai_bd_ha: 2,
+         trang_thai_bd_ep: 2,
+         bd_ha_id: 9, // Có bd_ha_id và đã hoàn thành
+         bd_cao_id: 10, // Có bd_cao_id và đã hoàn thành
+         bd_ep_id: 11, // Có bd_ep_id và đã hoàn thành
+         created_at: new Date('2025-08-02'), 
+         username: currentUsername, // Sử dụng username hiện tại
+         email: `${currentUsername}@example.com`, 
+         role_name: 'operator',
+         khau_sx: 'Khâu 2',
+         completed_date: new Date('2025-08-12'), 
+         completed_by: currentUsername, // Sử dụng username hiện tại
+         completion_notes: 'Hoàn thành đúng tiến độ'
+       }
     ];
     
     console.log('getMockCompletedData: Generated mock completed data length:', mockCompletedData.length);
@@ -893,6 +1034,34 @@ export class DsQuanDayComponent implements OnInit {
     console.log('onTabChange: Tab change event:', event);
     this.currentTabIndex = event.index;
     console.log('onTabChange: Current tab index updated to:', this.currentTabIndex);
+    
+    // Reset pagination về trang đầu tiên khi chuyển tab
+    if (this.currentTabIndex === 0) {
+      // Tab "Mới"
+      this.pageIndex = 0;
+      this.updatePagedNewQuanDays();
+    } else if (this.currentTabIndex === 1) {
+      // Tab "Đã hoàn thành"
+      this.pageIndexCompleted = 0;
+      this.updatePagedCompletedQuanDays();
+    }
+    
+    // Force change detection để đảm bảo UI được cập nhật
+    this.cdr.detectChanges();
+    
+    console.log('onTabChange: Tab change completed, pagination reset');
+  }
+
+  // Method để cập nhật paged data cho tab "Mới"
+  private updatePagedNewQuanDays(): void {
+    this.pagedNewQuanDays = this.getPaginatedData(this.filteredQuanDays, this.pageIndex, this.pageSize);
+    console.log('updatePagedNewQuanDays: Updated paged data length:', this.pagedNewQuanDays.length);
+  }
+
+  // Method để cập nhật paged data cho tab "Đã hoàn thành"
+  private updatePagedCompletedQuanDays(): void {
+    this.pagedCompletedQuanDays = this.getPaginatedData(this.filteredCompletedQuanDays, this.pageIndexCompleted, this.pageSizeCompleted);
+    console.log('updatePagedCompletedQuanDays: Updated paged data length:', this.pagedCompletedQuanDays.length);
   }
 
   searchQuanDays(): void {
@@ -997,21 +1166,26 @@ export class DsQuanDayComponent implements OnInit {
           console.log('Reload data sau khi lưu bối dây hạ thành công');
           this.showSuccess(result.message || 'Thông tin bối dây hạ đã được lưu thành công!');
           
-          // Reload data và chuyển sang tab "Đã hoàn thành"
-          this.loadQuanDayData();
-          // Lấy userId và headers để gọi loadCompletedQuanDayData
-          const userId = this.getUserId();
-          const token = this.authService.getToken();
-          if (userId && token) {
-            const headers = new HttpHeaders({
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            });
-            this.loadCompletedQuanDayData(userId, headers);
-          }
+          // Cập nhật trạng thái bối dây hạ trong database trước
+          this.updateBoiDayHaStatus(element.id, 2);
+          
+          // Log thông tin để debug
+          console.log('onGiaCongHa: After updating status, element details:', {
+            id: element.id,
+            kyhieuquanday: element.kyhieuquanday,
+            bd_ha_id: element.bd_ha_id,
+            trang_thai_bd_ha: element.trang_thai_bd_ha
+          });
+          
+          // Force refresh dữ liệu để đảm bảo cập nhật đúng
+          this.forceRefreshData();
           
           // Chuyển sang tab "Đã hoàn thành" để user thấy kết quả
           this.currentTabIndex = 1;
+          
+          // Đảm bảo tab được chọn đúng
+          this.onTabChange({ index: 1, tab: { textLabel: 'Đã hoàn thành' } } as MatTabChangeEvent);
+          
           this.cdr.detectChanges();
         } else {
           // Fallback cho trường hợp cũ
@@ -1082,6 +1256,108 @@ export class DsQuanDayComponent implements OnInit {
     });
   }
 
+  onGiaCongEp(element: QuanDayData): void {
+    console.log('onGiaCongEp: Processing winding pressing for:', element.kyhieuquanday);
+    console.log('onGiaCongEp: Element details:', element);
+    
+    // Kiểm tra quyền trước khi mở popup
+    if (!this.isGiaCongEp) {
+      console.log('onGiaCongEp: User does not have permission for winding pressing');
+      this.showError('Bạn không có quyền thực hiện gia công ép');
+      return;
+    }
+    
+    console.log('onGiaCongEp: Opening winding pressing popup...');
+    
+    // Mở popup bối dây ép
+    const dialogRef = this.dialog.open(EpBoiDayPopupComponent, {
+      width: '1000px',
+      maxWidth: '95vw',
+      data: { quanDay: element },
+      disableClose: true
+    });
+  
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        console.log('onGiaCongEp: Winding pressing data saved successfully:', result.data);
+        
+        // Nếu lưu thành công và cần reload data
+        if (result.reloadData) {
+          console.log('Reload data sau khi lưu bối dây ép thành công');
+          this.showSuccess(result.message || 'Thông tin bối dây ép đã được lưu thành công!');
+          
+          // Cập nhật trạng thái bối dây ép trong database trước
+          this.updateBoiDayEpStatus(element.id, 2);
+          
+          // Log thông tin để debug
+          console.log('onGiaCongEp: After updating status, element details:', {
+            id: element.id,
+            kyhieuquanday: element.kyhieuquanday,
+            bd_ep_id: element.bd_ep_id,
+            trang_thai_bd_ep: element.trang_thai_bd_ep
+          });
+          
+          // Force refresh dữ liệu để đảm bảo cập nhật đúng
+          this.forceRefreshData();
+          
+          // Chuyển sang tab "Đã hoàn thành" để user thấy kết quả
+          this.currentTabIndex = 1;
+          
+          // Đảm bảo tab được chọn đúng
+          this.onTabChange({ index: 1, tab: { textLabel: 'Đã hoàn thành' } } as MatTabChangeEvent);
+          
+          this.cdr.detectChanges();
+        } else {
+          // Fallback cho trường hợp cũ
+          this.showSuccess('Thông tin bối dây ép đã được lưu thành công!');
+          this.refreshData();
+        }
+      } else {
+        console.log('onGiaCongEp: Popup closed without saving or with error');
+      }
+    });
+  }
+
+  private updateBoiDayEpStatus(bangveId: number, status: number): void {
+    console.log(`updateBoiDayEpStatus: Updating bối dây ép status for bangveId: ${bangveId} to status: ${status}`);
+    
+    try {
+      const userId = this.getUserId();
+      const token = this.authService.getToken();
+      
+      if (userId && token) {
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        });
+        
+        // Gọi API để cập nhật trạng thái bối dây ép
+        const apiUrl = `${this.commonService.getServerAPIURL()}api/UserBangVe/update-boidayep-status`;
+        const requestBody = {
+          user_id: userId,
+          bangve_id: bangveId,
+          trang_thai_bd_ep: status
+        };
+        
+        console.log('updateBoiDayEpStatus: Request body:', requestBody);
+        
+        this.http.post(apiUrl, requestBody, { headers }).subscribe({
+          next: (response) => {
+            console.log('updateBoiDayEpStatus: Successfully updated status:', response);
+          },
+          error: (error) => {
+            console.error('updateBoiDayEpStatus: Error updating status:', error);
+            // Không hiển thị lỗi cho user vì đây là operation background
+          }
+        });
+      } else {
+        console.warn('updateBoiDayEpStatus: No userId or token available');
+      }
+    } catch (error) {
+      console.error('updateBoiDayEpStatus: Error:', error);
+    }
+  }
+
   // Method để refresh data
   async refreshData(): Promise<void> {
     console.log('refreshData: Starting data refresh...');
@@ -1100,6 +1376,133 @@ export class DsQuanDayComponent implements OnInit {
     } catch (error) {
       console.error('refreshData: Error during refresh:', error);
       this.showError('Lỗi khi refresh dữ liệu');
+    }
+  }
+
+  // Method để force refresh dữ liệu sau khi lưu thông tin bối dây
+  private async forceRefreshData(): Promise<void> {
+    console.log('forceRefreshData: Starting forced data refresh...');
+    
+    try {
+      // Lấy userId và headers
+      const userId = this.getUserId();
+      const token = this.authService.getToken();
+      
+      if (userId && token) {
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        });
+        
+        // Thêm delay nhỏ trước khi refresh để đảm bảo database đã được cập nhật
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Reload dữ liệu đã hoàn thành trước (vì đây là dữ liệu cần hiển thị)
+        await this.loadCompletedQuanDayData(userId, headers);
+        
+        // Sau đó reload dữ liệu mới
+        await this.loadQuanDayData();
+        
+        // Force change detection
+        this.cdr.detectChanges();
+        
+        // Thêm delay để đảm bảo UI được cập nhật hoàn toàn
+        setTimeout(() => {
+          this.cdr.detectChanges();
+          console.log('forceRefreshData: Final UI update completed');
+        }, 300);
+        
+        console.log('forceRefreshData: Data refresh completed successfully');
+        
+        // Log trạng thái dữ liệu sau khi refresh
+        this.logDataStatusAfterRefresh();
+        
+        // Log chi tiết về dữ liệu đã hoàn thành
+        console.log('forceRefreshData: Detailed completed data analysis:');
+        if (this.completedQuanDays.length > 0) {
+          this.completedQuanDays.forEach((item, index) => {
+            console.log(`Completed item ${index + 1}:`, {
+              id: item.id,
+              kyhieuquanday: item.kyhieuquanday,
+              bd_ha_id: item.bd_ha_id,
+              bd_cao_id: item.bd_cao_id,
+              trang_thai_bd_ha: item.trang_thai_bd_ha,
+              trang_thai_bd_cao: item.trang_thai_bd_cao,
+              completed_date: item.completed_date,
+              completion_notes: item.completion_notes
+            });
+          });
+        } else {
+          console.log('forceRefreshData: No completed data found after refresh');
+        }
+      } else {
+        console.warn('forceRefreshData: No userId or token available');
+        // Fallback to regular refresh
+        this.refreshData();
+      }
+    } catch (error) {
+      console.error('forceRefreshData: Error during forced refresh:', error);
+      // Fallback to regular refresh
+      this.refreshData();
+    }
+  }
+
+  // Method để log trạng thái dữ liệu sau khi refresh
+  private logDataStatusAfterRefresh(): void {
+    console.log('=== DATA STATUS AFTER REFRESH ===');
+    console.log('quanDays (tab mới):', this.quanDays.length, 'items');
+    console.log('completedQuanDays (tab hoàn thành):', this.completedQuanDays.length, 'items');
+    console.log('filteredQuanDays:', this.filteredQuanDays.length, 'items');
+    console.log('filteredCompletedQuanDays:', this.filteredCompletedQuanDays.length, 'items');
+    console.log('pagedNewQuanDays:', this.pagedNewQuanDays.length, 'items');
+    console.log('pagedCompletedQuanDays:', this.pagedCompletedQuanDays.length, 'items');
+    
+    if (this.completedQuanDays.length > 0) {
+      console.log('Sample completed item:', this.completedQuanDays[0]);
+    }
+    
+    console.log('Current tab index:', this.currentTabIndex);
+    console.log('=== END DATA STATUS ===');
+  }
+
+  // Method để cập nhật trạng thái bối dây hạ trong database
+  private updateBoiDayHaStatus(bangveId: number, status: number): void {
+    console.log(`updateBoiDayHaStatus: Updating bối dây hạ status for bangveId: ${bangveId} to status: ${status}`);
+    
+    try {
+      const userId = this.getUserId();
+      const token = this.authService.getToken();
+      
+      if (userId && token) {
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        });
+        
+        // Gọi API để cập nhật trạng thái bối dây hạ
+        const apiUrl = `${this.commonService.getServerAPIURL()}api/UserBangVe/update-boidayha-status`;
+        const requestBody = {
+          user_id: userId,
+          bangve_id: bangveId,
+          trang_thai_bd_ha: status
+        };
+        
+        console.log('updateBoiDayHaStatus: Request body:', requestBody);
+        
+        this.http.post(apiUrl, requestBody, { headers }).subscribe({
+          next: (response) => {
+            console.log('updateBoiDayHaStatus: Successfully updated status:', response);
+          },
+          error: (error) => {
+            console.error('updateBoiDayHaStatus: Error updating status:', error);
+            // Không hiển thị lỗi cho user vì đây là operation background
+          }
+        });
+      } else {
+        console.warn('updateBoiDayHaStatus: No userId or token available');
+      }
+    } catch (error) {
+      console.error('updateBoiDayHaStatus: Error:', error);
     }
   }
 
@@ -1547,6 +1950,21 @@ export class DsQuanDayComponent implements OnInit {
       // Có thể hiển thị thông báo cho user ở đây
     } else {
       console.log('showNoDataMessage: Data available, quanDays:', this.quanDays.length, 'completedQuanDays:', this.completedQuanDays.length);
+    }
+  }
+
+  // Method để kiểm tra và hiển thị thông báo cho tab đã hoàn thành
+  private checkCompletedTabData(): void {
+    console.log('checkCompletedTabData: Checking completed tab data...');
+    console.log('checkCompletedTabData: completedQuanDays length:', this.completedQuanDays.length);
+    console.log('checkCompletedTabData: filteredCompletedQuanDays length:', this.filteredCompletedQuanDays.length);
+    console.log('checkCompletedTabData: pagedCompletedQuanDays length:', this.pagedCompletedQuanDays.length);
+    
+    if (this.completedQuanDays.length === 0) {
+      console.log('checkCompletedTabData: No completed data available');
+      // Có thể hiển thị thông báo cho user ở đây
+    } else {
+      console.log('checkCompletedTabData: Completed data available, sample:', this.completedQuanDays[0]);
     }
   }
 

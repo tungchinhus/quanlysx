@@ -1,0 +1,363 @@
+<div class="container" style="max-width: 1200px;">
+  <!-- Authentication Check -->
+  <div *ngIf="!isAuthenticated" class="auth-warning mat-elevation-z2" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <mat-icon style="color: #f39c12; font-size: 48px; width: 48px; height: 48px;">warning</mat-icon>
+    <h3 style="color: #856404; margin: 16px 0;">Yêu cầu đăng nhập</h3>
+    <p style="color: #856404; margin: 16px 0;">Bạn cần đăng nhập để truy cập trang KCS Check.</p>
+    <button mat-raised-button color="primary" (click)="goToLogin()" style="margin-top: 16px;">
+      <mat-icon>login</mat-icon>
+      Đăng nhập ngay
+    </button>
+  </div>
+
+  <!-- Permission Check -->
+  <div *ngIf="isAuthenticated && !hasEpBoiDayPermission" class="permission-warning mat-elevation-z2" style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <mat-icon style="color: #dc3545; font-size: 48px; width: 48px; height: 48px;">block</mat-icon>
+    <h3 style="color: #721c24; margin: 16px 0;">Không có quyền truy cập</h3>
+    <p style="color: #721c24; margin: 16px 0;">Bạn không có quyền truy cập trang KCS Check. Vui lòng liên hệ quản trị viên.</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="isAuthenticated && hasEpBoiDayPermission">
+    <!-- Header -->
+    <div class="page-header mat-elevation-z1" style="background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <h1 style="margin: 0; color: #333; font-size: 28px; font-weight: 500;">
+        <mat-icon style="vertical-align: middle; margin-right: 12px; color: #1976d2;">verified</mat-icon>
+        KCS Check - Kiểm tra chất lượng
+      </h1>
+      <p style="margin: 8px 0 0 0; color: #666; font-size: 16px;">
+        Kiểm tra và duyệt các bối dây hạ, bối dây cao và ép bối dây
+      </p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;">
+      
+      <!-- Tab 1: Bối dây hạ -->
+      <mat-tab label="Bối dây hạ">
+        <div class="tab-content">
+          <!-- Search Bar -->
+          <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+            <mat-form-field appearance="outline" class="search-field" style="flex: 1;">
+              <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
+              <input type="text" matInput [formControl]="searchTermBoiDayHa" (input)="onSearchBoiDayHa()" placeholder="Nhập ký hiệu...">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Table for Bối dây hạ -->
+          <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+            <mat-table [dataSource]="boiDayHaDataSource" class="table" *ngIf="boiDayHaDataSource.data.length > 0" matSort>
+              
+              <ng-container matColumnDef="kyhieuquanday">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Ký hiệu quấn dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> <b>{{item.kyhieuquanday}}</b> </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="congsuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Công suất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.congsuat}} kVA </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="tbkt">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> TBKT </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.tbkt}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="dienap">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Điện áp </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.dienap}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="quy_cach_day">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Quy cách dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.quy_cach_day}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="so_soi_day">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Số sợi dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.so_soi_day}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="nha_san_xuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Nhà sản xuất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.nha_san_xuat}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="ngay_san_xuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Ngày sản xuất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.ngay_san_xuat | date:'dd/MM/yyyy'}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="trang_thai">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Trạng thái </mat-header-cell>
+                <mat-cell *matCellDef="let item">
+                  <mat-chip [color]="getStatusColor(item.trang_thai)" selected>
+                    <mat-icon>{{item.trang_thai === 'approved' ? 'check_circle' : item.trang_thai === 'rejected' ? 'cancel' : 'pending'}}</mat-icon>
+                    {{getStatusText(item.trang_thai)}}
+                  </mat-chip>
+                </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
+                <mat-cell *matCellDef="let item">
+                  <div class="action-buttons" style="display: flex; gap: 8px;">
+                    <button mat-icon-button [matMenuTriggerFor]="actionMenuBoiDayHa" aria-label="Menu hành động" class="action-menu-trigger">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+
+                    <mat-menu #actionMenuBoiDayHa="matMenu" class="custom-action-menu">
+                      <button mat-menu-item (click)="onViewDetails(item, 'boiDayHa')" class="menu-item">
+                        <mat-icon class="menu-icon">visibility</mat-icon>
+                        <span class="menu-text">Xem chi tiết</span>
+                      </button>
+                      <button mat-menu-item (click)="onApprove(item, 'boiDayHa')" class="menu-item">
+                        <mat-icon class="menu-icon">check_circle</mat-icon>
+                        <span class="menu-text">Duyệt</span>
+                      </button>
+                      <button mat-menu-item (click)="onReject(item, 'boiDayHa')" class="menu-item">
+                        <mat-icon class="menu-icon">cancel</mat-icon>
+                        <span class="menu-text">Từ chối</span>
+                      </button>
+                    </mat-menu>
+                  </div>
+                </mat-cell>
+              </ng-container>
+
+              <mat-header-row *matHeaderRowDef="boiDayHaColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: boiDayHaColumns;" class="table-row"></mat-row>
+            </mat-table>
+            
+            <mat-paginator [length]="boiDayHaDataSource.data.length"
+                           [pageSize]="10"
+                           [pageSizeOptions]="[5, 10, 20]"
+                           style="border-radius: 0 0 8px 8px;">
+            </mat-paginator>
+            
+            <div *ngIf="boiDayHaDataSource.data.length === 0" class="empty-table" style="padding: 32px; text-align: center; color: #888;">
+              <mat-icon style="font-size: 48px; color: #ccc;">inbox</mat-icon>
+              <div style="margin-top: 8px;">Không có dữ liệu bối dây hạ.</div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab 2: Bối dây cao -->
+      <mat-tab label="Bối dây cao">
+        <div class="tab-content">
+          <!-- Search Bar -->
+          <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+            <mat-form-field appearance="outline" class="search-field" style="flex: 1;">
+              <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
+              <input type="text" matInput [formControl]="searchTermBoiDayCao" (input)="onSearchBoiDayCao()" placeholder="Nhập ký hiệu...">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Table for Bối dây cao -->
+          <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+            <mat-table [dataSource]="boiDayCaoDataSource" class="table" *ngIf="boiDayCaoDataSource.data.length > 0" matSort>
+              
+              <ng-container matColumnDef="kyhieuquanday">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Ký hiệu quấn dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> <b>{{item.kyhieuquanday}}</b> </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="congsuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Công suất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.congsuat}} kVA </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="tbkt">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> TBKT </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.tbkt}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="dienap">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Điện áp </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.dienap}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="quy_cach_day">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Quy cách dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.quy_cach_day}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="so_soi_day">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Số sợi dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.so_soi_day}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="nha_san_xuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Nhà sản xuất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.nha_san_xuat}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="ngay_san_xuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Ngày sản xuất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.ngay_san_xuat | date:'dd/MM/yyyy'}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="trang_thai">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Trạng thái </mat-header-cell>
+                <mat-cell *matCellDef="let item">
+                  <mat-chip [color]="getStatusColor(item.trang_thai)" selected>
+                    <mat-icon>{{item.trang_thai === 'approved' ? 'check_circle' : item.trang_thai === 'rejected' ? 'cancel' : 'pending'}}</mat-icon>
+                    {{getStatusText(item.trang_thai)}}
+                  </mat-chip>
+                </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
+                <mat-cell *matCellDef="let item">
+                  <div class="action-buttons" style="display: flex; gap: 8px;">
+                    <button mat-icon-button [matMenuTriggerFor]="actionMenuBoiDayCao" aria-label="Menu hành động" class="action-menu-trigger">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+
+                    <mat-menu #actionMenuBoiDayCao="matMenu" class="custom-action-menu">
+                      <button mat-menu-item (click)="onViewDetails(item, 'boiDayCao')" class="menu-item">
+                        <mat-icon class="menu-icon">visibility</mat-icon>
+                        <span class="menu-text">Xem chi tiết</span>
+                      </button>
+                      <button mat-menu-item (click)="onApprove(item, 'boiDayCao')" class="menu-item">
+                        <mat-icon class="menu-icon">check_circle</mat-icon>
+                        <span class="menu-text">Duyệt</span>
+                      </button>
+                      <button mat-menu-item (click)="onReject(item, 'boiDayCao')" class="menu-item">
+                        <mat-icon class="menu-icon">cancel</mat-icon>
+                        <span class="menu-text">Từ chối</span>
+                      </button>
+                    </mat-menu>
+                  </div>
+                </mat-cell>
+              </ng-container>
+
+              <mat-header-row *matHeaderRowDef="boiDayCaoColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: boiDayCaoColumns;" class="table-row"></mat-row>
+            </mat-table>
+            
+            <mat-paginator [length]="boiDayCaoDataSource.data.length"
+                           [pageSize]="10"
+                           [pageSizeOptions]="[5, 10, 20]"
+                           style="border-radius: 0 0 8px 8px;">
+            </mat-paginator>
+            
+            <div *ngIf="boiDayCaoDataSource.data.length === 0" class="empty-table" style="padding: 32px; text-align: center; color: #888;">
+              <mat-icon style="font-size: 48px; color: #ccc;">inbox</mat-icon>
+              <div style="margin-top: 8px;">Không có dữ liệu bối dây cao.</div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab 3: Ép bối dây -->
+      <mat-tab label="Ép bối dây">
+        <div class="tab-content">
+          <!-- Search Bar -->
+          <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+            <mat-form-field appearance="outline" class="search-field" style="flex: 1;">
+              <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
+              <input type="text" matInput [formControl]="searchTermEpBoiDay" (input)="onSearchEpBoiDay()" placeholder="Nhập ký hiệu...">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Table for Ép bối dây -->
+          <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+            <mat-table [dataSource]="epBoiDayDataSource" class="table" *ngIf="epBoiDayDataSource.data.length > 0" matSort>
+              
+              <ng-container matColumnDef="kyhieuquanday">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Ký hiệu quấn dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> <b>{{item.kyhieuquanday}}</b> </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="congsuat">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Công suất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.congsuat}} kVA </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="tbkt">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> TBKT </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.tbkt}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="dienap">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Điện áp </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.dienap}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="bd_ep">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Bối dây ép </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.bd_ep}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="bung_bd">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Bung bối dây </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.bung_bd}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="ngay_hoan_thanh">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Ngày hoàn thành </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.ngay_hoan_thanh | date:'dd/MM/yyyy'}} </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="trang_thai">
+                <mat-header-cell *matHeaderCellDef mat-sort-header> Trạng thái </mat-header-cell>
+                <mat-cell *matCellDef="let item">
+                  <mat-chip [color]="getStatusColor(item.trang_thai)" selected>
+                    <mat-icon>{{item.trang_thai === 'approved' ? 'check_circle' : item.trang_thai === 'rejected' ? 'cancel' : 'pending'}}</mat-icon>
+                    {{getStatusText(item.trang_thai)}}
+                  </mat-chip>
+                </mat-cell>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
+                <mat-cell *matCellDef="let item">
+                  <div class="action-buttons" style="display: flex; gap: 8px;">
+                    <button mat-icon-button [matMenuTriggerFor]="actionMenuEpBoiDay" aria-label="Menu hành động" class="action-menu-trigger">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+
+                    <mat-menu #actionMenuEpBoiDay="matMenu" class="custom-action-menu">
+                      <button mat-menu-item (click)="onViewDetails(item, 'epBoiDay')" class="menu-item">
+                        <mat-icon class="menu-icon">visibility</mat-icon>
+                        <span class="menu-text">Xem chi tiết</span>
+                      </button>
+                      <button mat-menu-item (click)="onApprove(item, 'epBoiDay')" class="menu-item">
+                        <mat-icon class="menu-icon">check_circle</mat-icon>
+                        <span class="menu-text">Duyệt</span>
+                      </button>
+                      <button mat-menu-item (click)="onReject(item, 'epBoiDay')" class="menu-item">
+                        <mat-icon class="menu-icon">cancel</mat-icon>
+                        <span class="menu-text">Từ chối</span>
+                      </button>
+                    </mat-menu>
+                  </div>
+                </mat-cell>
+              </ng-container>
+
+              <mat-header-row *matHeaderRowDef="epBoiDayColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: epBoiDayColumns;" class="table-row"></mat-row>
+            </mat-table>
+            
+            <mat-paginator [length]="epBoiDayDataSource.data.length"
+                           [pageSize]="10"
+                           [pageSizeOptions]="[5, 10, 20]"
+                           style="border-radius: 0 0 8px 8px;">
+            </mat-paginator>
+            
+            <div *ngIf="epBoiDayDataSource.data.length === 0" class="empty-table" style="padding: 32px; text-align: center; color: #888;">
+              <mat-icon style="font-size: 48px; color: #ccc;">inbox</mat-icon>
+              <div style="margin-top: 8px;">Không có dữ liệu ép bối dây.</div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+</div>

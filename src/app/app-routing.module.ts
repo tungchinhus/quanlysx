@@ -57,6 +57,11 @@ const routes: Routes = [
     // canActivate: [() => import('./pages/landing/ds-quan-day/ds-quan-day.guard').then(m => m.WindingAccessGuard)]
   },
   {
+    path: 'kcs-check',
+    loadChildren: () => import('./pages/landing/kcs-check/kcs-check.module').then(m => m.KcsCheckModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+  },
+  {
     path: 'boi-day-ha',
     loadChildren: () => import('./pages/landing/boi-day-ha/boi-day-ha.module').then(m => m.BoiDayHaModule)
   },

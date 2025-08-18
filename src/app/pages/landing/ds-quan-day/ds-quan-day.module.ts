@@ -17,6 +17,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { BoiDayHaPopupModule } from './boi-day-ha-popup/boi-day-ha-popup.module';
 import { BoiDayCaoPopupModule } from './boi-day-cao-popup/boi-day-cao-popup.module';
+import { EpBoiDayPopupModule } from './ep-boi-day-popup/ep-boi-day-popup.module';
 
 const routes: Routes = [
   { path: '', component: DsQuanDayComponent }
@@ -44,6 +45,7 @@ const routes: Routes = [
     MatSnackBarModule,
     BoiDayHaPopupModule,
     BoiDayCaoPopupModule,
+    EpBoiDayPopupModule,
     RouterModule.forChild(routes)
   ],
   exports: [

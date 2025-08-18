@@ -31,6 +31,7 @@ import { LoginComponent } from './components/login/login.component';
 import { DialogComponent } from './dialogs/dialog/dialog.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { EpBoiDayPopupComponent } from '../pages/landing/ds-quan-day/ep-boi-day-popup/ep-boi-day-popup.component';
 // WindingOperationPopupModule đã được xóa
 
 @NgModule({
@@ -86,7 +87,7 @@ import { MatIconModule } from '@angular/material/icon';
     TabindexDirective,
     DynamicInputDirective,
     MaxLengthDirective,
-    LoginComponent
+    LoginComponent,
   ],
   providers: [
     {
