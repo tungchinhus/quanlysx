@@ -1,0 +1,50 @@
+.confirm-dialog {
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    
+    h2 {
+      margin: 0;
+      color: #333;
+      font-size: 20px;
+      font-weight: 500;
+    }
+    
+    .close-button {
+      color: #666;
+      
+      &:hover {
+        color: #333;
+      }
+    }
+  }
+  
+  .dialog-message {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #555;
+    margin: 0;
+    padding: 16px 0;
+  }
+  
+  mat-dialog-actions {
+    margin-top: 24px;
+    padding: 0;
+    
+    .cancel-button {
+      margin-right: 12px;
+      color: #666;
+      
+      &:hover {
+        color: #333;
+      }
+    }
+    
+    .confirm-button {
+      min-width: 100px;
+      font-weight: 500;
+    }
+  }
+}

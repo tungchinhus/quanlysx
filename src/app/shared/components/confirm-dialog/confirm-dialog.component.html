@@ -1,0 +1,25 @@
+<div class="confirm-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <button mat-icon-button (click)="onCancel()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  
+  <mat-dialog-content>
+    <p class="dialog-message">{{ data.message }}</p>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" class="cancel-button">
+      {{ data.cancelText || 'Hủy' }}
+    </button>
+    <button 
+      mat-raised-button 
+      [color]="getConfirmButtonColor()"
+      (click)="onConfirm()"
+      class="confirm-button">
+      {{ data.confirmText || 'Xác nhận' }}
+    </button>
+  </mat-dialog-actions>
+</div>

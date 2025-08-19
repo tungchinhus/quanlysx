@@ -24,11 +24,19 @@ export interface LoginResponseDto {
   hoten: string;
   userId: number;
   email: string;
-  khau_sx?: string; // Thêm field khau_sx
-  roles?: string[]; // Thêm field roles
-  firstName?: string; // Thêm field firstName
-  lastName?: string; // Thêm field lastName
-  // Thêm các thuộc tính khác tùy theo API trả về
+  khau_sx?: string; // Field khau_sx từ API
+  roles?: string[]; // Field roles từ API
+  firstName?: string; // Field firstName từ API
+  lastName?: string; // Field lastName từ API
+  // Các field khác từ API response
+  AccessToken?: string; // Fallback cho AccessToken
+  Token?: string; // Fallback cho Token
+  Email?: string; // Fallback cho Email
+  UserId?: string; // Fallback cho UserId
+  Roles?: string[]; // Fallback cho Roles
+  FirstName?: string; // Fallback cho FirstName
+  LastName?: string; // Fallback cho LastName
+  Khau_sx?: string; // Fallback cho Khau_sx
 }
 
 const SERVER_URL = '';
@@ -156,13 +164,27 @@ export class AuthServices {
     
     console.log('Response accessToken:', accessToken);
     
-    // Tự động xác định khau_sx dựa trên email nếu API không trả về
+    // Xử lý khau_sx từ response với fallback
     let khau_sx = response.khau_sx || response.Khau_sx || response.khauSx || response.KhauSx;
+    
+    // Tự động xác định khau_sx dựa trên email nếu API không trả về
     if (!khau_sx && (response.email || response.Email)) {
       const emailToCheck = response.email || response.Email;
       khau_sx = this.determineKhauSxFromEmail(emailToCheck);
       console.log('Auto-determined khau_sx from email:', khau_sx);
     }
+    
+    // Đảm bảo khau_sx không bao giờ là undefined hoặc null
+    if (!khau_sx) {
+      khau_sx = 'user'; // Giá trị mặc định
+      console.log('Set default khau_sx to:', khau_sx);
+    }
+    
+    // Log để debug
+    console.log('khau_sx from response:', response.khau_sx);
+    console.log('Khau_sx from response:', response.Khau_sx);
+    console.log('Final khau_sx value:', khau_sx);
+    console.log('Response email:', response.email || response.Email);
     
     // Lưu thông tin user - sử dụng cấu trúc response thực tế
     localStorage.setItem('role', response.roles?.[0] || response.Roles?.[0] || 'user');
@@ -194,18 +216,24 @@ export class AuthServices {
   private determineKhauSxFromEmail(email: string): string {
     const emailLower = email.toLowerCase();
     
-    if (emailLower.includes('quandayha') || emailLower.includes('boidayha')) {
+    // Kiểm tra các pattern cụ thể
+    if (emailLower.includes('kcs') || emailLower.includes('kcs1') || emailLower.includes('kcs2')) {
+      return 'kcs';
+    } else if (emailLower.includes('quandayha') || emailLower.includes('boidayha')) {
       return 'boidayha';
     } else if (emailLower.includes('quandaycao') || emailLower.includes('boidaycao')) {
       return 'boidaycao';
     } else if (emailLower.includes('quandayep') || emailLower.includes('boidayep')) {
       return 'boidayep';
     } else if (emailLower.includes('admin') || emailLower.includes('manager')) {
-      return 'admin'; // Đánh dấu là admin/manager
+      return 'admin';
+    } else if (emailLower.includes('thibidi')) {
+      // Nếu email chứa 'thibidi', có thể là user thường
+      return 'user';
     }
     
     // Mặc định nếu không xác định được
-    return 'unknown';
+    return 'user'; // Thay vì 'unknown', trả về 'user'
   }
 
   // Thêm method để kiểm tra token
@@ -278,5 +306,87 @@ export class AuthServices {
       userId: localStorage.getItem('userId') || '',
       khau_sx: localStorage.getItem('khau_sx') || ''
     };
+  }
+
+  // Thêm method để lấy khau_sx trực tiếp
+  getKhauSx(): string {
+    return localStorage.getItem('khau_sx') || '';
+  }
+
+  // Thêm method để kiểm tra xem user có thuộc khau_sx cụ thể không
+  hasKhauSx(khauSx: string): boolean {
+    const currentKhauSx = this.getKhauSx();
+    return currentKhauSx === khauSx;
+  }
+
+  // Thêm method để kiểm tra xem user có phải là admin/manager không
+  isAdminOrManager(): boolean {
+    const khauSx = this.getKhauSx();
+    return khauSx === 'admin' || khauSx === 'manager';
+  }
+
+  // Thêm method để lấy thông tin user đầy đủ bao gồm cả khau_sx
+  getFullUserInfo(): any {
+    const sessionUser = this.getUserInfo();
+    if (sessionUser) {
+      return {
+        ...sessionUser,
+        khau_sx: sessionUser.khau_sx || this.getKhauSx()
+      };
+    }
+    
+    return this.getUserInfoFromStorage();
+  }
+
+  // Thêm method để cập nhật khau_sx
+  updateKhauSx(khauSx: string): void {
+    localStorage.setItem('khau_sx', khauSx);
+    console.log('khau_sx updated to:', khauSx);
+  }
+
+  // Thêm method để debug và kiểm tra toàn bộ thông tin user
+  debugUserInfo(): void {
+    console.log('=== DEBUG USER INFO ===');
+    console.log('Session User:', this.getUserInfo());
+    console.log('Local Storage User:', this.getUserInfoFromStorage());
+    console.log('Full User Info:', this.getFullUserInfo());
+    console.log('khau_sx from localStorage:', localStorage.getItem('khau_sx'));
+    console.log('khau_sx from method:', this.getKhauSx());
+    console.log('Is Logged In:', this.isLoggedIn());
+    console.log('Token exists:', !!this.getToken());
+    console.log('========================');
+  }
+
+  // Thêm method để force refresh khau_sx từ tất cả nguồn
+  refreshKhauSx(): string {
+    // Thử lấy từ sessionStorage trước
+    const sessionUser = this.getUserInfo();
+    if (sessionUser && sessionUser.khau_sx) {
+      localStorage.setItem('khau_sx', sessionUser.khau_sx);
+      console.log('Refreshed khau_sx from session:', sessionUser.khau_sx);
+      return sessionUser.khau_sx;
+    }
+    
+    // Thử lấy từ localStorage
+    const localKhauSx = localStorage.getItem('khau_sx');
+    if (localKhauSx) {
+      console.log('khau_sx from localStorage:', localKhauSx);
+      return localKhauSx;
+    }
+    
+    // Nếu không có, thử xác định từ email
+    const email = localStorage.getItem('email');
+    if (email) {
+      const determinedKhauSx = this.determineKhauSxFromEmail(email);
+      localStorage.setItem('khau_sx', determinedKhauSx);
+      console.log('Determined khau_sx from email:', determinedKhauSx);
+      return determinedKhauSx;
+    }
+    
+    // Mặc định
+    const defaultKhauSx = 'user';
+    localStorage.setItem('khau_sx', defaultKhauSx);
+    console.log('Set default khau_sx:', defaultKhauSx);
+    return defaultKhauSx;
   }
 }

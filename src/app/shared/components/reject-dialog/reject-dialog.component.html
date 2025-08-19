@@ -1,0 +1,52 @@
+<div class="reject-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <button mat-icon-button (click)="onCancel()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <p class="dialog-message">{{ data.message }}</p>
+    
+    <form [formGroup]="rejectForm" class="reject-form">
+      <mat-form-field appearance="outline" class="reason-field">
+        <mat-label>Ghi chú lý do từ chối *</mat-label>
+        <textarea 
+          matInput 
+          formControlName="reason" 
+          rows="4" 
+          placeholder="Nhập lý do từ chối (tối thiểu 10 ký tự)..."
+          class="reason-textarea">
+        </textarea>
+        <mat-error *ngIf="rejectForm.get('reason')?.hasError('required')">
+          Ghi chú là bắt buộc
+        </mat-error>
+        <mat-error *ngIf="rejectForm.get('reason')?.hasError('minlength')">
+          Ghi chú phải có ít nhất 10 ký tự
+        </mat-error>
+      </mat-form-field>
+      
+      <div class="form-info">
+        <mat-icon class="info-icon">info</mat-icon>
+        <span class="info-text">
+          Khi từ chối, trạng thái sẽ được cập nhật thành "Đang xử lý" (1) trong hệ thống
+        </span>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" class="cancel-button">
+      {{ data.cancelText || 'Hủy' }}
+    </button>
+    <button
+      mat-raised-button
+      color="warn"
+      (click)="onConfirm()"
+      [disabled]="!rejectForm.valid"
+      class="confirm-button">
+      {{ data.confirmText || 'Từ chối' }}
+    </button>
+  </mat-dialog-actions>
+</div>

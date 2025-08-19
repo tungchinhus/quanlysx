@@ -26,7 +26,11 @@
         KCS Check - Kiểm tra chất lượng
       </h1>
       <p style="margin: 8px 0 0 0; color: #666; font-size: 16px;">
-        Kiểm tra và duyệt các bối dây hạ, bối dây cao và ép bối dây
+        Kiểm tra bối dây hạ, bối dây cao và ép bối dây
+      </p>
+      <p style="margin: 4px 0 0 0; color: #1976d2; font-size: 14px; font-style: italic;">
+        <mat-icon style="font-size: 16px; vertical-align: middle; margin-right: 4px;">info</mat-icon>
+        Chỉ hiển thị những item chưa kiểm tra (trạng thái: Chờ kiểm tra)
       </p>
     </div>
 
@@ -50,47 +54,47 @@
             <mat-table [dataSource]="boiDayHaDataSource" class="table" *ngIf="boiDayHaDataSource.data.length > 0" matSort>
               
               <ng-container matColumnDef="kyhieuquanday">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Ký hiệu quấn dây </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Ký hiệu quấn dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> <b>{{item.kyhieuquanday}}</b> </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="congsuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Công suất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.congsuat}} kVA </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="tbkt">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> TBKT </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Quy cách dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.tbkt}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="dienap">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Điện áp </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Số sợi dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.dienap}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="quy_cach_day">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Quy cách dây </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Nhà sản xuất </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.quy_cach_day}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="so_soi_day">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Số sợi dây </mat-header-cell>
-                <mat-cell *matCellDef="let item"> {{item.so_soi_day}} </mat-cell>
+                <mat-header-cell *matHeaderCellDef> Ngày sản xuất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.so_soi_day | date:'dd/MM/yyyy'}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="nha_san_xuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Nhà sản xuất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Người gia công </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.nha_san_xuat}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="ngay_san_xuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Ngày sản xuất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Ngày gia công </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.ngay_san_xuat | date:'dd/MM/yyyy'}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="trang_thai">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Trạng thái </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
                 <mat-cell *matCellDef="let item">
                   <mat-chip [color]="getStatusColor(item.trang_thai)" selected>
                     <mat-icon>{{item.trang_thai === 'approved' ? 'check_circle' : item.trang_thai === 'rejected' ? 'cancel' : 'pending'}}</mat-icon>
@@ -112,13 +116,15 @@
                         <mat-icon class="menu-icon">visibility</mat-icon>
                         <span class="menu-text">Xem chi tiết</span>
                       </button>
-                      <button mat-menu-item (click)="onApprove(item, 'boiDayHa')" class="menu-item">
-                        <mat-icon class="menu-icon">check_circle</mat-icon>
-                        <span class="menu-text">Duyệt</span>
+                      <button mat-menu-item (click)="onApprove(item, 'boiDayHa')" class="menu-item" [disabled]="isItemLoading('boiDayHa', item.id, 'approve')">
+                        <mat-icon class="menu-icon" *ngIf="!isItemLoading('boiDayHa', item.id, 'approve')">check_circle</mat-icon>
+                        <mat-spinner *ngIf="isItemLoading('boiDayHa', item.id, 'approve')" diameter="16" class="menu-icon"></mat-spinner>
+                        <span class="menu-text">{{ isItemLoading('boiDayHa', item.id, 'approve') ? 'Đang xử lý...' : 'Kiểm duyệt' }}</span>
                       </button>
-                      <button mat-menu-item (click)="onReject(item, 'boiDayHa')" class="menu-item">
-                        <mat-icon class="menu-icon">cancel</mat-icon>
-                        <span class="menu-text">Từ chối</span>
+                      <button mat-menu-item (click)="onReject(item, 'boiDayHa')" class="menu-item" [disabled]="isItemLoading('boiDayHa', item.id, 'reject')">
+                        <mat-icon class="menu-icon" *ngIf="!isItemLoading('boiDayHa', item.id, 'reject')">cancel</mat-icon>
+                        <mat-spinner *ngIf="isItemLoading('boiDayHa', item.id, 'reject')" diameter="16" class="menu-icon"></mat-spinner>
+                        <span class="menu-text">{{ isItemLoading('boiDayHa', item.id, 'reject') ? 'Đang xử lý...' : 'Chưa đạt' }}</span>
                       </button>
                     </mat-menu>
                   </div>
@@ -160,47 +166,42 @@
             <mat-table [dataSource]="boiDayCaoDataSource" class="table" *ngIf="boiDayCaoDataSource.data.length > 0" matSort>
               
               <ng-container matColumnDef="kyhieuquanday">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Ký hiệu quấn dây </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Ký hiệu quấn dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> <b>{{item.kyhieuquanday}}</b> </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="congsuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Công suất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.congsuat}} kVA </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="tbkt">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> TBKT </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Quy cách dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.tbkt}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="dienap">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Điện áp </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Số sợi dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.dienap}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="quy_cach_day">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Quy cách dây </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Nhà sản xuất </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.quy_cach_day}} </mat-cell>
               </ng-container>
 
-              <ng-container matColumnDef="so_soi_day">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Số sợi dây </mat-header-cell>
-                <mat-cell *matCellDef="let item"> {{item.so_soi_day}} </mat-cell>
-              </ng-container>
-
               <ng-container matColumnDef="nha_san_xuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Nhà sản xuất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Người gia công </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.nha_san_xuat}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="ngay_san_xuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Ngày sản xuất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Ngày gia công </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.ngay_san_xuat | date:'dd/MM/yyyy'}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="trang_thai">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Trạng thái </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
                 <mat-cell *matCellDef="let item">
                   <mat-chip [color]="getStatusColor(item.trang_thai)" selected>
                     <mat-icon>{{item.trang_thai === 'approved' ? 'check_circle' : item.trang_thai === 'rejected' ? 'cancel' : 'pending'}}</mat-icon>
@@ -222,13 +223,15 @@
                         <mat-icon class="menu-icon">visibility</mat-icon>
                         <span class="menu-text">Xem chi tiết</span>
                       </button>
-                      <button mat-menu-item (click)="onApprove(item, 'boiDayCao')" class="menu-item">
-                        <mat-icon class="menu-icon">check_circle</mat-icon>
-                        <span class="menu-text">Duyệt</span>
+                      <button mat-menu-item (click)="onApprove(item, 'boiDayCao')" class="menu-item" [disabled]="isItemLoading('boiDayCao', item.id, 'approve')">
+                        <mat-icon class="menu-icon" *ngIf="!isItemLoading('boiDayCao', item.id, 'approve')">check_circle</mat-icon>
+                        <mat-spinner *ngIf="isItemLoading('boiDayCao', item.id, 'approve')" diameter="16" class="menu-icon"></mat-spinner>
+                        <span class="menu-text">{{ isItemLoading('boiDayCao', item.id, 'approve') ? 'Đang xử lý...' : 'Kiểm duyệt' }}</span>
                       </button>
-                      <button mat-menu-item (click)="onReject(item, 'boiDayCao')" class="menu-item">
-                        <mat-icon class="menu-icon">cancel</mat-icon>
-                        <span class="menu-text">Từ chối</span>
+                      <button mat-menu-item (click)="onReject(item, 'boiDayCao')" class="menu-item" [disabled]="isItemLoading('boiDayCao', item.id, 'reject')">
+                        <mat-icon class="menu-icon" *ngIf="!isItemLoading('boiDayCao', item.id, 'reject')">cancel</mat-icon>
+                        <mat-spinner *ngIf="isItemLoading('boiDayCao', item.id, 'reject')" diameter="16" class="menu-icon"></mat-spinner>
+                        <span class="menu-text">{{ isItemLoading('boiDayCao', item.id, 'reject') ? 'Đang xử lý...' : 'Chưa đạt' }}</span>
                       </button>
                     </mat-menu>
                   </div>
@@ -270,42 +273,42 @@
             <mat-table [dataSource]="epBoiDayDataSource" class="table" *ngIf="epBoiDayDataSource.data.length > 0" matSort>
               
               <ng-container matColumnDef="kyhieuquanday">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Ký hiệu quấn dây </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Ký hiệu quấn dây </mat-header-cell>
                 <mat-cell *matCellDef="let item"> <b>{{item.kyhieuquanday}}</b> </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="congsuat">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Công suất </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.congsuat}} kVA </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="tbkt">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> TBKT </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.tbkt}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="dienap">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Điện áp </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.dienap}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="bd_ep">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Bối dây ép </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Nhà sản xuất </mat-header-cell>
                 <mat-cell *matCellDef="let item"> {{item.bd_ep}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="bung_bd">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Bung bối dây </mat-header-cell>
-                <mat-cell *matCellDef="let item"> {{item.bung_bd}} </mat-cell>
+                <mat-header-cell *matHeaderCellDef> Ngày sản xuất </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.bung_bd | date:'dd/MM/yyyy'}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="ngay_hoan_thanh">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Ngày hoàn thành </mat-header-cell>
-                <mat-cell *matCellDef="let item"> {{item.ngay_hoan_thanh | date:'dd/MM/yyyy'}} </mat-cell>
+                <mat-header-cell *matHeaderCellDef> Người gia công </mat-header-cell>
+                <mat-cell *matCellDef="let item"> {{item.ngay_hoan_thanh}} </mat-cell>
               </ng-container>
 
               <ng-container matColumnDef="trang_thai">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> Trạng thái </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
                 <mat-cell *matCellDef="let item">
                   <mat-chip [color]="getStatusColor(item.trang_thai)" selected>
                     <mat-icon>{{item.trang_thai === 'approved' ? 'check_circle' : item.trang_thai === 'rejected' ? 'cancel' : 'pending'}}</mat-icon>
@@ -327,13 +330,15 @@
                         <mat-icon class="menu-icon">visibility</mat-icon>
                         <span class="menu-text">Xem chi tiết</span>
                       </button>
-                      <button mat-menu-item (click)="onApprove(item, 'epBoiDay')" class="menu-item">
-                        <mat-icon class="menu-icon">check_circle</mat-icon>
-                        <span class="menu-text">Duyệt</span>
+                      <button mat-menu-item (click)="onApprove(item, 'epBoiDay')" class="menu-item" [disabled]="isItemLoading('epBoiDay', item.id, 'approve')">
+                        <mat-icon class="menu-icon" *ngIf="!isItemLoading('epBoiDay', item.id, 'approve')">check_circle</mat-icon>
+                        <mat-spinner *ngIf="isItemLoading('epBoiDay', item.id, 'approve')" diameter="16" class="menu-icon"></mat-spinner>
+                        <span class="menu-text">{{ isItemLoading('epBoiDay', item.id, 'approve') ? 'Đang xử lý...' : 'Kiểm duyệt' }}</span>
                       </button>
-                      <button mat-menu-item (click)="onReject(item, 'epBoiDay')" class="menu-item">
-                        <mat-icon class="menu-icon">cancel</mat-icon>
-                        <span class="menu-text">Từ chối</span>
+                      <button mat-menu-item (click)="onReject(item, 'epBoiDay')" class="menu-item" [disabled]="isItemLoading('epBoiDay', item.id, 'reject')">
+                        <mat-icon class="menu-icon" *ngIf="!isItemLoading('epBoiDay', item.id, 'reject')">cancel</mat-icon>
+                        <mat-spinner *ngIf="isItemLoading('epBoiDay', item.id, 'reject')" diameter="16" class="menu-icon"></mat-spinner>
+                        <span class="menu-text">{{ isItemLoading('epBoiDay', item.id, 'reject') ? 'Đang xử lý...' : 'Chưa đạt' }}</span>
                       </button>
                     </mat-menu>
                   </div>

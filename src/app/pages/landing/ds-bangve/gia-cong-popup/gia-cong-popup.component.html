@@ -10,21 +10,6 @@
 
   <!-- Nội dung popup -->
   <div class="popup-content">
-    <!-- Thông tin về danh sách workers -->
-    <div class="workers-info">
-      <p class="workers-description">
-        <mat-icon class="info-icon">info</mat-icon>
-        Danh sách chỉ hiển thị người dùng có quyền thực hiện gia công (role: user)
-      </p>
-      <p class="workers-count" *ngIf="!isLoadingWorkers">
-        Tổng cộng: {{ nguoiGiaCongOptions.length }} người dùng
-        <br>
-        <span class="khau-sx-count">
-          Bối dây hạ (quandayha): {{ quandayhaUsers.length }} người | 
-          Bối dây cao (quandaycao): {{ quandaycaoUsers.length }} người
-        </span>
-      </p>
-    </div>
 
     <form [formGroup]="giaCongForm" class="gia-cong-form">
       <!-- Bối dây hạ -->

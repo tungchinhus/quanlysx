@@ -17,6 +17,8 @@ interface Worker {
   code?: string;
   department?: string;
   khau_sx?: string; // Thêm field khau_sx để phân loại
+  LastName?: string;
+  FirstName?: string;
 }
 
 interface ApiResponse {
@@ -173,15 +175,27 @@ export class GiaCongPopupComponent implements OnInit {
         // Đảm bảo mỗi worker có đầy đủ thông tin
         const workers = response.users || [];
         workers.forEach(worker => {
-          // Log để debug
-          console.log('Worker from API:', {
-            id: worker.id,
-            userId: worker.userId,
-            name: worker.name,
-            email: worker.email,
-            role: worker.role,
-            khau_sx: worker.khau_sx
-          });
+          // Đảm bảo field name không bị undefined và tạo tên duy nhất
+          if (!worker.name || worker.name.trim() === '') {
+            if (worker.FirstName && worker.LastName) {
+              worker.name = `${worker.FirstName} ${worker.LastName}`;
+            } else if (worker.username && worker.username.trim() !== '') {
+              worker.name = worker.username;
+            } else if (worker.email && worker.email.trim() !== '') {
+              worker.name = worker.email;
+            } else {
+              worker.name = `User ${worker.id}`;
+            }
+          }
+          
+          // Tạo tên duy nhất bằng cách thêm khau_sx prefix nếu có
+          if (worker.khau_sx && worker.khau_sx.trim() !== '') {
+            const khauSxPrefix = worker.khau_sx.toLowerCase();
+            // Chỉ thêm prefix nếu chưa có
+            if (!worker.name.toLowerCase().startsWith(khauSxPrefix)) {
+              worker.name = `${khauSxPrefix} ${worker.name}`;
+            }
+          }
         });
         
         return workers;
@@ -251,8 +265,11 @@ export class GiaCongPopupComponent implements OnInit {
   getWorkerDisplayName(worker: Worker): string {
     let displayName = '';
     
+    // Ưu tiên sử dụng name đã được xử lý từ getWorkers
     if (worker.name && worker.name.trim() !== '') {
       displayName = worker.name;
+    } else if (worker.FirstName && worker.LastName) {
+      displayName = `${worker.FirstName} ${worker.LastName}`;
     } else if (worker.username && worker.username.trim() !== '') {
       displayName = worker.username;
     } else if (worker.email && worker.email.trim() !== '') {
@@ -311,8 +328,16 @@ export class GiaCongPopupComponent implements OnInit {
     console.log('User2 ID:', user2?.id, 'Type:', typeof user2?.id);
     console.log('User1 userId:', user1?.userId, 'Type:', typeof user1?.userId);
     console.log('User2 userId:', user2?.userId, 'Type:', typeof user2?.userId);
+    console.log('User1 khau_sx:', user1?.khau_sx);
+    console.log('User2 khau_sx:', user2?.khau_sx);
+    console.log('User1 name:', user1?.name);
+    console.log('User2 name:', user2?.name);
+    console.log('User1 FirstName:', user1?.FirstName);
+    console.log('User2 FirstName:', user2?.FirstName);
+    console.log('User1 LastName:', user1?.LastName);
+    console.log('User2 LastName:', user2?.LastName);
     
-    // So sánh ID trước
+    // So sánh ID trước (quan trọng nhất)
     if (user1.id !== user2.id) {
       console.log('Users have different IDs, returning true');
       return true;
@@ -324,19 +349,38 @@ export class GiaCongPopupComponent implements OnInit {
       return true;
     }
     
-    console.log('Users have same ID and userId, checking email...');
+    // So sánh FirstName + LastName nếu có
+    if (user1.FirstName && user2.FirstName && user1.FirstName !== user2.FirstName) {
+      console.log('Users have different FirstNames, returning true');
+      return true;
+    }
     
-    // Nếu ID giống nhau, so sánh email
+    if (user1.LastName && user2.LastName && user1.LastName !== user2.LastName) {
+      console.log('Users have different LastNames, returning true');
+      return true;
+    }
+    
+    // So sánh name nếu có
+    if (user1.name && user2.name && user1.name !== user2.name) {
+      console.log('Users have different names, returning true');
+      return true;
+    }
+    
+    // So sánh email
     if (user1.email && user2.email && user1.email !== user2.email) {
       console.log('Users have different emails, returning true');
       return true;
     }
     
-    console.log('Users have same email, checking username...');
-    
-    // Nếu email giống nhau, so sánh username
+    // So sánh username
     if (user1.username && user2.username && user1.username !== user2.username) {
       console.log('Users have different usernames, returning true');
+      return true;
+    }
+    
+    // So sánh khau_sx (cuối cùng vì có thể giống nhau)
+    if (user1.khau_sx && user2.khau_sx && user1.khau_sx !== user2.khau_sx) {
+      console.log('Users have different khau_sx, returning true');
       return true;
     }
     
@@ -375,6 +419,12 @@ export class GiaCongPopupComponent implements OnInit {
           }
         }
       }
+      
+      // Debug: Log form state sau khi validation
+      console.log('Form state after validation:');
+      console.log('Form valid:', this.giaCongForm.valid);
+      console.log('boiDayCao errors:', this.giaCongForm.get('boiDayCao')?.errors);
+      console.log('isFormValidForSubmission:', this.isFormValidForSubmission);
     }
   }
 
@@ -390,7 +440,10 @@ export class GiaCongPopupComponent implements OnInit {
         email: worker.email,
         role: worker.role,
         department: worker.department,
-        khau_sx: worker.khau_sx
+        khau_sx: worker.khau_sx,
+        FirstName: worker.FirstName,
+        LastName: worker.LastName,
+        displayName: this.getWorkerDisplayName(worker)
       });
     });
     
@@ -400,7 +453,8 @@ export class GiaCongPopupComponent implements OnInit {
         id: worker.id,
         name: worker.name,
         email: worker.email,
-        khau_sx: worker.khau_sx
+        khau_sx: worker.khau_sx,
+        displayName: this.getWorkerDisplayName(worker)
       });
     });
     
@@ -410,7 +464,8 @@ export class GiaCongPopupComponent implements OnInit {
         id: worker.id,
         name: worker.name,
         email: worker.email,
-        khau_sx: worker.khau_sx
+        khau_sx: worker.khau_sx,
+        displayName: this.getWorkerDisplayName(worker)
       });
     });
   }
@@ -436,6 +491,18 @@ export class GiaCongPopupComponent implements OnInit {
     if (this.quandayhaUsers.length === 0 && this.quandaycaoUsers.length === 0) {
       this.commonService.thongbao('Không có người gia công nào phù hợp. Vui lòng thử lại sau.', 'Đóng', 'error');
       this.dialogRef.close();
+    }
+    
+    // Debug: Test validation với 2 user khác nhau
+    if (this.quandayhaUsers.length > 0 && this.quandaycaoUsers.length > 0) {
+      const testUser1 = this.quandayhaUsers[0];
+      const testUser2 = this.quandaycaoUsers[0];
+      console.log('=== Testing Validation ===');
+      console.log('Test User 1:', testUser1);
+      console.log('Test User 2:', testUser2);
+      const areDifferent = this.areUsersDifferent(testUser1, testUser2);
+      console.log('Test validation result:', areDifferent);
+      console.log('========================');
     }
   }
 }

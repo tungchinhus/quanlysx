@@ -203,7 +203,26 @@ export class BoiDayHaComponent implements OnInit {
     };
     
     return this.http.get<ApiResponse>(apiUrl, { headers }).pipe(
-      map(response => response.users) // Extract users array from response
+      map(response => {
+        console.log('API response for workers:', response);
+        
+        const workers = response.users || [];
+        workers.forEach(worker => {
+          // Đảm bảo field name không bị undefined
+          if (!worker.name || worker.name.trim() === '') {
+            // Nếu không có name, sử dụng username hoặc email làm name
+            if (worker.username && worker.username.trim() !== '') {
+              worker.name = worker.username;
+            } else if (worker.email && worker.email.trim() !== '') {
+              worker.name = worker.email;
+            } else {
+              worker.name = `User ${worker.id}`;
+            }
+          }
+        });
+        
+        return workers;
+      })
     );
   }
 
@@ -213,20 +232,25 @@ export class BoiDayHaComponent implements OnInit {
       return 'Chưa chọn người gia công';
     }
     
+    let displayName = '';
+    
     // Ưu tiên hiển thị name, sau đó username, email, cuối cùng là User ID
     if (worker.name && worker.name.trim() !== '') {
-      return worker.name;
+      displayName = worker.name;
+    } else if (worker.username && worker.username.trim() !== '') {
+      displayName = worker.username;
+    } else if (worker.email && worker.email.trim() !== '') {
+      displayName = worker.email;
+    } else {
+      displayName = `User ID: ${worker.id}`;
     }
     
-    if (worker.username && worker.username.trim() !== '') {
-      return worker.username;
+    // Thêm thông tin role nếu có
+    if (worker.role && worker.role.trim() !== '') {
+      displayName += ` (${worker.role})`;
     }
     
-    if (worker.email && worker.email.trim() !== '') {
-      return worker.email;
-    }
-    
-    return `User ${worker.id}`;
+    return displayName;
   }
 
   getCurrentUser(): Worker {

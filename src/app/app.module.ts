@@ -33,8 +33,11 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LandingService } from './pages/landing/landing.service';
 import { TokenService } from './shared/services/token-service';
+import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog.component';
+import { RejectDialogComponent } from './shared/components/reject-dialog/reject-dialog.component';
 defineLocale('vi', viLocale);
 defineLocale('en', enGbLocale);
 
@@ -105,7 +108,8 @@ const locationInitialized = async (translate: TranslateService, injector: Inject
     MatNativeDateModule, // Required for MatDatepicker
     MatRadioModule,
     MatFormFieldModule,
-    MatInputModule, 
+    MatInputModule,
+    MatProgressSpinnerModule, 
     TranslateModule.forRoot(Constant.translateConfig),
     HttpClientXsrfModule.withOptions({
       cookieName: 'XSRF-TOKEN',
@@ -113,7 +117,9 @@ const locationInitialized = async (translate: TranslateService, injector: Inject
     })
   ],
   declarations: [
-    AppComponent
+    AppComponent,
+    ConfirmDialogComponent,
+    RejectDialogComponent
   ],
   providers: [
     CommonService,
