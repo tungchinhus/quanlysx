@@ -31,7 +31,7 @@ export interface BoiDayHaData {
   // Các field kỹ thuật cần thiết
   kt_bung_bd_truoc?: number;
   bung_bd_sau?: number;
-  chieu_quan_day?: string;
+  chieu_quan_day?: boolean;
   may_quan_day?: string;
   xung_quanh_day?: number;
   hai_dau_day?: number;
@@ -67,7 +67,7 @@ export interface BoiDayHaSubmitData {
   trang_thai: number;
   kt_bung_bd_truoc?: number;
   bung_bd_sau?: number;
-  chieu_quan_day?: string;
+  chieu_quan_day?: boolean;
   may_quan_day?: string;
   xung_quanh_day?: number;
   hai_dau_day?: number;
@@ -85,36 +85,29 @@ export interface BoiDayHaSubmitData {
 
 // Interface cho API request
 export interface BoiDayHaApiRequest {
-  quan_day_id: number;
-  ky_hieu_bv: string;
-  cong_suat: number;
-  tbkt: string;
-  dien_ap: string;
-  so_boi_day: string;
+  masothe_bd_ha: string;
+  kyhieubangve: string;
+  ngaygiacong: string;
+  nguoigiacong: string;
   quycachday: string;
   sosoiday: number;
-  nhasanxuat: string;
-  nhasanxuat_name?: string;
   ngaysanxuat: string;
+  nhasanxuat: string;
   chuvikhuon: number;
-  ghichu?: string;
-  trangthai: number;
-  ktbungbdtruoc?: number;
-  bungbdsau?: number;
-  chieuquanday?: string;
-  mayquanday?: string;
-  xungquanhday?: number;
-  haidauday?: number;
-  chuvibdhatrong1p?: number;
-  chuvibdhatrong2p?: number;
-  chuvibdhatrong3p?: number;
-  ktbdhangoai1p?: number;
-  ktbdhangoai2p?: number;
-  ktbdhangoai3p?: number;
-  dientrohara?: number;
-  dientrobhb?: number;
-  dientroharc?: number;
-  dolechdientrogiuacacpha?: number;
+  kt_bung_bd: number;
+  chieuquanday: boolean;
+  mayquanday: string;
+  xungquanh: number;
+  haidau: number;
+  kt_boiday_trong: string;
+  chuvi_bd_trong: number;
+  kt_bd_ngoai: string;
+  dientroRa: number;
+  dientroRb: number;
+  dientroRc: number;
+  dolechdientro: number;
+  trang_thai: number;
+  khau_sx: string;
 }
 
 @Component({
@@ -163,7 +156,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       chu_vi_khuon: [0, [Validators.min(0)]],
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: ['trái'],
+      chieu_quan_day: [false],
       may_quan_day: [''],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
@@ -280,34 +273,40 @@ export class BoiDayHaPopupComponent implements OnInit {
       return 'quycachday' in data;
     };
     
-    // Kiểm tra các field bắt buộc
-    if (isSubmitData(data)) {
-      if (!data.quy_cach_day?.trim()) {
-        errors.push('Quy cách dây là bắt buộc');
-      }
-      if (!data.so_soi_day || data.so_soi_day <= 0) {
-        errors.push('Số sợi dây phải lớn hơn 0');
-      }
-      if (!data.nha_san_xuat) {
-        errors.push('Nhà sản xuất là bắt buộc');
-      }
-      if (!data.ngay_san_xuat) {
-        errors.push('Ngày sản xuất là bắt buộc');
-      }
-    } else if (isApiRequest(data)) {
-      if (!data.quycachday?.trim()) {
-        errors.push('Quy cách dây là bắt buộc');
-      }
-      if (!data.sosoiday || data.sosoiday <= 0) {
-        errors.push('Số sợi dây phải lớn hơn 0');
-      }
-      if (!data.nhasanxuat) {
-        errors.push('Nhà sản xuất là bắt buộc');
-      }
-      if (!data.ngaysanxuat) {
-        errors.push('Ngày sản xuất là bắt buộc');
-      }
-    }
+         // Kiểm tra các field bắt buộc
+     if (isSubmitData(data)) {
+       if (!data.quy_cach_day?.trim()) {
+         errors.push('Quy cách dây là bắt buộc');
+       }
+       if (!data.so_soi_day || data.so_soi_day <= 0) {
+         errors.push('Số sợi dây phải lớn hơn 0');
+       }
+       if (!data.nha_san_xuat) {
+         errors.push('Nhà sản xuất là bắt buộc');
+       }
+       if (!data.ngay_san_xuat) {
+         errors.push('Ngày sản xuất là bắt buộc');
+       }
+     } else if (isApiRequest(data)) {
+       if (!data.quycachday?.trim()) {
+         errors.push('Quy cách dây là bắt buộc');
+       }
+       if (!data.sosoiday || data.sosoiday <= 0) {
+         errors.push('Số sợi dây phải lớn hơn 0');
+       }
+       if (!data.nhasanxuat) {
+         errors.push('Nhà sản xuất là bắt buộc');
+       }
+       if (!data.ngaysanxuat) {
+         errors.push('Ngày sản xuất là bắt buộc');
+       }
+       if (!data.kyhieubangve?.trim()) {
+         errors.push('Ký hiệu bảng vẽ là bắt buộc');
+       }
+       if (!data.nguoigiacong?.trim()) {
+         errors.push('Người gia công là bắt buộc');
+       }
+     }
     
     console.log('Validation errors:', errors);
     return { isValid: errors.length === 0, errors };
@@ -319,36 +318,29 @@ export class BoiDayHaPopupComponent implements OnInit {
     const nhaSanXuatName = formData.nha_san_xuat === 'OTHER' ? formData.nha_san_xuat_other : this.getManufacturerName(formData.nha_san_xuat);
     
     return {
-      quan_day_id: this.data.quanDay.id,
-      ky_hieu_bv: this.data.quanDay.kyhieuquanday,
-      cong_suat: this.data.quanDay.congsuat,
-      tbkt: this.data.quanDay.tbkt,
-      dien_ap: this.data.quanDay.dienap,
-      so_boi_day: this.data.quanDay.soboiday,
+      masothe_bd_ha: `${this.data.quanDay.kyhieuquanday}-065`,
+      kyhieubangve: this.data.quanDay.kyhieuquanday,
+      ngaygiacong: new Date().toISOString().split('T')[0],
+      nguoigiacong: this.currentUser?.hoten || this.currentUser?.username || this.currentUser?.email || 'Unknown',
       quycachday: formData.quy_cach_day,
       sosoiday: formData.so_soi_day,
-      nhasanxuat: nhaSanXuat,
-      nhasanxuat_name: nhaSanXuatName,
       ngaysanxuat: formData.ngay_san_xuat.toISOString().split('T')[0],
-      chuvikhuon: formData.chu_vi_khuon || 0,
-      ghichu: formData.ghi_chu || '',
-      trangthai: 1,
-      ktbungbdtruoc: formData.kt_bung_bd_truoc || 0,
-      bungbdsau: formData.bung_bd_sau || 0,
-      chieuquanday: formData.chieu_quan_day || 'trái',
-      mayquanday: formData.may_quan_day || '',
-      xungquanhday: this.getSelectedThickness(formData, 'xung_quanh'),
-      haidauday: this.getSelectedThickness(formData, 'hai_dau'),
-      chuvibdhatrong1p: formData.chu_vi_bd_ha_trong_1p || 0,
-      chuvibdhatrong2p: formData.chu_vi_bd_ha_trong_2p || 0,
-      chuvibdhatrong3p: formData.chu_vi_bd_ha_trong_3p || 0,
-      ktbdhangoai1p: formData.kt_bd_ha_ngoai_bv_1p || 0,
-      ktbdhangoai2p: formData.kt_bd_ha_ngoai_bv_2p || 0,
-      ktbdhangoai3p: formData.kt_bd_ha_ngoai_bv_3p || 0,
-      dientrohara: formData.dien_tro_ha_ra || 0,
-      dientrobhb: formData.dien_tro_ha_rb || 0,
-      dientroharc: formData.dien_tro_ha_rc || 0,
-      dolechdientrogiuacacpha: formData.do_lech_dien_tro_giua_cac_pha || 0
+      nhasanxuat: nhaSanXuat,
+      chuvikhuon: formData.chu_vi_khuon,
+      kt_bung_bd: formData.kt_bung_bd_truoc || 0,
+      chieuquanday: formData.chieu_quan_day,
+      mayquanday: formData.may_quan_day,
+      xungquanh: formData.xung_quanh_day_2,
+      haidau: formData.hai_dau_day_2,
+      kt_boiday_trong: formData.kt_boiday_trong,
+      chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p,
+      kt_bd_ngoai: formData.kt_bd_ngoai,
+      dientroRa: formData.dien_tro_ha_ra,
+      dientroRb: formData.dien_tro_ha_rb,
+      dientroRc: formData.dien_tro_ha_rc,
+      dolechdientro: formData.do_lech_dien_tro_giua_cac_pha,
+      trang_thai: 1,
+      khau_sx: this.currentUser?.khau_sx
     };
   }
 
@@ -422,7 +414,7 @@ export class BoiDayHaPopupComponent implements OnInit {
 
   // Gọi API save-bd-ha để lưu thông tin bối dây hạ
   private async submitToApi(data: BoiDayHaApiRequest): Promise<any> {
-    const url = `${this.commonService.getServerAPIURL()}api/save-bd-ha`;
+    const url = `${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-ha`;
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${this.authToken}`,
       'Content-Type': 'application/json'
