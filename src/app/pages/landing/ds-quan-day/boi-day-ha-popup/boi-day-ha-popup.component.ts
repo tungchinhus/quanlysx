@@ -381,9 +381,9 @@ export class BoiDayHaPopupComponent implements OnInit {
         throw new Error(`Dữ liệu không hợp lệ: ${validation.errors.join(', ')}`);
       }
       
-      // Gọi API
+      // Gọi API save-bd-ha
       const response = await this.submitToApi(apiRequest);
-      console.log('API response:', response);
+      console.log('save-bd-ha API response:', response);
       
       // Hiển thị thông báo thành công
       this.snackBar.open('Lưu thông tin bối dây hạ thành công!', 'Đóng', {
@@ -420,26 +420,26 @@ export class BoiDayHaPopupComponent implements OnInit {
     }
   }
 
-  // Gọi API để lưu thông tin
+  // Gọi API save-bd-ha để lưu thông tin bối dây hạ
   private async submitToApi(data: BoiDayHaApiRequest): Promise<any> {
-    const url = `${this.commonService.getServerAPIURL()}api/boi-day-ha`;
+    const url = `${this.commonService.getServerAPIURL()}api/save-bd-ha`;
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${this.authToken}`,
       'Content-Type': 'application/json'
     });
     
-    console.log('Submitting to API:', url);
+    console.log('Submitting to save-bd-ha API:', url);
     console.log('Request data:', data);
     console.log('Headers:', headers);
     
     return new Promise((resolve, reject) => {
       this.http.post(url, data, { headers }).subscribe({
         next: (response: any) => {
-          console.log('API response success:', response);
+          console.log('save-bd-ha API response success:', response);
           resolve(response);
         },
         error: (error: any) => {
-          console.error('API error:', error);
+          console.error('save-bd-ha API error:', error);
           reject(error);
         }
       });
