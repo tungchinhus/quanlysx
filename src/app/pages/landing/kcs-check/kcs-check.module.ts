@@ -19,6 +19,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 // Shared Module
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -60,6 +61,7 @@ const routes: Routes = [
     MatDialogModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatSnackBarModule,
     
     // Shared Module
     SharedModule,

@@ -1151,7 +1151,7 @@ export class DsQuanDayComponent implements OnInit {
     
     // Mở popup bối dây hạ
     const dialogRef = this.dialog.open(BoiDayHaPopupComponent, {
-      width: '1000px',
+      width: '1200px',
       maxWidth: '95vw',
       data: { quanDay: element },
       disableClose: true

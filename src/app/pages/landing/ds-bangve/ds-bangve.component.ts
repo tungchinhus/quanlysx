@@ -1310,8 +1310,8 @@ export class DsBangveComponent implements OnInit {
     
     // Tạo request body theo format API yêu cầu
     const requestBody = {
-      userId_boidayha: boiDayHa.userId || boiDayHa.id,
-      userId_boidaycao: boiDayCao.userId || boiDayCao.id,
+      userId_boidayha: boiDayHa.UserId,
+      userId_boidaycao: boiDayCao.UserId,
       bangVeId: drawing.id,
       permissionType: "gia_cong", // Loại quyền
       status: true, // Trạng thái active
@@ -2010,7 +2010,7 @@ export class DsBangveComponent implements OnInit {
   // Method để transform dữ liệu từ API response an toàn
   private transformDrawingData(item: any): BangVeData {
     return {
-      id: item.id || 0,
+      id: item.Id || 0,
       kyhieubangve: item.kyhieubangve || '',
       congsuat: item.congsuat || 0,
       tbkt: item.tbkt || '',

@@ -139,63 +139,76 @@
             </mat-error>
           </mat-form-field>
 
+          <!-- Độ dày -->
           <div class="form-field">
-            <label class="mat-label">Xung quanh, dày (mm)</label>
-            <div class="button-group">
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('xung_quanh_day')?.value === 2"
-                      (click)="boiDayCaoForm.patchValue({xung_quanh_day: 2}); onFormValueChange()"
-                      class="thickness-button">
-                2mm
-              </button>
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('xung_quanh_day')?.value === 3"
-                      (click)="boiDayCaoForm.patchValue({xung_quanh_day: 3}); onFormValueChange()"
-                      class="thickness-button">
-                3mm
-              </button>
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('xung_quanh_day')?.value === 4"
-                      (click)="boiDayCaoForm.patchValue({xung_quanh_day: 4}); onFormValueChange()"
-                      class="thickness-button">
-                4mm
-              </button>
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('xung_quanh_day')?.value === 6"
-                      (click)="boiDayCaoForm.patchValue({xung_quanh_day: 6}); onFormValueChange()"
-                      class="thickness-button">
-                6mm
-              </button>
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label class="mat-label">Hai đầu, dày (mm)</label>
-            <div class="button-group">
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('hai_dau_day')?.value === 2"
-                      (click)="boiDayCaoForm.patchValue({hai_dau_day: 2})"
-                      class="thickness-button">
-                2mm
-              </button>
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('hai_dau_day')?.value === 3"
-                      (click)="boiDayCaoForm.patchValue({hai_dau_day: 3})"
-                      class="thickness-button">
-                3mm
-              </button>
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('hai_dau_day')?.value === 4"
-                      (click)="boiDayCaoForm.patchValue({hai_dau_day: 4})"
-                      class="thickness-button">
-                4mm
-              </button>
-              <button type="button" 
-                      [class.selected]="boiDayCaoForm.get('hai_dau_day')?.value === 6"
-                      (click)="boiDayCaoForm.patchValue({hai_dau_day: 6})"
-                      class="thickness-button">
-                6mm
-              </button>
+            <label class="mat-label">Độ dày (mm)</label>
+            <div class="thickness-controls">
+              <div class="thickness-group">
+                <span class="thickness-label">Xung quanh:</span>
+                <div class="thickness-inputs">
+                  <input type="number" 
+                         formControlName="xung_quanh_day_2" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="2"
+                         value="2">
+                  <input type="number" 
+                         formControlName="xung_quanh_day_3" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="3"
+                         value="3">
+                  <input type="number" 
+                         formControlName="xung_quanh_day_4" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="4"
+                         value="4">
+                  <input type="number" 
+                         formControlName="xung_quanh_day_6" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="6"
+                         value="6">
+                </div>
+              </div>
+              <div class="thickness-group">
+                <span class="thickness-label">Hai đầu:</span>
+                <div class="thickness-inputs">
+                  <input type="number" 
+                         formControlName="hai_dau_day_2" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="2"
+                         value="2">
+                  <input type="number" 
+                         formControlName="hai_dau_day_3" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="3"
+                         value="3">
+                  <input type="number" 
+                         formControlName="hai_dau_day_4" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="4"
+                         value="4">
+                  <input type="number" 
+                         formControlName="hai_dau_day_6" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="6"
+                         value="6">
+                </div>
+              </div>
             </div>
           </div>
 
@@ -374,6 +387,7 @@
     <button mat-button (click)="onCancel()" [disabled]="isLoading">
       Hủy
     </button>
+    
     <button mat-raised-button 
             color="primary" 
             (click)="onSubmit()" 
@@ -383,4 +397,53 @@
       <span *ngIf="!isLoading">Hoàn thành</span>
     </button>
   </mat-dialog-actions>
+
+  <!-- Form KCS Failure Dialog -->
+  <div class="kcs-failure-overlay" *ngIf="showKcsFailureForm">
+    <div class="kcs-failure-dialog">
+      <div class="kcs-failure-header">
+        <h3>KCS Quality Check Failure</h3>
+        <button mat-icon-button (click)="hideKcsFailureForm()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      
+      <div class="kcs-failure-content">
+        <form [formGroup]="kcsFailureForm" (ngSubmit)="submitKcsFailure()">
+          <div class="form-field">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Khẩu sản xuất</mat-label>
+              <input matInput formControlName="id_khau_sanxuat" placeholder="Nhập khẩu sản xuất">
+              <mat-error *ngIf="kcsFailureForm.get('id_khau_sanxuat')?.hasError('required') && kcsFailureForm.get('id_khau_sanxuat')?.touched">
+                Khẩu sản xuất là bắt buộc
+              </mat-error>
+            </mat-form-field>
+          </div>
+          
+          <div class="form-field">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Ghi chú</mat-label>
+              <textarea matInput formControlName="ghi_chu" placeholder="Nhập lý do không đạt chất lượng" rows="3"></textarea>
+              <mat-error *ngIf="kcsFailureForm.get('ghi_chu')?.hasError('required') && kcsFailureForm.get('ghi_chu')?.touched">
+                Ghi chú là bắt buộc
+              </mat-error>
+            </mat-form-field>
+          </div>
+          
+          <div class="kcs-failure-actions">
+            <button mat-button type="button" (click)="hideKcsFailureForm()" [disabled]="isLoading">
+              Hủy
+            </button>
+            <button mat-raised-button 
+                    color="warn" 
+                    type="submit" 
+                    [disabled]="!kcsFailureForm.valid || isLoading">
+              <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+              <span *ngIf="!isLoading">Gửi KCS Failure</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>

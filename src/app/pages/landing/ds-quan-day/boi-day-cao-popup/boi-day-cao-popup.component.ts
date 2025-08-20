@@ -8,6 +8,7 @@ import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 import { QuanDayData } from '../ds-quan-day.component';
 import { Constant } from 'src/app/constant/constant';
 import { DialogComponent } from 'src/app/shared/dialogs/dialog/dialog.component';
+import { KcsQualityService, KcsQualityCheckFailure } from 'src/app/shared/services/kcs-quality.service';
 
 export interface BoiDayCaoData {
   id?: number;
@@ -145,6 +146,8 @@ export class BoiDayCaoPopupComponent implements OnInit {
   currentUser: any;
   authToken: string = '';
   currentDate: Date = new Date();
+  showKcsFailureForm = false; // Hiển thị form KCS failure
+  kcsFailureForm: FormGroup; // Form cho KCS failure
 
   constructor(
     private fb: FormBuilder,
@@ -155,6 +158,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
     private commonService: CommonService,
     private authService: AuthServices,
     private changeDetectorRef: ChangeDetectorRef,
+    private kcsQualityService: KcsQualityService,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     this.boiDayCaoForm = this.fb.group({
@@ -184,8 +188,14 @@ export class BoiDayCaoPopupComponent implements OnInit {
       bung_bd_sau: [0, [Validators.min(0)]],
       chieu_quan_day: ['trái'], // Có giá trị mặc định
       may_quan_day: [''],
-      xung_quanh_day: [2, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day: [2, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_6: [6, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       kt_bd_ha_trong_bv: [''],
       chu_vi_bd_ha_trong_1p: [0, [Validators.min(0)]],
       chu_vi_bd_ha_trong_2p: [0, [Validators.min(0)]],
@@ -199,6 +209,12 @@ export class BoiDayCaoPopupComponent implements OnInit {
       dien_tro_ha_rc: [0, [Validators.min(0)]],
       do_lech_dien_tro_giua_cac_pha: [0, [Validators.min(0), Validators.max(2)]],
       ghi_chu: ['']
+    });
+
+    // Form cho KCS failure
+    this.kcsFailureForm = this.fb.group({
+      id_khau_sanxuat: ['', Validators.required],
+      ghi_chu: ['', Validators.required]
     });
   }
 
@@ -233,8 +249,14 @@ export class BoiDayCaoPopupComponent implements OnInit {
       bung_bd_sau: [0, [Validators.min(0)]],
       chieu_quan_day: ['trái'], // Có giá trị mặc định
       may_quan_day: [''],
-      xung_quanh_day: [2, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day: [2, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_6: [6, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       kt_bd_ha_trong_bv: [''],
       chu_vi_bd_ha_trong_1p: [0, [Validators.min(0)]],
       chu_vi_bd_ha_trong_2p: [0, [Validators.min(0)]],
@@ -597,8 +619,8 @@ export class BoiDayCaoPopupComponent implements OnInit {
       nhasanxuat: nhaSanXuat || '',
       chieuquanday: formData.chieu_quan_day === 'trái' ? 1 : 2, // 1 = trái, 2 = phải
       mayquanday: formData.may_quan_day || '',
-      xungquanh: formData.xung_quanh_day || 2,
-      haidau: formData.hai_dau_day || 2,
+      xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
+      haidau: this.getSelectedThickness(formData, 'hai_dau'),
       bd_tt: formData.kt_bung_bd_truoc || 0, // Kích thước bụng bối dây trước
       chuvi_bd_tt: formData.chu_vi_khuon || 0, // Chu vi bối dây theo thiết kế
       dientroRa: formData.dien_tro_ha_ra || 0,
@@ -730,5 +752,97 @@ export class BoiDayCaoPopupComponent implements OnInit {
       verticalPosition: 'top',
       panelClass: ['error-snackbar']
     });
+  }
+
+  // Hiển thị form KCS failure
+  showKcsFailureFormDialog() {
+    this.showKcsFailureForm = true;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  // Ẩn form KCS failure
+  hideKcsFailureForm() {
+    this.showKcsFailureForm = false;
+    this.kcsFailureForm.reset();
+    this.changeDetectorRef.detectChanges();
+  }
+
+  // Submit KCS failure
+  async submitKcsFailure() {
+    if (!this.kcsFailureForm.valid) {
+      this.snackBar.open('Vui lòng nhập đầy đủ thông tin', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    this.isLoading = true;
+
+    try {
+      const kcsFailureData: KcsQualityCheckFailure = {
+        kyhieubangve: this.data.quanDay.kyhieuquanday,
+        user_kcs_approve: this.currentUser?.username || this.currentUser?.email || 'Unknown',
+        id_khau_sanxuat: this.kcsFailureForm.get('id_khau_sanxuat')?.value,
+        ghi_chu: this.kcsFailureForm.get('ghi_chu')?.value,
+        check_type: 'boidaycao',
+        bd_id: this.data.quanDay.id || 0
+      };
+
+      console.log('Submitting KCS failure for boidaycao:', kcsFailureData);
+
+      // Gọi API KCS quality check failure
+      const response = await this.kcsQualityService.submitQualityCheckFailure(kcsFailureData).toPromise();
+      console.log('KCS failure API response:', response);
+
+      // Hiển thị thông báo thành công
+      this.snackBar.open('Đã gửi thông báo KCS failure thành công!', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['success-snackbar']
+      });
+
+      // Ẩn form và đóng popup
+      this.hideKcsFailureForm();
+      this.dialogRef.close({
+        success: true,
+        data: response,
+        message: 'Đã gửi thông báo KCS failure thành công!',
+        kcsFailure: true
+      });
+
+    } catch (error: any) {
+      console.error('Error submitting KCS failure:', error);
+      
+      const errorMessage = error.error?.message || error.message || 'Có lỗi xảy ra khi gửi thông báo KCS failure';
+      this.snackBar.open(errorMessage, 'Đóng', {
+        duration: 5000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['error-snackbar']
+      });
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  private getSelectedThickness(formData: any, fieldName: string): number {
+    if (fieldName === 'xung_quanh') {
+      // Check which xung quanh field has a value
+      if (formData.xung_quanh_day_2 && formData.xung_quanh_day_2 > 0) return 2;
+      if (formData.xung_quanh_day_3 && formData.xung_quanh_day_3 > 0) return 3;
+      if (formData.xung_quanh_day_4 && formData.xung_quanh_day_4 > 0) return 4;
+      if (formData.xung_quanh_day_6 && formData.xung_quanh_day_6 > 0) return 6;
+    } else if (fieldName === 'hai_dau') {
+      // Check which hai dau field has a value
+      if (formData.hai_dau_day_2 && formData.hai_dau_day_2 > 0) return 2;
+      if (formData.hai_dau_day_3 && formData.hai_dau_day_3 > 0) return 3;
+      if (formData.hai_dau_day_4 && formData.hai_dau_day_4 > 0) return 4;
+      if (formData.hai_dau_day_6 && formData.hai_dau_day_6 > 0) return 6;
+    }
+    return 2; // Default value
   }
 }

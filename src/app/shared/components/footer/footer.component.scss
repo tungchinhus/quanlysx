@@ -6,7 +6,16 @@
     font-weight: 400;
     font-size: 13px;
     line-height: 18px;
-    // margin-top: 30px;
+    position: fixed !important; /* Fixed position để footer luôn ở dưới cùng */
+    bottom: 0 !important; /* Dock ở dưới cùng */
+    left: 0 !important; /* Căn trái */
+    right: 0 !important; /* Căn phải */
+    width: 100vw !important; /* Chiều rộng 100% viewport */
+    z-index: 9999 !important; /* Đảm bảo footer hiển thị trên tất cả element khác */
+    margin: 0 !important; /* Loại bỏ margin */
+    padding: 0 !important; /* Loại bỏ padding */
+    box-sizing: border-box !important; /* Box sizing */
+    
     .policy-container {
         min-height: 80px;
         display: flex;

@@ -2,14 +2,9 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { FormControl } from '@angular/forms';
-import { AuthServices } from 'src/app/shared/services/authen/auth.service';
-import { Router } from '@angular/router';
-import { KcsCheckService, BoiDayHaData, BoiDayCaoData, EpBoiDayData } from './kcs-check.service';
-import { ConfirmDialogComponent } from 'src/app/shared/components/confirm-dialog/confirm-dialog.component';
-import { RejectDialogComponent } from 'src/app/shared/components/reject-dialog/reject-dialog.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { CommonService } from '../../../shared/services/common.service';
+import { AuthServices } from '../../../shared/services/authen/auth.service';
 
 @Component({
   selector: 'app-kcs-check',
@@ -18,398 +13,265 @@ import { RejectDialogComponent } from 'src/app/shared/components/reject-dialog/r
 })
 export class KcsCheckComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
 
-  // Authentication check
-  isAuthenticated = false;
-  hasEpBoiDayPermission = false;
-  currentUser: any;
+  // Search variables for each tab
+  searchBangVe: string = '';
+  searchKeyword: string = '';
+  searchBangVeCao: string = '';
+  searchKeywordCao: string = '';
+  searchBangVeEp: string = '';
+  searchKeywordEp: string = '';
 
-  // Tab management
-  selectedTabIndex = 0;
+  // Data sources for each tab
+  boiDayHaDataSource = new MatTableDataSource<any>([]);
+  boiDayCaoDataSource = new MatTableDataSource<any>([]);
+  epBoiDayDataSource = new MatTableDataSource<any>([]);
 
-  // Search controls
-  searchTermBoiDayHa = new FormControl('');
-  searchTermBoiDayCao = new FormControl('');
-  searchTermEpBoiDay = new FormControl('');
-
-  // Data sources for tables
-  boiDayHaDataSource = new MatTableDataSource<BoiDayHaData>([]);
-  boiDayCaoDataSource = new MatTableDataSource<BoiDayCaoData>([]);
-  epBoiDayDataSource = new MatTableDataSource<EpBoiDayData>([]);
-
-  // Display columns for each tab
-  boiDayHaColumns = ['kyhieuquanday', 'congsuat', 'quy_cach_day', 'so_soi_day', 'ngay_san_xuat', 'trang_thai', 'actions'];
-  boiDayCaoColumns = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'quy_cach_day', 'ngay_san_xuat', 'trang_thai', 'actions'];
-  epBoiDayColumns = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'trang_thai', 'actions'];
-
-  // Data arrays
-  boiDayHaData: BoiDayHaData[] = [];
-  boiDayCaoData: BoiDayCaoData[] = [];
-  epBoiDayData: EpBoiDayData[] = [];
-
-  // Loading states
-  isLoadingBoiDayHa = false;
-  isLoadingBoiDayCao = false;
-  isLoadingEpBoiDay = false;
+  // Displayed columns for each tab
+  boiDayHaDisplayedColumns: string[] = [
+    'kyhieuQuanDay', 'tenBangVe', 'congSuat', 'tbkt', 
+    'nhaSanXuat', 'ngaySanXuat', 'ngayGiaCong', 'trangThai', 'thaoTac'
+  ];
   
-  // Loading states cho từng item (để hiển thị loading trên button cụ thể)
-  loadingItems = new Set<string>(); // Format: 'type_id_action' (ví dụ: 'boiDayHa_1_approve')
+  boiDayCaoDisplayedColumns: string[] = [
+    'kyhieuQuanDay', 'tenBangVe', 'congSuat', 'tbkt', 
+    'nhaSanXuat', 'ngaySanXuat', 'ngayGiaCong', 'trangThai', 'thaoTac'
+  ];
+  
+  epBoiDayDisplayedColumns: string[] = [
+    'kyhieuQuanDay', 'tenBangVe', 'congSuat', 'tbkt', 
+    'nhaSanXuat', 'ngaySanXuat', 'ngayGiaCong', 'trangThai', 'thaoTac'
+  ];
+
+  // Sample data - replace with actual API calls
+  sampleBoiDayHaData = [
+    {
+      id: 1,
+      kyhieuquanday: 'khâu quấn dây hạ',
+      tenbangve: 'BV001',
+      congsuat: '100',
+      tbkt: 'TBKT001',
+      nhasanxuat: 'GM',
+      ngaysanxuat: new Date('2025-08-18'),
+      ngaygiacong: new Date('2025-08-18'),
+      trangthai: 'pending'
+    },
+    {
+      id: 2,
+      kyhieuquanday: 'khâu quấn dây hạ 2',
+      tenbangve: 'BV002',
+      congsuat: '200',
+      tbkt: 'TBKT002',
+      nhasanxuat: 'GM',
+      ngaysanxuat: new Date('2025-08-19'),
+      ngaygiacong: new Date('2025-08-19'),
+      trangthai: 'approved'
+    }
+  ];
+
+  sampleBoiDayCaoData = [
+    {
+      id: 3,
+      kyhieuquanday: 'khâu quấn dây cao',
+      tenbangve: 'BV003',
+      congsuat: '150',
+      tbkt: 'TBKT003',
+      nhasanxuat: 'GM',
+      ngaysanxuat: new Date('2025-08-20'),
+      ngaygiacong: new Date('2025-08-20'),
+      trangthai: 'pending'
+    }
+  ];
+
+  sampleEpBoiDayData = [
+    {
+      id: 4,
+      kyhieuquanday: 'khâu ép bối dây',
+      tenbangve: 'BV004',
+      congsuat: '300',
+      tbkt: 'TBKT004',
+      nhasanxuat: 'GM',
+      ngaysanxuat: new Date('2025-08-21'),
+      ngaygiacong: new Date('2025-08-21'),
+      trangthai: 'rejected'
+    }
+  ];
 
   constructor(
+    private commonService: CommonService,
     private authService: AuthServices,
-    private router: Router,
-    private dialog: MatDialog,
-    private kcsCheckService: KcsCheckService
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    this.checkAuthentication();
     this.loadData();
   }
 
-  ngAfterViewInit(): void {
-    this.setupTableSorting();
-  }
-
-  private checkAuthentication(): void {
-    this.isAuthenticated = this.authService.isLoggedIn();
-    if (this.isAuthenticated) {
-      this.currentUser = this.authService.getFullUserInfo() || this.authService.getUserInfoFromStorage();
-      
-      // Debug thông tin user
-      console.log('=== AUTHENTICATION DEBUG ===');
-      this.authService.debugUserInfo();
-      console.log('Current User in component:', this.currentUser);
-      console.log('================================');
-      
-      this.checkEpBoiDayPermission();
-    }
-  }
-
-  private checkEpBoiDayPermission(): void {
-    if (this.currentUser) {      
-      // Sử dụng method refreshKhauSx để lấy giá trị chính xác
-      const khauSx = this.authService.refreshKhauSx();     
-      
-      const roleName = this.currentUser.roles[0] || '';
-      
-      this.hasEpBoiDayPermission = khauSx.includes('kcs') || 
-                                   roleName.includes('user');
-      
-      console.log('KCS Check: EpBoiDay permission:', this.hasEpBoiDayPermission);
-      console.log('========================');
-    }
-  }
-
-  private loadData(): void {
-    this.loadBoiDayHaData();
-    this.loadBoiDayCaoData();
-    this.loadEpBoiDayData();
-  }
-
-  private loadBoiDayHaData(): void {
-    this.isLoadingBoiDayHa = true;
-    this.kcsCheckService.getBoiDayHaData().subscribe({
-      next: (data) => {
-        this.boiDayHaData = data;
-        this.boiDayHaDataSource.data = data;
-        this.isLoadingBoiDayHa = false;
-      },
-      error: (error) => {
-        console.error('Error loading boi day ha data:', error);
-        this.isLoadingBoiDayHa = false;
-      }
-    });
-  }
-
-  private loadBoiDayCaoData(): void {
-    this.isLoadingBoiDayCao = true;
-    this.kcsCheckService.getBoiDayCaoData().subscribe({
-      next: (data) => {
-        this.boiDayCaoData = data;
-        this.boiDayCaoDataSource.data = data;
-        this.isLoadingBoiDayCao = false;
-      },
-      error: (error) => {
-        console.error('Error loading boi day cao data:', error);
-        this.isLoadingBoiDayCao = false;
-      }
-    });
-  }
-
-  private loadEpBoiDayData(): void {
-    this.isLoadingEpBoiDay = true;
-    this.kcsCheckService.getEpBoiDayData().subscribe({
-      next: (data) => {
-        this.epBoiDayData = data;
-        this.epBoiDayDataSource.data = data;
-        this.isLoadingEpBoiDay = false;
-      },
-      error: (error) => {
-        console.error('Error loading ep boi day data:', error);
-        this.isLoadingEpBoiDay = false;
-      }
-    });
-  }
-
-  private setupTableSorting(): void {
+  ngAfterViewInit() {
+    // Connect paginators to data sources
     this.boiDayHaDataSource.paginator = this.paginator;
-    this.boiDayHaDataSource.sort = this.sort;
     this.boiDayCaoDataSource.paginator = this.paginator;
-    this.boiDayCaoDataSource.sort = this.sort;
     this.epBoiDayDataSource.paginator = this.paginator;
-    this.epBoiDayDataSource.sort = this.sort;
+  }
+
+  loadData(): void {
+    // Load sample data - replace with actual API calls
+    this.boiDayHaDataSource.data = this.sampleBoiDayHaData;
+    this.boiDayCaoDataSource.data = this.sampleBoiDayCaoData;
+    this.epBoiDayDataSource.data = this.sampleEpBoiDayData;
+  }
+
+  // Search methods for Bối dây hạ
+  onSearchBangVeChange(value: string): void {
+    this.searchBangVe = value;
+    this.filterBoiDayHaData();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchKeyword = value;
+    this.filterBoiDayHaData();
+  }
+
+  // Search methods for Bối dây cao
+  onSearchBangVeCaoChange(value: string): void {
+    this.searchBangVeCao = value;
+    this.filterBoiDayCaoData();
+  }
+
+  onSearchCaoChange(value: string): void {
+    this.searchKeywordCao = value;
+    this.filterBoiDayCaoData();
+  }
+
+  // Search methods for Ép bối dây
+  onSearchBangVeEpChange(value: string): void {
+    this.searchBangVeEp = value;
+    this.filterEpBoiDayData();
+  }
+
+  onSearchEpChange(value: string): void {
+    this.searchKeywordEp = value;
+    this.filterEpBoiDayData();
+  }
+
+  // Filter methods for each tab
+  filterBoiDayHaData(): void {
+    let filteredData = this.sampleBoiDayHaData;
+
+    if (this.searchBangVe) {
+      filteredData = filteredData.filter(item => 
+        item.tenbangve?.toLowerCase().includes(this.searchBangVe.toLowerCase())
+      );
+    }
+
+    if (this.searchKeyword) {
+      filteredData = filteredData.filter(item => 
+        item.kyhieuquanday?.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
+        item.tbkt?.toLowerCase().includes(this.searchKeyword.toLowerCase())
+      );
+    }
+
+    this.boiDayHaDataSource.data = filteredData;
+  }
+
+  filterBoiDayCaoData(): void {
+    let filteredData = this.sampleBoiDayCaoData;
+
+    if (this.searchBangVeCao) {
+      filteredData = filteredData.filter(item => 
+        item.tenbangve?.toLowerCase().includes(this.searchBangVeCao.toLowerCase())
+      );
+    }
+
+    if (this.searchKeywordCao) {
+      filteredData = filteredData.filter(item => 
+        item.kyhieuquanday?.toLowerCase().includes(this.searchKeywordCao.toLowerCase()) ||
+        item.tbkt?.toLowerCase().includes(this.searchKeywordCao.toLowerCase())
+      );
+    }
+
+    this.boiDayCaoDataSource.data = filteredData;
+  }
+
+  filterEpBoiDayData(): void {
+    let filteredData = this.sampleEpBoiDayData;
+
+    if (this.searchBangVeEp) {
+      filteredData = filteredData.filter(item => 
+        item.tenbangve?.toLowerCase().includes(this.searchBangVeEp.toLowerCase())
+      );
+    }
+
+    if (this.searchKeywordEp) {
+      filteredData = filteredData.filter(item => 
+        item.kyhieuquanday?.toLowerCase().includes(this.searchKeywordEp.toLowerCase()) ||
+        item.tbkt?.toLowerCase().includes(this.searchKeywordEp.toLowerCase())
+      );
+    }
+
+    this.epBoiDayDataSource.data = filteredData;
   }
 
   onTabChange(event: MatTabChangeEvent): void {
-    this.selectedTabIndex = event.index;
-    console.log('Tab changed to:', event.index);
+    console.log('Tab changed to:', event.tab.textLabel);
+    // Reset search when changing tabs
+    this.resetSearch();
   }
 
-  // Search functions
-  onSearchBoiDayHa(): void {
-    const searchTerm = this.searchTermBoiDayHa.value?.toLowerCase() || '';
-    this.boiDayHaDataSource.data = this.boiDayHaData.filter(item =>
-      item.kyhieuquanday.toLowerCase().includes(searchTerm) ||
-      item.tbkt.toLowerCase().includes(searchTerm)
-    );
+  resetSearch(): void {
+    this.searchBangVe = '';
+    this.searchKeyword = '';
+    this.searchBangVeCao = '';
+    this.searchKeywordCao = '';
+    this.searchBangVeEp = '';
+    this.searchKeywordEp = '';
+    this.loadData();
   }
 
-  onSearchBoiDayCao(): void {
-    const searchTerm = this.searchTermBoiDayCao.value?.toLowerCase() || '';
-    this.boiDayCaoDataSource.data = this.boiDayCaoData.filter(item =>
-      item.kyhieuquanday.toLowerCase().includes(searchTerm) ||
-      item.tbkt.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  onSearchEpBoiDay(): void {
-    const searchTerm = this.searchTermEpBoiDay.value?.toLowerCase() || '';
-    this.epBoiDayDataSource.data = this.epBoiDayData.filter(item =>
-      item.kyhieuquanday.toLowerCase().includes(searchTerm) ||
-      item.tbkt.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  // Action functions
-  onApprove(item: any, type: string): void {
-    console.log('Approve item:', item, 'Type:', type);
-    
-    // Hiển thị confirm dialog
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '500px',
-      data: {
-        title: 'Xác nhận kiểm duyệt',
-        message: `Bạn có chắc chắn muốn kiểm duyệt item "${item.kyhieuquanday}"?`,
-        confirmText: 'Kiểm duyệt',
-        cancelText: 'Hủy',
-        type: 'approve'
-      }
-    });
-    
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // User đã xác nhận, gọi API
-        this.executeApprove(item, type);
-      }
-    });
-  }
-  
-  // Method thực hiện approve sau khi confirm
-  private executeApprove(item: any, type: string): void {
-    const loadingKey = `${type}_${item.id}_approve`;
-    this.loadingItems.add(loadingKey);
-    
-    this.kcsCheckService.approveItem(type, item.id).subscribe({
-      next: (response) => {
-        console.log('Approval successful:', response);
-        
-        if (response.IsSuccess) {
-          // Reload data từ API thay vì chỉ update local
-          this.reloadDataAfterAction(type);
-          
-          // Hiển thị thông báo thành công (có thể thêm toast/notification)
-          console.log('Item approved successfully:', response.Message || 'Approval successful');
-        } else {
-          console.error('Approval failed:', response.Message || 'Approval failed');
-          // Hiển thị thông báo lỗi
-        }
-      },
-      error: (error) => {
-        console.error('Approval failed:', error);
-        // Hiển thị thông báo lỗi
-      },
-      complete: () => {
-        this.loadingItems.delete(loadingKey);
-      }
+  // Action methods
+  viewBangVeDetails(element: any): void {
+    console.log('Viewing details for:', element);
+    this.snackBar.open(`Xem chi tiết bảng vẽ: ${element.tenbangve}`, 'Đóng', {
+      duration: 3000
     });
   }
 
-  onReject(item: any, type: string): void {
-    console.log('Reject item:', item, 'Type:', type);
-    
-    // Hiển thị dialog reject với form nhập ghi chú
-    const dialogRef = this.dialog.open(RejectDialogComponent, {
-      width: '600px',
-      disableClose: true,
-      data: {
-        title: 'Từ chối item',
-        message: `Bạn đang từ chối item "${item.kyhieuquanday}". Vui lòng nhập lý do từ chối:`,
-        itemName: item.kyhieuquanday,
-        confirmText: 'Xác nhận từ chối',
-        cancelText: 'Hủy'
-      }
-    });
-    
-    dialogRef.afterClosed().subscribe(result => {
-      if (result && result.confirmed) {
-        // User đã xác nhận và nhập ghi chú, gọi API với ghi chú
-        this.executeReject(item, type, result.reason);
-      }
-    });
-  }
-  
-  // Method thực hiện reject sau khi confirm
-  private executeReject(item: any, type: string, reason: string): void {
-    const loadingKey = `${type}_${item.id}_reject`;
-    this.loadingItems.add(loadingKey);
-    
-    this.kcsCheckService.rejectItem(type, item.id, reason).subscribe({
-      next: (response) => {
-        console.log('Rejection successful:', response);
-        
-        if (response.IsSuccess) {
-          // Reload data từ API thay vì chỉ update local
-          this.reloadDataAfterAction(type);
-          
-          // Hiển thị thông báo thành công
-          console.log('Item rejected successfully:', response.Message || 'Rejection successful');
-        } else {
-          console.error('Rejection failed:', response.Message || 'Rejection failed');
-          // Hiển thị thông báo lỗi
-        }
-      },
-      error: (error) => {
-        console.error('Rejection failed:', error);
-        // Hiển thị thông báo lỗi
-      },
-      complete: () => {
-        this.loadingItems.delete(loadingKey);
-      }
+  approveKcs(element: any): void {
+    console.log('Approving KCS for:', element);
+    this.snackBar.open(`Đã duyệt KCS cho: ${element.tenbangve}`, 'Đóng', {
+      duration: 3000
     });
   }
 
-  onViewDetails(item: any, type: string): void {
-    console.log('View details for:', item, 'Type:', type);
-    
-    this.kcsCheckService.getItemDetails(type, item.id).subscribe({
-      next: (response) => {
-        console.log('Item details:', response);
-        // Implement view details logic here
-        // Could open a dialog or navigate to detail page
-      },
-      error: (error) => {
-        console.error('Failed to get item details:', error);
-      }
+  rejectKcs(element: any): void {
+    console.log('Rejecting KCS for:', element);
+    this.snackBar.open(`Đã từ chối KCS cho: ${element.tenbangve}`, 'Đóng', {
+      duration: 3000
     });
   }
 
-  private refreshTableData(type: string): void {
-    switch (type) {
-      case 'boiDayHa':
-        this.boiDayHaDataSource.data = [...this.boiDayHaData];
-        break;
-      case 'boiDayCao':
-        this.boiDayCaoDataSource.data = [...this.boiDayCaoData];
-        break;
-      case 'epBoiDay':
-        this.epBoiDayDataSource.data = [...this.epBoiDayData];
-        break;
-    }
-  }
-
-  goToLogin(): void {
-    this.router.navigate(['/landing']);
-  }
-
-  getStatusColor(status: string): string {
+  // Status helper methods
+  getStatusClass(status: string): string {
     switch (status) {
       case 'approved':
-        return 'primary'; // Xanh - Đã kiểm tra
+        return 'status-approved';
       case 'rejected':
-        return 'warn';    // Đỏ - Không đạt
+        return 'status-rejected';
       case 'pending':
-        return 'accent';  // Vàng - Chờ kiểm tra
       default:
-        return 'basic';
+        return 'status-pending';
     }
   }
 
   getStatusText(status: string): string {
     switch (status) {
       case 'approved':
-        return 'Đã kiểm tra';
+        return 'Đã duyệt';
       case 'rejected':
-        return 'Không đạt';
+        return 'Từ chối';
       case 'pending':
-        return 'Chờ kiểm tra';
       default:
-        return 'Không xác định';
+        return 'Chờ kiểm tra';
     }
-  }
-
-  // Method để test và debug khau_sx
-  testKhauSx(): void {
-    console.log('=== TEST KHAU_SX ===');
-    console.log('1. Direct localStorage:', localStorage.getItem('khau_sx'));
-    console.log('2. AuthService.getKhauSx():', this.authService.getKhauSx());
-    console.log('3. AuthService.refreshKhauSx():', this.authService.refreshKhauSx());
-    console.log('4. Current User khau_sx:', this.currentUser?.khau_sx);
-    console.log('5. Full User Info:', this.authService.getFullUserInfo());
-    console.log('6. User from Storage:', this.authService.getUserInfoFromStorage());
-    console.log('=====================');
-  }
-
-  // Method để kiểm tra loading state cho từng item
-  isItemLoading(type: string, id: number, action: 'approve' | 'reject'): boolean {
-    const loadingKey = `${type}_${id}_${action}`;
-    return this.loadingItems.has(loadingKey);
-  }
-  
-  // Method để set loading state cho từng tab
-  private setLoadingState(type: string, isLoading: boolean): void {
-    switch (type) {
-      case 'boiDayHa':
-        this.isLoadingBoiDayHa = isLoading;
-        break;
-      case 'boiDayCao':
-        this.isLoadingBoiDayCao = isLoading;
-        break;
-      case 'epBoiDay':
-        this.isLoadingEpBoiDay = isLoading;
-        break;
-    }
-  }
-
-  // Method để reload data sau khi approve/reject
-  private reloadDataAfterAction(type: string): void {
-    console.log(`Reloading data for type: ${type}`);
-    
-    // Reload data để chỉ hiển thị những item còn pending
-    switch (type) {
-      case 'boiDayHa':
-        this.loadBoiDayHaData();
-        break;
-      case 'boiDayCao':
-        this.loadBoiDayCaoData();
-        break;
-      case 'epBoiDay':
-        this.loadEpBoiDayData();
-        break;
-    }
-    
-    // Hiển thị thông báo thành công
-    console.log(`Data reloaded for ${type} - only pending items are displayed`);
   }
 }
