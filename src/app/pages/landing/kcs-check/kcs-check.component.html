@@ -36,7 +36,21 @@
 
         <!-- Data Table -->
         <div class="table-container">
-          <table mat-table [dataSource]="boiDayHaDataSource" class="kcs-table">
+          <!-- Loading indicator -->
+          <div *ngIf="isLoading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Đang tải dữ liệu...</p>
+          </div>
+
+          <!-- No data message -->
+          <div *ngIf="!isLoading && boiDayHaDataSource.data.length === 0" class="no-data-container">
+            <mat-icon>inbox</mat-icon>
+            <p>Không có dữ liệu bối dây hạ chờ duyệt</p>
+          </div>
+
+          <!-- Data table -->
+          <table *ngIf="!isLoading && boiDayHaDataSource.data.length > 0" 
+                 mat-table [dataSource]="boiDayHaDataSource" class="kcs-table">
             <!-- Ký hiệu quấn dây Column -->
             <ng-container matColumnDef="kyhieuQuanDay">
               <th mat-header-cell *matHeaderCellDef>Ký hiệu quấn dây</th>
@@ -51,7 +65,7 @@
             <ng-container matColumnDef="tenBangVe">
               <th mat-header-cell *matHeaderCellDef>Tên bảng vẽ</th>
               <td mat-cell *matCellDef="let element">
-                {{element.tenbangve || 'N/A'}}
+                {{element.congsuat}}
               </td>
             </ng-container>
 
@@ -59,7 +73,7 @@
             <ng-container matColumnDef="congSuat">
               <th mat-header-cell *matHeaderCellDef>Công suất</th>
               <td mat-cell *matCellDef="let element">
-                {{element.congsuat}} kVA
+                {{element.congsuat}}
               </td>
             </ng-container>
 
@@ -75,7 +89,7 @@
             <ng-container matColumnDef="nhaSanXuat">
               <th mat-header-cell *matHeaderCellDef>Nhà sản xuất</th>
               <td mat-cell *matCellDef="let element">
-                {{element.nhasanxuat}}
+                {{element.nha_san_xuat}}
               </td>
             </ng-container>
 
@@ -83,7 +97,7 @@
             <ng-container matColumnDef="ngaySanXuat">
               <th mat-header-cell *matHeaderCellDef>Ngày sản xuất</th>
               <td mat-cell *matCellDef="let element">
-                {{element.ngaysanxuat | date:'dd/MM/yyyy'}}
+                {{element.ngay_san_xuat | date:'dd/MM/yyyy'}}
               </td>
             </ng-container>
 
@@ -99,9 +113,9 @@
             <ng-container matColumnDef="trangThai">
               <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
               <td mat-cell *matCellDef="let element">
-                <span class="status-badge" [class]="getStatusClass(element.trangthai)">
+                <span class="status-badge" [class]="getStatusClass(element.trang_thai)">
                   <span class="status-dot"></span>
-                  {{getStatusText(element.trangthai)}}
+                  {{getStatusText(element.trang_thai)}}
                 </span>
               </td>
             </ng-container>
@@ -135,10 +149,22 @@
           </table>
 
           <!-- Pagination -->
-          <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" 
-                         showFirstLastButtons 
-                         aria-label="Select page of KCS check items">
-          </mat-paginator>
+          <div *ngIf="!isLoading && boiDayHaDataSource.data.length > 0" class="pagination-container">
+            <mat-paginator 
+              [length]="totalCount"
+              [pageSize]="pageSize"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              [pageIndex]="currentPage - 1"
+              (page)="onPageChange($event)"
+              showFirstLastButtons 
+              aria-label="Select page of KCS check items">
+            </mat-paginator>
+            
+            <!-- Additional pagination info -->
+            <div class="pagination-info">
+              <span>Hiển thị {{(currentPage - 1) * pageSize + 1}} - {{Math.min(currentPage * pageSize, totalCount)}} của {{totalCount}} kết quả</span>
+            </div>
+          </div>
         </div>
       </div>
     </mat-tab>

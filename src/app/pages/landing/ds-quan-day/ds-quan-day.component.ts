@@ -1167,7 +1167,7 @@ export class DsQuanDayComponent implements OnInit {
           this.showSuccess(result.message || 'Thông tin bối dây hạ đã được lưu thành công!');
           
           // Cập nhật trạng thái bối dây hạ trong database trước
-          this.updateBoiDayHaStatus(element.id, 2);
+          this.updateBoiDayHaStatus(element.id, 1);
           
           // Log thông tin để debug
           console.log('onGiaCongHa: After updating status, element details:', {

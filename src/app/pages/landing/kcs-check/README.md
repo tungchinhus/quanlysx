@@ -1,183 +1,234 @@
-# KCS Check Component
+# KCS Check Component - API Integration Update
 
-## Mô tả
-KCS Check là một component Angular được thiết kế để kiểm tra và duyệt chất lượng các bối dây hạ, bối dây cao và ép bối dây. Component này chỉ dành cho những user có quyền `epboiday`.
+## Overview
 
-## Tính năng chính
+This component has been updated to integrate with the new KCS API endpoints for managing "Bối dây hạ chờ duyệt" (Low voltage winding pending approval) according to the API specification.
 
-### 1. Kiểm tra quyền truy cập
-- Chỉ user có quyền `epboiday` mới có thể truy cập
-- Kiểm tra authentication và authorization
-- Hiển thị thông báo phù hợp cho từng trường hợp
+## New Features
 
-### 2. Ba tab chính
-- **Bối dây hạ**: Hiển thị thông tin bối dây hạ đã lưu trước đó
-- **Bối dây cao**: Hiển thị thông tin bối dây cao đã lưu trước đó  
-- **Ép bối dây**: Hiển thị thông tin ép bối dây đã lưu trước đó
+### 1. API Integration
+- **Base URL**: Updated to `https://localhost:7001` (from API spec)
+- **New Endpoints**:
+  - `GET /api/kcs-check/boi-day-ha-pending` - Get all pending low voltage windings
+  - `POST /api/kcs-check/boi-day-ha-pending-search` - Search with pagination
 
-### 3. Chức năng cho mỗi tab
-- Tìm kiếm theo ký hiệu quấn dây hoặc TBKT
-- Xem chi tiết thông tin
-- Duyệt (Approve) - có thể thực hiện bất kỳ lúc nào
-- Từ chối (Reject) - có thể thực hiện bất kỳ lúc nào
-- Phân trang và sắp xếp dữ liệu
+### 2. Dialog Components
+- **Approve Dialog**: Shows approval confirmation with quality score and inspector details
+- **Reject Dialog**: Form-based rejection with detailed reasons, technical details, and recommendations
+- **Data Persistence**: Rejection data is saved to `tbl_kcs_approve` table
 
-## Cấu trúc file
+### 2. Data Structure
+- **New Interfaces**: Added comprehensive interfaces matching API response
+- **Backward Compatibility**: Maintained legacy interfaces for existing functionality
+- **Data Mapping**: Automatic conversion from API format to display format
 
-```
-kcs-check/
-├── kcs-check.component.ts          # Component chính
-├── kcs-check.component.html        # Template HTML
-├── kcs-check.component.scss        # Styles CSS
-├── kcs-check.component.spec.ts     # Unit tests
-├── kcs-check.module.ts             # Module configuration
-├── kcs-check.service.ts            # Service xử lý business logic
-└── README.md                       # Hướng dẫn sử dụng
-```
+### 3. Enhanced Search & Pagination
+- **Real-time Search**: Search by drawing name and winding symbol/TBKT
+- **Server-side Pagination**: Proper pagination with page size options
+- **Search Criteria**: Structured search with optional parameters
 
-## Cách sử dụng
+### 4. User Experience Improvements
+- **Loading States**: Visual feedback during API calls
+- **Error Handling**: Comprehensive error handling with user notifications
+- **Empty States**: Informative messages when no data is available
+- **Pagination Info**: Clear display of current page and total results
 
-### 1. Routing
-Component được cấu hình với route `/kcs-check` và được bảo vệ bởi `AuthGuard`.
+## API Response Structure
 
-### 2. Import vào module khác
+### BoiDayHaPendingResponse
 ```typescript
-import { KcsCheckModule } from './kcs-check/kcs-check.module';
-
-@NgModule({
-  imports: [
-    KcsCheckModule,
-    // ... other modules
-  ]
-})
-export class YourModule { }
+{
+  isSuccess: boolean;
+  message: string;
+  data: BoiDayHaPendingItem[];
+  totalCount: number;
+  currentUserId: string;
+  isKcsUser: boolean;
+  userRoles: string[];
+}
 ```
 
-### 3. Sử dụng trong template
-```html
-<app-kcs-check></app-kcs-check>
+### SearchCriteria
+```typescript
+{
+  searchByDrawingName?: string;
+  searchByWindingSymbolOrTBKT?: string;
+  pageNumber: number;
+  pageSize: number;
+}
 ```
+
+## Component Methods
+
+### Data Loading
+- `loadBoiDayHaData()` - Loads pending low voltage windings
+- `searchBoiDayHaData()` - Searches with criteria and pagination
+- `loadBoiDayCaoData()` - Loads high voltage windings (legacy)
+- `loadEpBoiDayData()` - Loads pressed windings (legacy)
+
+### Search & Filtering
+- `onSearchBangVeChange()` - Drawing name search
+- `onSearchChange()` - Winding symbol/TBKT search
+- `filterBoiDayHaData()` - Triggers API search
+- `filterBoiDayCaoData()` - Client-side filtering
+- `filterEpBoiDayData()` - Client-side filtering
+
+### Actions
+- `approveKcs()` - Approves KCS inspection
+- `rejectKcs()` - Rejects KCS inspection
+- `viewBangVeDetails()` - Views drawing details
+
+### Pagination
+- `onPageChange()` - Handles page navigation
+- `resetSearch()` - Resets search and pagination
+
+## Status Mapping
+
+### API Status to Display Status
+- `1` (đang xử lý) → `pending` (Chờ kiểm tra)
+- `2` (hoàn thành, chờ duyệt) → `pending` (Chờ kiểm tra)
+- `3` (từ chối) → `rejected` (Từ chối)
+
+## Error Handling
+
+### Network Errors
+- Automatic fallback to mock data
+- User-friendly error messages
+- Console logging for debugging
+
+### API Errors
+- Response validation
+- Success/failure status checking
+- Detailed error messages from API
+
+## Mock Data
+
+### Fallback Strategy
+- Used when API is unavailable
+- Maintains same data structure
+- Provides realistic test data
+
+### Mock Data Structure
+- Follows API response format
+- Includes all required fields
+- Realistic Vietnamese company names and data
+
+## CSS Classes
+
+### New Components
+- `.loading-container` - Loading spinner and message
+- `.no-data-container` - Empty state display
+- `.pagination-container` - Enhanced pagination styling
+- `.pagination-info` - Page information display
 
 ## Dependencies
 
-### Angular Material
-- `MatTabsModule` - Quản lý tabs
-- `MatTableModule` - Hiển thị bảng dữ liệu
-- `MatPaginatorModule` - Phân trang
-- `MatSortModule` - Sắp xếp dữ liệu
-- `MatFormFieldModule` - Form fields
-- `MatInputModule` - Input controls
-- `MatButtonModule` - Buttons
-- `MatIconModule` - Icons
-- `MatMenuModule` - Dropdown menus
-- `MatChipsModule` - Status chips
-- `MatDialogModule` - Dialogs
-- `MatDatepickerModule` - Date picker
+### Material Design
+- `MatProgressSpinnerModule` - Loading indicators
+- `MatPaginatorModule` - Pagination controls
+- `MatTableModule` - Data tables
+- `MatSnackBarModule` - User notifications
 
-### Services
-- `AuthServices` - Xác thực và phân quyền
-- `KcsCheckService` - Xử lý business logic và API calls
+### Angular
+- `HttpClientModule` - API communication
+- `FormsModule` - Search input handling
+- `CommonModule` - Common directives
 
-## API Integration
+## Usage Examples
 
-### Endpoints cần thiết
+### Basic Data Loading
 ```typescript
-// Lấy danh sách bối dây hạ
-GET /api/kcs-check/boi-day-ha
+// Load all pending items
+this.loadBoiDayHaData();
 
-// Lấy danh sách bối dây cao  
-GET /api/kcs-check/boi-day-cao
-
-// Lấy danh sách ép bối dây
-GET /api/kcs-check/ep-boi-day
-
-// Duyệt item
-POST /api/kcs-check/{type}/approve
-
-// Từ chối item
-POST /api/kcs-check/{type}/reject
-
-// Lấy chi tiết item
-GET /api/kcs-check/{type}/{id}
+// Search with criteria
+const criteria: SearchCriteria = {
+  searchByDrawingName: 'BV001',
+  pageNumber: 1,
+  pageSize: 10
+};
+this.searchBoiDayHaData();
 ```
 
-### Data Models
+### Action Handling
 ```typescript
-interface BoiDayHaData {
-  id: number;
-  kyhieuquanday: string;
-  congsuat: string;
-  tbkt: string;
-  dienap: string;
-  quy_cach_day: string;
-  so_soi_day: number;
-  nha_san_xuat: string;
-  ngay_san_xuat: Date;
-  trang_thai: 'pending' | 'approved' | 'rejected';
-}
+// Approve KCS
+this.approveKcs(element);
 
-interface BoiDayCaoData {
-  // Tương tự BoiDayHaData
-}
+// Reject KCS
+this.rejectKcs(element);
 
-interface EpBoiDayData {
-  id: number;
-  kyhieuquanday: string;
-  congsuat: string;
-  tbkt: string;
-  dienap: string;
-  bd_ep: string;
-  bung_bd: number;
-  ngay_hoan_thanh: Date;
-  trang_thai: 'pending' | 'approved' | 'rejected';
-}
+// View details
+this.viewBangVeDetails(element);
 ```
 
-## Customization
+## Configuration
 
-### 1. Thay đổi giao diện
-- Chỉnh sửa `kcs-check.component.scss` để thay đổi styles
-- Cập nhật `kcs-check.component.html` để thay đổi layout
+### Environment
+- **Development**: `https://localhost:7001`
+- **Production**: Configure in environment files
 
-### 2. Thêm tính năng mới
-- Mở rộng `KcsCheckService` để thêm API calls mới
-- Cập nhật component để xử lý tính năng mới
+### Pagination
+- **Default Page Size**: 10
+- **Page Size Options**: [5, 10, 25, 50]
+- **Max Results**: Configurable via API
 
-### 3. Thay đổi logic phân quyền
-- Cập nhật method `checkEpBoiDayPermission()` trong component
-- Thay đổi logic kiểm tra quyền theo yêu cầu
+### Search
+- **Real-time**: Triggers on input change
+- **Debouncing**: Built-in Angular change detection
+- **Reset**: Automatic on tab change
 
-## Troubleshooting
+## Testing
 
-### 1. Lỗi không hiển thị dữ liệu
-- Kiểm tra console để xem lỗi API
-- Đảm bảo user có quyền truy cập
-- Kiểm tra network requests
+### Unit Tests
+- Component initialization
+- Service method calls
+- Data transformation
+- Error handling
 
-### 2. Lỗi authentication
-- Kiểm tra token trong localStorage/sessionStorage
-- Đảm bảo AuthGuard hoạt động đúng
-- Kiểm tra AuthService configuration
-
-### 3. Lỗi Material Design
-- Đảm bảo đã import đầy đủ Material modules
-- Kiểm tra Angular Material version compatibility
+### Integration Tests
+- API endpoint connectivity
+- Data flow validation
+- User interaction testing
 
 ## Future Enhancements
 
-### 1. Tính năng có thể thêm
-- Export dữ liệu ra Excel/PDF
-- Filter nâng cao theo nhiều tiêu chí
-- Bulk approve/reject
-- Lịch sử thay đổi trạng thái
-- Notifications real-time
+### Planned Features
+- Advanced filtering options
+- Export functionality
+- Bulk operations
+- Real-time updates
 
-### 2. Performance improvements
-- Lazy loading cho từng tab
-- Virtual scrolling cho bảng dữ liệu lớn
-- Caching dữ liệu
-- Optimize API calls
+### API Extensions
+- Additional winding types
+- Enhanced search capabilities
+- Performance optimizations
+- Caching strategies
 
-## Support
+## Troubleshooting
 
-Nếu gặp vấn đề hoặc cần hỗ trợ, vui lòng liên hệ team development hoặc tạo issue trong repository.
+### Common Issues
+1. **API Connection**: Check base URL and network
+2. **Authentication**: Verify JWT token validity
+3. **Data Mapping**: Check console for mapping errors
+4. **Pagination**: Verify page size and current page values
+
+### Debug Information
+- Console logging for all API calls
+- Response data validation
+- Error message details
+- Network request tracking
+
+## Performance Considerations
+
+### Optimization Strategies
+- Lazy loading of tab content
+- Efficient data transformation
+- Minimal re-renders
+- Optimized search queries
+
+### Memory Management
+- Proper subscription cleanup
+- Efficient data structures
+- Minimal object creation
+- Garbage collection optimization

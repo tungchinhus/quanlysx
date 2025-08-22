@@ -1,0 +1,103 @@
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { KcsCheckService } from '../kcs-check.service';
+
+export interface RejectDialogData {
+  itemId: number;
+  itemName: string;
+  itemType: string;
+}
+
+@Component({
+  selector: 'app-reject-dialog',
+  templateUrl: './reject-dialog.component.html',
+  styleUrls: ['./reject-dialog.component.scss']
+})
+export class RejectDialogComponent implements OnInit {
+  rejectForm: FormGroup;
+  isLoading = false;
+
+  constructor(
+    private fb: FormBuilder,
+    private dialogRef: MatDialogRef<RejectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: RejectDialogData,
+    private kcsService: KcsCheckService
+  ) {
+    this.rejectForm = this.fb.group({
+      ghiChu: ['', [Validators.required]]
+    });
+  }
+
+  ngOnInit(): void {
+    // Form is already initialized in constructor
+  }
+
+  onSubmit(): void {
+    if (this.rejectForm.valid) {
+      this.isLoading = true;
+      
+      const formData = this.rejectForm.value;
+      const rejectionData = {
+        itemId: this.data.itemId,
+        ghiChu: formData.ghiChu,
+        rejectedAt: new Date().toISOString(),
+        itemType: this.data.itemType
+      };
+
+      // Call service to reject item and save to tbl_kcs_approve
+      this.kcsService.rejectItemWithDetails(this.data.itemType, this.data.itemId, rejectionData)
+        .subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.dialogRef.close({
+                success: true,
+                message: 'Đã từ chối thành công',
+                data: rejectionData
+              });
+            } else {
+              this.dialogRef.close({
+                success: false,
+                message: response.message || 'Lỗi khi từ chối'
+              });
+            }
+          },
+          error: (error) => {
+            console.error('Error rejecting item:', error);
+            this.dialogRef.close({
+              success: false,
+              message: 'Lỗi khi từ chối. Vui lòng thử lại.'
+            });
+          },
+          complete: () => {
+            this.isLoading = false;
+          }
+        });
+    }
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  getItemTypeDisplayName(itemType: string): string {
+    switch (itemType) {
+      case 'boiDayHa':
+        return 'Bối dây hạ';
+      case 'boiDayCao':
+        return 'Bối dây cao';
+      case 'epBoiDay':
+        return 'Ép bối dây';
+      default:
+        return itemType;
+    }
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const field = this.rejectForm.get(fieldName);
+    if (field?.hasError('required')) {
+      return 'Trường này là bắt buộc';
+    }
+    return '';
+  }
+}

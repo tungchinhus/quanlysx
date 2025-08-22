@@ -20,6 +20,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 // Shared Module
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -29,6 +30,8 @@ import { Constant } from 'src/app/constant/constant';
 
 // Components
 import { KcsCheckComponent } from './kcs-check.component';
+import { ApproveDialogComponent } from './approve-dialog/approve-dialog.component';
+import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
 
 const routes: Routes = [
   {
@@ -39,7 +42,9 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    KcsCheckComponent
+    KcsCheckComponent,
+    ApproveDialogComponent,
+    RejectDialogComponent
   ],
   imports: [
     CommonModule,
@@ -62,6 +67,7 @@ const routes: Routes = [
     MatDatepickerModule,
     MatNativeDateModule,
     MatSnackBarModule,
+    MatProgressSpinnerModule,
     
     // Shared Module
     SharedModule,

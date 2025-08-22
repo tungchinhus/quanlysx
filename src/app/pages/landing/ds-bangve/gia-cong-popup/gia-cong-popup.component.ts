@@ -124,21 +124,22 @@ export class GiaCongPopupComponent implements OnInit {
           worker.role?.toLowerCase() !== 'manager'
         );
         
-        // Phân loại user theo khau_sx
+        // Phân loại user theo khau_sx - chỉ lấy quandayha và quandaycao
         this.quandayhaUsers = this.nguoiGiaCongOptions.filter(worker => 
-          worker.khau_sx?.toLowerCase() === 'quandayha' ||
-          worker.khau_sx?.toLowerCase() === 'boidayha'
+          worker.khau_sx?.toLowerCase() === 'quandayha'
         );
         
         this.quandaycaoUsers = this.nguoiGiaCongOptions.filter(worker => 
-          worker.khau_sx?.toLowerCase() === 'quandaycao' ||
-          worker.khau_sx?.toLowerCase() === 'boidaycao'
+          worker.khau_sx?.toLowerCase() === 'quandaycao'
         );
         
         console.log('All workers from API:', workers);
         console.log('Filtered workers (role=user):', this.nguoiGiaCongOptions);
         console.log('Quan day ha users:', this.quandayhaUsers);
         console.log('Quan day cao users:', this.quandaycaoUsers);
+        
+        // Làm sạch và validate worker data
+        this.cleanAndValidateWorkerData();
         
         // Log thông tin chi tiết về workers được lọc
         this.logWorkerDetails();
@@ -175,27 +176,8 @@ export class GiaCongPopupComponent implements OnInit {
         // Đảm bảo mỗi worker có đầy đủ thông tin
         const workers = response.users || [];
         workers.forEach(worker => {
-          // Đảm bảo field name không bị undefined và tạo tên duy nhất
-          if (!worker.name || worker.name.trim() === '') {
-            if (worker.FirstName && worker.LastName) {
-              worker.name = `${worker.FirstName} ${worker.LastName}`;
-            } else if (worker.username && worker.username.trim() !== '') {
-              worker.name = worker.username;
-            } else if (worker.email && worker.email.trim() !== '') {
-              worker.name = worker.email;
-            } else {
-              worker.name = `User ${worker.id}`;
-            }
-          }
-          
-          // Tạo tên duy nhất bằng cách thêm khau_sx prefix nếu có
-          if (worker.khau_sx && worker.khau_sx.trim() !== '') {
-            const khauSxPrefix = worker.khau_sx.toLowerCase();
-            // Chỉ thêm prefix nếu chưa có
-            if (!worker.name.toLowerCase().startsWith(khauSxPrefix)) {
-              worker.name = `${khauSxPrefix} ${worker.name}`;
-            }
-          }
+          // Không cần tạo field name nữa vì chúng ta sẽ sử dụng FirstName + LastName trực tiếp
+          // Chỉ cần đảm bảo các field cần thiết có giá trị
         });
         
         return workers;
@@ -219,14 +201,16 @@ export class GiaCongPopupComponent implements OnInit {
       console.log('boiDayHa details:', {
         id: formValue.boiDayHa?.id,
         userId: formValue.boiDayHa?.userId,
-        name: formValue.boiDayHa?.name,
-        email: formValue.boiDayHa?.email
+        FirstName: formValue.boiDayHa?.FirstName,
+        LastName: formValue.boiDayHa?.LastName,
+        displayName: this.getWorkerDisplayName(formValue.boiDayHa)
       });
       console.log('boiDayCao details:', {
         id: formValue.boiDayCao?.id,
         userId: formValue.boiDayCao?.userId,
-        name: formValue.boiDayCao?.name,
-        email: formValue.boiDayCao?.email
+        FirstName: formValue.boiDayCao?.FirstName,
+        LastName: formValue.boiDayCao?.LastName,
+        displayName: this.getWorkerDisplayName(formValue.boiDayCao)
       });
       
       const closeData = {
@@ -265,11 +249,13 @@ export class GiaCongPopupComponent implements OnInit {
   getWorkerDisplayName(worker: Worker): string {
     let displayName = '';
     
-    // Ưu tiên sử dụng name đã được xử lý từ getWorkers
-    if (worker.name && worker.name.trim() !== '') {
-      displayName = worker.name;
-    } else if (worker.FirstName && worker.LastName) {
+    // Ưu tiên sử dụng FirstName + LastName để hiển thị tên đầy đủ
+    if (worker.FirstName && worker.LastName) {
       displayName = `${worker.FirstName} ${worker.LastName}`;
+    } else if (worker.FirstName && worker.FirstName.trim() !== '') {
+      displayName = worker.FirstName;
+    } else if (worker.LastName && worker.LastName.trim() !== '') {
+      displayName = worker.LastName;
     } else if (worker.username && worker.username.trim() !== '') {
       displayName = worker.username;
     } else if (worker.email && worker.email.trim() !== '') {
@@ -435,7 +421,6 @@ export class GiaCongPopupComponent implements OnInit {
       console.log('Worker:', {
         id: worker.id,
         userId: worker.userId,
-        name: worker.name,
         username: worker.username,
         email: worker.email,
         role: worker.role,
@@ -451,7 +436,8 @@ export class GiaCongPopupComponent implements OnInit {
     this.quandayhaUsers.forEach(worker => {
       console.log('Quan Day Ha:', {
         id: worker.id,
-        name: worker.name,
+        FirstName: worker.FirstName,
+        LastName: worker.LastName,
         email: worker.email,
         khau_sx: worker.khau_sx,
         displayName: this.getWorkerDisplayName(worker)
@@ -462,12 +448,41 @@ export class GiaCongPopupComponent implements OnInit {
     this.quandaycaoUsers.forEach(worker => {
       console.log('Quan Day Cao:', {
         id: worker.id,
-        name: worker.name,
+        FirstName: worker.FirstName,
+        LastName: worker.LastName,
         email: worker.email,
         khau_sx: worker.khau_sx,
         displayName: this.getWorkerDisplayName(worker)
       });
     });
+  }
+
+  // Method to clean and validate worker data
+  private cleanAndValidateWorkerData(): void {
+    // Làm sạch khau_sx field trước
+    this.nguoiGiaCongOptions.forEach(worker => {
+      if (worker.khau_sx) {
+        // Chuẩn hóa khau_sx field
+        const khauSx = worker.khau_sx.toLowerCase().trim();
+        if (khauSx.includes('boidayha')) {
+          worker.khau_sx = 'quandayha'; // Chuyển boidayha thành quandayha
+        } else if (khauSx.includes('boidaycao')) {
+          worker.khau_sx = 'quandaycao'; // Chuyển boidaycao thành quandaycao
+        }
+      }
+    });
+    
+    // Không cần làm sạch field name nữa vì chúng ta sẽ sử dụng FirstName + LastName trực tiếp
+    // Chỉ cần đảm bảo FirstName và LastName có giá trị hợp lệ
+    
+    // Cập nhật lại các danh sách đã filter
+    this.quandayhaUsers = this.nguoiGiaCongOptions.filter(worker => 
+      worker.khau_sx?.toLowerCase() === 'quandayha'
+    );
+    
+    this.quandaycaoUsers = this.nguoiGiaCongOptions.filter(worker => 
+      worker.khau_sx?.toLowerCase() === 'quandaycao'
+    );
   }
 
   // Method to check if workers are available

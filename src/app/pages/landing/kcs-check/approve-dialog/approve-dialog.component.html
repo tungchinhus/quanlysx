@@ -1,0 +1,98 @@
+<div class="approve-dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon class="header-icon">check_circle</mat-icon>
+      Duyệt KCS
+    </h2>
+    <button mat-icon-button mat-dialog-close class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <div class="item-info">
+      <p><strong>Ký hiệu:</strong> {{data.itemName}}</p>
+      <p><strong>Loại:</strong> {{getItemTypeDisplayName(data.itemType)}}</p>
+    </div>
+
+    <div class="approval-summary">
+      <mat-icon class="summary-icon">verified</mat-icon>
+      <h3>Xác nhận duyệt KCS</h3>
+      <p>Bạn có chắc chắn muốn duyệt item này đạt tiêu chuẩn chất lượng KCS?</p>
+    </div>
+
+    <form [formGroup]="approveForm">
+      <div class="form-section">
+        <h3>Ghi chú duyệt</h3>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Ghi chú</mat-label>
+          <textarea 
+            matInput 
+            formControlName="notes" 
+            rows="3"
+            placeholder="Nhập ghi chú về việc duyệt...">
+          </textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="form-section">
+        <h3>Đánh giá chất lượng</h3>
+        <div class="quality-score-container">
+          <label>Điểm chất lượng:</label>
+          <div class="score-buttons">
+            <button 
+              type="button"
+              *ngFor="let score of [1,2,3,4,5]" 
+              [class]="'score-btn ' + (approveForm.get('qualityScore')?.value === score ? 'selected' : '')"
+              (click)="approveForm.patchValue({qualityScore: score})">
+              {{score}}
+            </button>
+          </div>
+          <small>1 = Kém, 5 = Xuất sắc</small>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Thông tin kiểm tra</h3>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Tên người kiểm tra</mat-label>
+            <input 
+              matInput 
+              formControlName="inspectorName" 
+              placeholder="Nhập tên người kiểm tra...">
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Ngày kiểm tra</mat-label>
+            <input 
+              matInput 
+              [matDatepicker]="picker" 
+              formControlName="inspectionDate"
+              placeholder="Chọn ngày kiểm tra...">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog-actions">
+    <button 
+      mat-button 
+      (click)="onCancel()" 
+      [disabled]="isLoading">
+      Hủy
+    </button>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="onSubmit()" 
+      [disabled]="isLoading"
+      class="submit-button">
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+      <span *ngIf="!isLoading">Duyệt KCS</span>
+    </button>
+  </div>
+</div>
