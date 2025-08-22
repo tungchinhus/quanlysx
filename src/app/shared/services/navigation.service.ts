@@ -1,105 +1,124 @@
 import { Injectable } from '@angular/core';
-import { Router, NavigationExtras } from '@angular/router';
+import { Router } from '@angular/router';
+import { StorageKey } from '../enums/storage-key.enum';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NavigationService {
-  constructor(private router: Router) {}
+
+  constructor(private router: Router) { }
 
   /**
-   * Navigate to a route without reloading the page
+   * Chuyển hướng user dựa trên quyền sau khi login
+   * - admin hoặc manager: chuyển về page ds-bang-ve
+   * - user: chuyển về page ds-quan-day  
+   * - kcs: chuyển về page kcs-check
    */
-  navigate(route: string, options?: NavigationExtras): void {
-    this.router.navigate([route], options);
-  }
+  navigateBasedOnUserRole(): void {
+    // Kiểm tra xem user có đăng nhập không
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem(StorageKey.TOKEN_KEY);
+    if (!token) {
+      console.log('NavigationService: User not logged in, navigating to landing');
+      this.router.navigate(['/landing']);
+      return;
+    }
 
-  /**
-   * Navigate to landing page
-   */
-  navigateToLanding(queryParams?: any): void {
-    this.router.navigate(['/landing'], { 
-      replaceUrl: true,
-      queryParams: queryParams 
+    const role = localStorage.getItem('role')?.toLowerCase() || '';
+    const khauSx = localStorage.getItem('khau_sx')?.toLowerCase() || '';
+    const email = localStorage.getItem('email')?.toLowerCase() || '';
+
+    console.log('NavigationService: Determining navigation based on role:', {
+      role,
+      khauSx,
+      email
     });
+
+    // Kiểm tra quyền admin hoặc manager
+    if (this.isAdminOrManager(role, khauSx, email)) {
+      console.log('NavigationService: User is admin/manager, navigating to ds-bang-ve');
+      this.router.navigate(['/ds-bang-ve']);
+      return;
+    }
+
+    // Kiểm tra quyền KCS
+    if (this.isKCS(role, khauSx, email)) {
+      console.log('NavigationService: User is KCS, navigating to kcs-check');
+      this.router.navigate(['/kcs-check']);
+      return;
+    }
+
+    // Mặc định là user thường
+    console.log('NavigationService: User is regular user, navigating to ds-quan-day');
+    this.router.navigate(['/ds-quan-day']);
   }
 
   /**
-   * Navigate to a route with query parameters
+   * Kiểm tra xem user có phải là admin hoặc manager không
    */
-  navigateWithParams(route: string, params: any): void {
-    this.router.navigate([route], { queryParams: params });
+  private isAdminOrManager(role: string, khauSx: string, email: string): boolean {
+    // Kiểm tra role
+    if (role.includes('admin') || role.includes('manager')) {
+      return true;
+    }
+
+    // Kiểm tra khau_sx
+    if (khauSx.includes('admin') || khauSx.includes('manager')) {
+      return true;
+    }
+
+    // Kiểm tra email
+    if (email.includes('admin') || email.includes('manager')) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
-   * Navigate to a route with state
+   * Kiểm tra xem user có phải là KCS không
    */
-  navigateWithState(route: string, state: any): void {
-    this.router.navigate([route], { state: state });
+  private isKCS(role: string, khauSx: string, email: string): boolean {
+    // Kiểm tra role
+    if (role.includes('kcs')) {
+      return true;
+    }
+
+    // Kiểm tra khau_sx
+    if (khauSx.includes('kcs')) {
+      return true;
+    }
+
+    // Kiểm tra email
+    if (email.includes('kcs')) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
-   * Navigate back
+   * Lấy route mặc định dựa trên quyền của user
    */
-  navigateBack(): void {
-    this.router.navigate(['../']);
-  }
+  getDefaultRoute(): string {
+    // Kiểm tra xem user có đăng nhập không
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem(StorageKey.TOKEN_KEY);
+    if (!token) {
+      return '/landing';
+    }
 
-  /**
-   * Navigate to home
-   */
-  navigateToHome(): void {
-    this.router.navigate(['/']);
-  }
+    const role = localStorage.getItem('role')?.toLowerCase() || '';
+    const khauSx = localStorage.getItem('khau_sx')?.toLowerCase() || '';
+    const email = localStorage.getItem('email')?.toLowerCase() || '';
 
-  /**
-   * Navigate to login page
-   */
-  navigateToLogin(): void {
-    this.router.navigate(['/login']);
-  }
+    if (this.isAdminOrManager(role, khauSx, email)) {
+      return '/ds-bang-ve';
+    }
 
-  /**
-   * Navigate to maintenance page
-   */
-  navigateToMaintenance(state?: any): void {
-    const navigationExtras: NavigationExtras = {
-      state: state
-    };
-    this.router.navigate(['/maintenance'], navigationExtras);
-  }
+    if (this.isKCS(role, khauSx, email)) {
+      return '/kcs-check';
+    }
 
-  /**
-   * Navigate to result page
-   */
-  navigateToResult(route: string, params?: any): void {
-    this.router.navigate([route], { 
-      replaceUrl: true,
-      queryParams: params 
-    });
-  }
-
-  /**
-   * Navigate to payment page
-   */
-  navigateToPayment(params?: any): void {
-    this.router.navigate(['/payment'], { 
-      replaceUrl: true,
-      queryParams: params 
-    });
-  }
-
-  /**
-   * Get current URL
-   */
-  getCurrentUrl(): string {
-    return this.router.url;
-  }
-
-  /**
-   * Check if current route matches
-   */
-  isCurrentRoute(route: string): boolean {
-    return this.router.url === route;
+    return '/ds-quan-day';
   }
 } 

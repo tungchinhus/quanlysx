@@ -4,33 +4,39 @@ import { RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'ds-quan-day',
+    redirectTo: 'landing',
     pathMatch: 'full'
   },
-  {
-    path: 'components',
-    loadChildren: () =>
-      import('./shared/components/components.module').then((m) => m.ComponentsModule)
-  },
+
   {
     path: 'landing',
     loadChildren: () => import('./pages/landing/landing.module').then((m) => m.LandingModule)
   },
   {
+    path: 'components',
+    loadChildren: () =>
+      import('./shared/components/components.module').then((m) => m.ComponentsModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+  },
+  {
     path: 'result-passed',
-    loadChildren: () => import('./pages/landing/result-passed/result-passed.module').then((m) => m.ResultPassedModule)
+    loadChildren: () => import('./pages/landing/result-passed/result-passed.module').then((m) => m.ResultPassedModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'result-failed',
-    loadChildren: () => import('./pages/landing/result-failed/result-failed.module').then(m => m.ResultFailedModule)    
+    loadChildren: () => import('./pages/landing/result-failed/result-failed.module').then(m => m.ResultFailedModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'payment-result',
-    loadChildren: () => import('./pages/landing/payment-result/payment-result.module').then((m) => m.PaymentResultModule)
+    loadChildren: () => import('./pages/landing/payment-result/payment-result.module').then((m) => m.PaymentResultModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'maintenance',
-    loadChildren: () => import('./pages/landing/maintenance/maintenance.module').then((m) => m.MaintenanceModule)
+    loadChildren: () => import('./pages/landing/maintenance/maintenance.module').then((m) => m.MaintenanceModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'ds-bang-ve',
@@ -39,7 +45,8 @@ const routes: Routes = [
   },
   {
     path: 'quan-day',
-    loadChildren: () => import('./pages/landing/quan-day/quan-day.module').then(m => m.QuanDayModule)
+    loadChildren: () => import('./pages/landing/quan-day/quan-day.module').then(m => m.QuanDayModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'ds-quan-day',
@@ -52,9 +59,8 @@ const routes: Routes = [
         console.error('🔍 App Routing: Error loading ds-quan-day module:', error);
         throw error;
       });
-    }
-    // Temporarily comment out guard for testing
-    // canActivate: [() => import('./pages/landing/ds-quan-day/ds-quan-day.guard').then(m => m.WindingAccessGuard)]
+    },
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'kcs-check',
@@ -63,11 +69,13 @@ const routes: Routes = [
   },
   {
     path: 'boi-day-ha',
-    loadChildren: () => import('./pages/landing/boi-day-ha/boi-day-ha.module').then(m => m.BoiDayHaModule)
+    loadChildren: () => import('./pages/landing/boi-day-ha/boi-day-ha.module').then(m => m.BoiDayHaModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: 'boi-day-cao',
-    loadChildren: () => import('./pages/landing/boi-day-cao/boi-day-cao.module').then(m => m.BoiDayCaoModule)
+    loadChildren: () => import('./pages/landing/boi-day-cao/boi-day-cao.module').then(m => m.BoiDayCaoModule),
+    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
   },
   {
     path: '**',

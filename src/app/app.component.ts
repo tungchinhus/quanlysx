@@ -10,6 +10,7 @@ import { filter, Subscription } from 'rxjs';
 import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 import { LoginComponent } from './shared/components/login/login.component';
 import { AuthServices } from './shared/services/authen/auth.service';
+import { NavigationService } from './shared/services/navigation.service';
 
 
 export interface UserLoginDto {
@@ -81,7 +82,8 @@ title: string = 'quanlysx';
     private router: Router,
     private route: ActivatedRoute,
     private localeService: BsLocaleService,
-    public authService: AuthServices
+    public authService: AuthServices,
+    private navigationService: NavigationService
   ) { }
 
   @HostListener('window:click', ["$event"])
@@ -380,7 +382,7 @@ title: string = 'quanlysx';
           }
         }, 100);
         
-        this.router.navigate(['/landing']);
+        this.navigationService.navigateBasedOnUserRole();
         return;
       } catch (error) {
         console.error('Mock login failed:', error);
@@ -603,9 +605,9 @@ title: string = 'quanlysx';
           }
         }, 100);
         
-        // Chuyển về trang landing mà không reload
-        console.log('Navigating to /landing...');
-        this.router.navigate(['/landing']);
+        // Chuyển hướng dựa trên quyền của user
+        console.log('Navigating based on user role...');
+        this.navigationService.navigateBasedOnUserRole();
         console.log('Navigation completed');
 
       },
