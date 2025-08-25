@@ -6,34 +6,58 @@ import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 
 // New interfaces based on API specification
 export interface BoiDayHaPendingResponse {
-  isSuccess: boolean;
-  message: string;
-  data: BoiDayHaPendingItem[];
-  totalCount: number;
-  currentUserId: string;
-  isKcsUser: boolean;
-  userRoles: string[];
+  IsSuccess: boolean;
+  Message: string;
+  Data: BoiDayHaPendingItem[];
+  TotalCount: number;
+  CurrentUserId: string;
+  IsKcsUser: boolean;
+  UserRoles: string[];
+}
+
+// New interfaces for API responses
+export interface RejectResponse {
+  IsSuccess: boolean;
+  Message: string;
+  ItemId: number;
+  ItemType: string;
+  RejectedBy: string;
+  RejectedAt: string;
+  Reason: string;
+}
+
+export interface ApproveResponse {
+  IsSuccess: boolean;
+  Message: string;
+  ItemId: number;
+  ItemType: string;
+  ApprovedBy: string;
+  ApprovedAt: string;
+  Notes: string;
+  QualityScore: number;
+  InspectorName: string;
+  InspectionDate: string;
 }
 
 export interface BoiDayHaPendingSearchResponse {
-  isSuccess: boolean;
-  message: string;
-  data: BoiDayHaPendingItem[];
-  totalCount: number;
-  pageNumber: number;
-  pageSize: number;
-  totalPages: number;
-  currentUserId: string;
-  isKcsUser: boolean;
-  userRoles: string[];
-  searchCriteria: SearchCriteria;
+  IsSuccess: boolean;
+  Message: string;
+  Data: BoiDayHaPendingItem[];
+  TotalCount: number;
+  PageNumber: number;
+  PageSize: number;
+  TotalPages: number;
+  CurrentUserId: string;
+  IsKcsUser: boolean;
+  UserRoles: string[];
+  SearchCriteria: SearchCriteria;
 }
 
 export interface SearchCriteria {
-  searchByDrawingName?: string;
-  searchByWindingSymbolOrTBKT?: string;
-  pageNumber: number;
-  pageSize: number;
+  SearchByDrawingName?: string;
+  SearchByWindingSymbolOrTBKT?: string;
+  PageNumber: number;
+  PageSize: number;
 }
 
 export interface BoiDayHaPendingItem {
@@ -107,6 +131,7 @@ export interface UserInfo {
 export interface BoiDayHaData {
   id: number;
   kyhieuquanday: string;
+  tenBangVe: string;
   congsuat: string;
   tbkt: string;
   dienap: string;
@@ -157,7 +182,7 @@ export interface EpBoiDayData {
 })
 export class KcsCheckService {
 
-  private baseUrl = 'https://localhost:7001'; // Updated base URL from API spec
+  private baseUrl = 'https://localhost:7190'; // Updated base URL from API spec
   private headers = new HttpHeaders({
     'Content-Type': 'application/json'
   });
@@ -219,9 +244,10 @@ export class KcsCheckService {
   // Convert new API response to legacy format for backward compatibility
   convertToLegacyFormat(items: BoiDayHaPendingItem[]): BoiDayHaData[] {
     return items.map(item => ({
-      id: item.id,
+      id: item.bd_ha_id,
       kyhieuquanday: item.bdHa?.masothe_bd_ha || 'N/A',
-      congsuat: item.bangve?.kyhieubangve || 'N/A',
+      tenBangVe: item.bangve?.kyhieubangve || 'N/A',
+      congsuat: item.bangve?.congsuat || 'N/A',
       tbkt: item.bangve?.tbkt || 'N/A',
       dienap: item.bangve?.dienap || 'N/A',
       quy_cach_day: item.bdHa?.quycachday || 'N/A',
@@ -256,48 +282,48 @@ export class KcsCheckService {
         assigned_at: "2025-01-20T10:00:00Z",
         assigned_by_user_id: "admin123",
         bangve: {
-          id: 1,
-          kyhieubangve: "BV001",
-          congsuat: "100 kVA",
-          tbkt: "TBKT001",
-          dienap: "220V",
-          soboiday: 5,
-          bd_ha_trong: 10,
-          bd_ha_ngoai: 12,
-          bd_cao: 8,
-          bd_ep: 6,
-          bung_bd: 15,
-          user_create: "user123",
-          trang_thai: 1,
-          created_at: "2025-01-20T09:00:00Z",
+          id: 7,
+          kyhieubangve: "1000-39N-25086T",
+          congsuat: "1000",
+          tbkt: "25086T",
+          dienap: "22/0.4",
+          soboiday: 13,
+          bd_ha_trong: 244,
+          bd_ha_ngoai: 436,
+          bd_cao: 437,
+          bd_ep: 550,
+          bung_bd: 33,
+          user_create: "totruongquanday@thibidi.com",
+          trang_thai: 0,
+          created_at: "2025-08-20T00:00:00Z",
           isActive: true
         },
         bdHa: {
           id: 1,
-          masothe_bd_ha: "khâu quấn dây hạ",
-          kyhieubangve: "BV001",
+          masothe_bd_ha: "1000-39N-25086T-065",
+          kyhieubangve: "1000-39N-25086T",
           ngaygiacong: "2025-01-20T08:00:00Z",
-          nguoigiacong: "Nguyễn Văn A",
-          quycachday: "0.5mm",
-          sosoiday: 100,
+          nguoigiacong: "quandayha1@thibidi.com",
+          quycachday: "dasfaf",
+          sosoiday: 1,
           ngaysanxuat: "2025-01-19T00:00:00Z",
-          nhasanxuat: "GM",
-          chuvikhuon: 50,
-          kt_bung_bd: 45,
+          nhasanxuat: "nha_sx1",
+          chuvikhuon: 0,
+          kt_bung_bd: 0,
           chieuquanday: true,
-          mayquanday: "Máy quấn dây tự động",
-          xungquanh: 25.5,
-          haidau: 30.2,
-          kt_boiday_trong: "40x50",
-          chuvi_bd_trong: 180.0,
-          kt_bd_ngoai: "45x55",
-          dientroRa: 2.5,
-          dientroRb: 2.6,
-          dientroRc: 2.4,
-          dolechdientro: 0.1,
+          mayquanday: "2",
+          xungquanh: 2,
+          haidau: 2,
+          kt_boiday_trong: "",
+          chuvi_bd_trong: 0.00,
+          kt_bd_ngoai: "",
+          dientroRa: 0,
+          dientroRb: 0,
+          dientroRc: 0,
+          dolechdientro: 0,
           user_update: "user123",
           trang_thai: 2,
-          khau_sx: "KH001"
+          khau_sx: "boidayha"
         },
         user: {
           id: "user123",
@@ -309,13 +335,13 @@ export class KcsCheckService {
     ];
     
     const mockResponse: BoiDayHaPendingResponse = {
-      isSuccess: true,
-      message: `Đã tìm thấy ${mockData.length} bối dây hạ chờ duyệt.`,
-      data: mockData,
-      totalCount: mockData.length,
-      currentUserId: "user123",
-      isKcsUser: false,
-      userRoles: ["User"]
+      IsSuccess: true,
+      Message: `Đã tìm thấy ${mockData.length} bối dây hạ chờ duyệt.`,
+      Data: mockData,
+      TotalCount: mockData.length,
+      CurrentUserId: "user123",
+      IsKcsUser: false,
+      UserRoles: ["User"]
     };
     
     return of(mockResponse).pipe(delay(500));
@@ -327,13 +353,13 @@ export class KcsCheckService {
     
     return mockData.pipe(
       map(response => {
-        const totalPages = Math.ceil(response.totalCount / searchCriteria.pageSize);
+        const totalPages = Math.ceil(response.TotalCount / searchCriteria.PageSize);
         return {
           ...response,
-          pageNumber: searchCriteria.pageNumber,
-          pageSize: searchCriteria.pageSize,
-          totalPages: totalPages,
-          searchCriteria: searchCriteria
+          PageNumber: searchCriteria.PageNumber,
+          PageSize: searchCriteria.PageSize,
+          TotalPages: totalPages,
+          SearchCriteria: searchCriteria
         };
       })
     );
@@ -342,7 +368,7 @@ export class KcsCheckService {
   // Legacy methods for backward compatibility
   getBoiDayHaData(): Observable<BoiDayHaData[]> {
     return this.getBoiDayHaPending().pipe(
-      map(response => this.convertToLegacyFormat(response.data))
+      map(response => this.convertToLegacyFormat(response.Data))
     );
   }
 
@@ -589,32 +615,34 @@ export class KcsCheckService {
     }
   }
 
+  // Get display name for type
+  private getTypeDisplayName(type: string): string {
+    switch (type) {
+      case 'boiDayHa':
+        return 'Bối dây hạ';
+      case 'boiDayCao':
+        return 'Bối dây cao';
+      case 'epBoiDay':
+        return 'Ép bối dây';
+      default:
+        return type;
+    }
+  }
+
   // Approve item
-  approveItem(type: string, id: number, approvalData?: any): Observable<any> {
+  approveItem(type: string, id: number, approvalData?: any): Observable<ApproveResponse> {
     // Sử dụng endpoint mới theo định nghĩa BE
     const apiType = this.mapTypeToApi(type);
     const url = `${this.baseUrl}/api/kcs-check/${apiType}/approve`;
     
+    // Request body theo API specification mới - chỉ gửi các field cần thiết
     const payload = {
       itemId: id,
       notes: approvalData?.notes || 'Đạt tiêu chuẩn chất lượng',
       qualityScore: approvalData?.qualityScore || 5,
-      inspectorName: approvalData?.inspectorName || '',
+      inspectorName: approvalData?.inspectorName || 'Unknown',
       inspectionDate: approvalData?.inspectionDate || new Date().toISOString(),
-      approvedAt: new Date().toISOString(),
-      // Save to tbl_kcs_approve table
-      saveToKcsApprove: true,
-      kcsApproveData: {
-        item_id: id,
-        item_type: type,
-        action: 'approve',
-        notes: approvalData?.notes || 'Đạt tiêu chuẩn chất lượng',
-        quality_score: approvalData?.qualityScore || 5,
-        inspector_name: approvalData?.inspectorName || 'Unknown',
-        inspection_date: approvalData?.inspectionDate || new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        status: 'approved'
-      }
+      approvedAt: new Date().toISOString()
     };
     
     console.log('=== APPROVE ITEM DEBUG ===');
@@ -627,7 +655,7 @@ export class KcsCheckService {
     console.log(`Headers:`, this.getAuthHeaders());
     console.log('==========================');
     
-    return this.http.post<any>(url, payload, { headers: this.getAuthHeaders() })
+    return this.http.post<ApproveResponse>(url, payload, { headers: this.getAuthHeaders() })
       .pipe(
         map(response => {
           console.log('Approve response:', response);
@@ -635,39 +663,22 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error approving item:', error);
-          return of({ success: false, message: 'Approval failed' });
+          return of({ IsSuccess: false, Message: 'Approval failed' } as ApproveResponse);
         })
       );
   }
 
   // Reject item
-  rejectItem(type: string, id: number, reason?: string): Observable<any> {
+  rejectItem(type: string, id: number, reason?: string): Observable<RejectResponse> {
     // Sử dụng endpoint mới theo định nghĩa BE
     const apiType = this.mapTypeToApi(type);
     const url = `${this.baseUrl}/api/kcs-check/${apiType}/reject`;
     
+    // Request body theo API specification mới
     const payload = {
       itemId: id,
-      reason: reason || 'Không đạt tiêu chuẩn chất lượng',
-      rejectedAt: new Date().toISOString(),
-      // Thêm thông tin để cập nhật trạng thái thành 1 (đang xử lý)
-      status: 1,
-      updateTables: ['tbl_bd_ha', 'tbl_user_bangve'],
-      // Thêm thông tin chi tiết để cập nhật các bảng
-      tableUpdates: {
-        tbl_bd_ha: {
-          id: id,
-          trang_thai: 1, // Đang xử lý
-          ghi_chu: reason,
-          ngay_cap_nhat: new Date().toISOString()
-        },
-        tbl_user_bangve: {
-          id: id,
-          trang_thai: 1, // Đang xử lý
-          ghi_chu: reason,
-          ngay_cap_nhat: new Date().toISOString()
-        }
-      }
+      reason: reason || 'Kiểm tra chất lượng không đạt',
+      rejectedAt: new Date().toISOString()
     };
     
     console.log('=== REJECT ITEM DEBUG ===');
@@ -680,7 +691,7 @@ export class KcsCheckService {
     console.log(`Headers:`, this.getAuthHeaders());
     console.log('==========================');
     
-    return this.http.post<any>(url, payload, { headers: this.getAuthHeaders() })
+    return this.http.post<RejectResponse>(url, payload, { headers: this.getAuthHeaders() })
       .pipe(
         map(response => {
           console.log('Reject response:', response);
@@ -688,39 +699,21 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error rejecting item:', error);
-          return of({ success: false, message: 'Rejection failed' });
+          return of({ IsSuccess: false, Message: 'Rejection failed' } as RejectResponse);
         })
       );
   }
 
-  // Reject item with detailed information and save to tbl_kcs_approve
-  rejectItemWithDetails(type: string, id: number, rejectionData: any): Observable<any> {
+  // Reject item with detailed information
+  rejectItemWithDetails(type: string, id: number, rejectionData: any): Observable<RejectResponse> {
     const apiType = this.mapTypeToApi(type);
-    const url = `${this.baseUrl}/api/kcs-check/${apiType}/reject-with-details`;
+    const url = `${this.baseUrl}/api/kcs-check/${apiType}/reject`;
     
+    // Request body theo API specification mới - chỉ gửi 3 field cần thiết
     const payload = {
       itemId: id,
-      reason: rejectionData.reason,
-      technicalDetails: rejectionData.technicalDetails,
-      qualityIssues: rejectionData.qualityIssues,
-      recommendations: rejectionData.recommendations,
-      rejectedAt: rejectionData.rejectedAt,
-      itemType: rejectionData.itemType,
-      // Save to tbl_kcs_approve table
-      saveToKcsApprove: true,
-      kcsApproveData: {
-        item_id: id,
-        item_type: type,
-        action: 'reject',
-        reason: rejectionData.reason,
-        technical_details: rejectionData.technicalDetails,
-        quality_issues: rejectionData.qualityIssues,
-        recommendations: rejectionData.recommendations,
-        inspector_name: rejectionData.inspectorName || 'Unknown',
-        inspection_date: rejectionData.inspectionDate || new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        status: 'rejected'
-      }
+      reason: rejectionData.reason || 'Kiểm tra chất lượng không đạt',
+      rejectedAt: new Date().toISOString()
     };
     
     console.log('=== REJECT ITEM WITH DETAILS DEBUG ===');
@@ -733,7 +726,7 @@ export class KcsCheckService {
     console.log(`Headers:`, this.getAuthHeaders());
     console.log('==========================');
     
-    return this.http.post<any>(url, payload, { headers: this.getAuthHeaders() })
+    return this.http.post<RejectResponse>(url, payload, { headers: this.getAuthHeaders() })
       .pipe(
         map(response => {
           console.log('Reject with details response:', response);
@@ -741,7 +734,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error rejecting item with details:', error);
-          return of({ success: false, message: 'Rejection failed' });
+          return of({ IsSuccess: false, Message: 'Rejection failed' } as RejectResponse);
         })
       );
   }
@@ -770,7 +763,7 @@ export class KcsCheckService {
     switch (type) {
       case 'boiDayHa':
         return this.getBoiDayHaPending().pipe(
-          map(response => this.convertToLegacyFormat(response.data))
+          map(response => this.convertToLegacyFormat(response.Data))
         );
       case 'boiDayCao':
         return this.getBoiDayCaoData();

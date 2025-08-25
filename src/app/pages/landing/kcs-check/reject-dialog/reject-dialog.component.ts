@@ -45,28 +45,28 @@ export class RejectDialogComponent implements OnInit {
         itemType: this.data.itemType
       };
 
-      // Call service to reject item and save to tbl_kcs_approve
-      this.kcsService.rejectItemWithDetails(this.data.itemType, this.data.itemId, rejectionData)
+      // Call service to reject item
+      this.kcsService.rejectItem(this.data.itemType, this.data.itemId, formData.ghiChu)
         .subscribe({
           next: (response) => {
-            if (response.success) {
+            if (response.IsSuccess) {
               this.dialogRef.close({
-                success: true,
-                message: 'Đã từ chối thành công',
+                IsSuccess: true,
+                Message: response.Message || 'Đã từ chối thành công',
                 data: rejectionData
               });
             } else {
               this.dialogRef.close({
-                success: false,
-                message: response.message || 'Lỗi khi từ chối'
+                IsSuccess: false,
+                Message: response.Message || 'Lỗi khi từ chối'
               });
             }
           },
           error: (error) => {
             console.error('Error rejecting item:', error);
             this.dialogRef.close({
-              success: false,
-              message: 'Lỗi khi từ chối. Vui lòng thử lại.'
+              IsSuccess: false,
+              Message: 'Lỗi khi từ chối. Vui lòng thử lại.'
             });
           },
           complete: () => {

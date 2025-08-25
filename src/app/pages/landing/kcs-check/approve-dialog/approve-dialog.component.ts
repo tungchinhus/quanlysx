@@ -54,24 +54,24 @@ export class ApproveDialogComponent implements OnInit {
     this.kcsService.approveItem(this.data.itemType, this.data.itemId, approvalData)
       .subscribe({
         next: (response) => {
-          if (response.success) {
+          if (response.IsSuccess) {
             this.dialogRef.close({
-              success: true,
-              message: 'Đã duyệt KCS thành công',
+              IsSuccess: true,
+              Message: response.Message || 'Đã duyệt KCS thành công',
               data: approvalData
             });
           } else {
             this.dialogRef.close({
-              success: false,
-              message: response.message || 'Lỗi khi duyệt'
+              IsSuccess: false,
+              Message: response.Message || 'Lỗi khi duyệt'
             });
           }
         },
         error: (error) => {
           console.error('Error approving item:', error);
           this.dialogRef.close({
-            success: false,
-            message: 'Lỗi khi duyệt. Vui lòng thử lại.'
+            IsSuccess: false,
+            Message: 'Lỗi khi duyệt. Vui lòng thử lại.'
           });
         },
         complete: () => {

@@ -2,11 +2,12 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { CommonService } from '../../../shared/services/common.service';
 import { AuthServices } from '../../../shared/services/authen/auth.service';
-import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse } from './kcs-check.service';
+import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
 import { RejectDialogComponent, RejectDialogData } from './reject-dialog/reject-dialog.component';
 
@@ -65,10 +66,20 @@ export class KcsCheckComponent implements OnInit {
     private authService: AuthServices,
     private kcsService: KcsCheckService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Kiểm tra quyền KCS trước khi cho phép truy cập
+    if (!this.checkKcsPermission()) {
+      console.error('Access denied: User is not KCS');
+      this.thongbao('Bạn không có quyền truy cập trang này', 'Đóng', 'error');
+      // Redirect về trang landing
+      this.router.navigate(['/landing']);
+      return;
+    }
+    
     this.loadData();
   }
 
@@ -101,23 +112,23 @@ export class KcsCheckComponent implements OnInit {
     // Use new API method for pending items
     this.kcsService.getBoiDayHaPending().subscribe({
       next: (response: BoiDayHaPendingResponse) => {
-        if (response.isSuccess) {
+        if (response.IsSuccess) {
           // Convert to legacy format for backward compatibility
-          const legacyData = this.kcsService.convertToLegacyFormat(response.data);
+          const legacyData = this.kcsService.convertToLegacyFormat(response.Data);
           this.boiDayHaDataSource.data = legacyData;
-          this.totalCount = response.totalCount;
+          this.totalCount = response.TotalCount;
           this.totalPages = Math.ceil(this.totalCount / this.pageSize);
           
           console.log(`Loaded ${legacyData.length} BoiDayHa pending items`);
         } else {
-          console.error('Failed to load BoiDayHa data:', response.message);
-          this.snackBar.open(response.message || 'Lỗi khi tải dữ liệu', 'Đóng', { duration: 3000 });
+          console.error('Failed to load BoiDayHa data:', response.Message);
+          this.thongbao(response.Message || 'Lỗi khi tải dữ liệu', 'Đóng', 'error');
         }
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading BoiDayHa data:', error);
-        this.snackBar.open('Lỗi khi tải dữ liệu', 'Đóng', { duration: 3000 });
+        this.thongbao('Lỗi khi tải dữ liệu', 'Đóng', 'error');
         this.isLoading = false;
       }
     });
@@ -127,33 +138,33 @@ export class KcsCheckComponent implements OnInit {
     this.isLoading = true;
     
     const searchCriteria: SearchCriteria = {
-      searchByDrawingName: this.searchBangVe || undefined,
-      searchByWindingSymbolOrTBKT: this.searchKeyword || undefined,
-      pageNumber: this.currentPage,
-      pageSize: this.pageSize
+      SearchByDrawingName: this.searchBangVe || undefined,
+      SearchByWindingSymbolOrTBKT: this.searchKeyword || undefined,
+      PageNumber: this.currentPage,
+      PageSize: this.pageSize
     };
 
     this.kcsService.searchBoiDayHaPending(searchCriteria).subscribe({
       next: (response: BoiDayHaPendingSearchResponse) => {
-        if (response.isSuccess) {
+        if (response.IsSuccess) {
           // Convert to legacy format for backward compatibility
-          const legacyData = this.kcsService.convertToLegacyFormat(response.data);
+          const legacyData = this.kcsService.convertToLegacyFormat(response.Data);
           this.boiDayHaDataSource.data = legacyData;
-          this.totalCount = response.totalCount;
-          this.totalPages = response.totalPages;
-          this.currentPage = response.pageNumber;
-          this.pageSize = response.pageSize;
+          this.totalCount = response.TotalCount;
+          this.totalPages = response.TotalPages;
+          this.currentPage = response.PageNumber;
+          this.pageSize = response.PageSize;
           
           console.log(`Search results: ${legacyData.length} items found`);
         } else {
-          console.error('Search failed:', response.message);
-          this.snackBar.open(response.message || 'Lỗi khi tìm kiếm', 'Đóng', { duration: 3000 });
+          console.error('Search failed:', response.Message);
+          this.thongbao(response.Message || 'Lỗi khi tìm kiếm', 'Đóng', 'error');
         }
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error searching BoiDayHa data:', error);
-        this.snackBar.open('Lỗi khi tìm kiếm', 'Đóng', { duration: 3000 });
+        this.thongbao('Lỗi khi tìm kiếm', 'Đóng', 'error');
         this.isLoading = false;
       }
     });
@@ -168,7 +179,7 @@ export class KcsCheckComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading BoiDayCao data:', error);
-        this.snackBar.open('Lỗi khi tải dữ liệu', 'Đóng', { duration: 3000 });
+        this.thongbao('Lỗi khi tải dữ liệu', 'Đóng', 'error');
         this.isLoading = false;
       }
     });
@@ -183,8 +194,7 @@ export class KcsCheckComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading EpBoiDay data:', error);
-        this.snackBar.open('Lỗi khi tải dữ liệu', 'Đóng', { duration: 3000 });
-        this.isLoading = false;
+        this.thongbao('Lỗi khi tải dữ liệu', 'Đóng', 'error');
       }
     });
   }
@@ -313,9 +323,7 @@ export class KcsCheckComponent implements OnInit {
   // Action methods
   viewBangVeDetails(element: any): void {
     console.log('Viewing details for:', element);
-    this.snackBar.open(`Xem chi tiết bảng vẽ: ${element.kyhieuquanday}`, 'Đóng', {
-      duration: 3000
-    });
+    this.thongbao(`Xem chi tiết bảng vẽ: ${element.kyhieuquanday}`, 'Đóng', 'info');
   }
 
   approveKcs(element: any): void {
@@ -334,16 +342,12 @@ export class KcsCheckComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result && result.success) {
-        this.snackBar.open(result.message, 'Đóng', {
-          duration: 3000
-        });
+      if (result && result.IsSuccess) {
+        this.thongbao(result.Message, 'Đóng', 'success');
         // Refresh data after approval
         this.loadData();
-      } else if (result && !result.success) {
-        this.snackBar.open(result.message, 'Đóng', {
-          duration: 3000
-        });
+      } else if (result && !result.IsSuccess) {
+        this.thongbao(result.Message || 'Có lỗi xảy ra', 'Đóng', 'error');
       }
     });
   }
@@ -364,16 +368,12 @@ export class KcsCheckComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result && result.success) {
-        this.snackBar.open(result.message, 'Đóng', {
-          duration: 3000
-        });
+      if (result && result.IsSuccess) {
+        this.thongbao(result.Message, 'Đóng', 'success');
         // Refresh data after rejection
         this.loadData();
-      } else if (result && !result.success) {
-        this.snackBar.open(result.message, 'Đóng', {
-          duration: 3000
-        });
+      } else if (result && !result.IsSuccess) {
+        this.thongbao(result.Message || 'Có lỗi xảy ra', 'Đóng', 'error');
       }
     });
   }
@@ -401,5 +401,45 @@ export class KcsCheckComponent implements OnInit {
       default:
         return 'Chờ kiểm tra';
     }
+  }
+
+  /**
+   * Kiểm tra xem user có quyền KCS không
+   */
+  private checkKcsPermission(): boolean {
+    const role = localStorage.getItem('role')?.toLowerCase() || '';
+    const khauSx = localStorage.getItem('khau_sx')?.toLowerCase() || '';
+    const email = localStorage.getItem('email')?.toLowerCase() || '';
+
+    console.log('KcsCheckComponent checking KCS permissions:', { role, khauSx, email });
+
+    // Kiểm tra role
+    if (role.includes('kcs')) {
+      return true;
+    }
+
+    // Kiểm tra khau_sx
+    if (khauSx.includes('kcs')) {
+      return true;
+    }
+
+    // Kiểm tra email
+    if (email.includes('kcs')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Hàm thông báo chung với styling tùy chỉnh
+   */
+  private thongbao(text: string, action: string, type: 'success' | 'error' | 'warning' | 'info'): void {
+    let config = new MatSnackBarConfig();
+    config.verticalPosition = 'top'; // Đặt vị trí dọc là "trên cùng"
+    config.horizontalPosition = 'right'; // Đặt vị trí ngang là "bên phải"
+    config.duration = 3000; // Tùy chọn: Thời gian hiển thị (ví dụ 3 giây)
+    config.panelClass = ['snackbar-custom', `snackbar-${type}`];
+    this.snackBar.open(text, action, config);
   }
 }

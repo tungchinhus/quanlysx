@@ -16,37 +16,37 @@ const routes: Routes = [
     path: 'components',
     loadChildren: () =>
       import('./shared/components/components.module').then((m) => m.ComponentsModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'result-passed',
     loadChildren: () => import('./pages/landing/result-passed/result-passed.module').then((m) => m.ResultPassedModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'result-failed',
     loadChildren: () => import('./pages/landing/result-failed/result-failed.module').then(m => m.ResultFailedModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'payment-result',
     loadChildren: () => import('./pages/landing/payment-result/payment-result.module').then((m) => m.PaymentResultModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'maintenance',
     loadChildren: () => import('./pages/landing/maintenance/maintenance.module').then((m) => m.MaintenanceModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'ds-bang-ve',
     loadChildren: () => import('./pages/landing/ds-bangve/ds-bangve.module').then(m => m.DSBangVeModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'quan-day',
     loadChildren: () => import('./pages/landing/quan-day/quan-day.module').then(m => m.QuanDayModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'ds-quan-day',
@@ -60,22 +60,22 @@ const routes: Routes = [
         throw error;
       });
     },
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'kcs-check',
     loadChildren: () => import('./pages/landing/kcs-check/kcs-check.module').then(m => m.KcsCheckModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.KcsGuard)]
   },
   {
     path: 'boi-day-ha',
     loadChildren: () => import('./pages/landing/boi-day-ha/boi-day-ha.module').then(m => m.BoiDayHaModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: 'boi-day-cao',
     loadChildren: () => import('./pages/landing/boi-day-cao/boi-day-cao.module').then(m => m.BoiDayCaoModule),
-    canActivate: [() => import('./shared/guards/auth.guard').then(m => m.AuthGuard)]
+    canActivate: [() => import('./shared/guards').then(m => m.AuthGuard)]
   },
   {
     path: '**',
