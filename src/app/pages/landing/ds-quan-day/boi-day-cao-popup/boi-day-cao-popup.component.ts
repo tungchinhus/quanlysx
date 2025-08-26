@@ -45,7 +45,7 @@ export interface BoiDayCaoData {
   // Bổ sung thêm các field theo hình
   kt_bung_bd_truoc?: number;
   bung_bd_sau?: number;
-  chieu_quan_day?: string; // 'trái' hoặc 'phải'
+  chieu_quan_day?: boolean; // true = trái, false = phải
   may_quan_day?: string;
   xung_quanh_day?: number; // 2, 3, 4, 6
   hai_dau_day?: number; // 2, 3, 4, 6
@@ -94,7 +94,7 @@ export interface BoiDayCaoSubmitData {
   loai_may_quay?: string;
   kt_bung_bd_truoc?: number;
   bung_bd_sau?: number;
-  chieu_quan_day?: string;
+  chieu_quan_day?: boolean;
   may_quan_day?: string;
   xung_quanh_day?: number;
   hai_dau_day?: number;
@@ -122,12 +122,12 @@ export interface BoiDayCaoApiRequest {
   sosoiday: number;
   ngaysanxuat: string; // ISO date string
   nhasanxuat: string;
-  chieuquanday: number;
+  chieuquanday: boolean; // Changed from number to boolean
   mayquanday: string;
   xungquanh: number;
   haidau: number;
-  bd_tt: number;
-  chuvi_bd_tt: number;
+  bd_tt: string; // Changed from number to string - API expects string
+  chuvi_bd_tt: string; // Changed from number to string - API expects string
   dientroRa: number;
   dientroRb: number;
   dientroRc: number;
@@ -187,7 +187,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       // Các field theo hình - có thể để trống
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: ['trái'], // Có giá trị mặc định
+      chieu_quan_day: [true], // Changed from 'trái' to true (true = trái, false = phải)
       may_quan_day: [''],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
@@ -248,7 +248,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       // Các field theo hình - có thể để trống
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: ['trái'], // Có giá trị mặc định
+      chieu_quan_day: [true], // Changed from 'trái' to true (true = trái, false = phải)
       may_quan_day: [''],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
@@ -525,7 +525,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
     this.isLoading = true;
 
     // Gọi API để lưu dữ liệu
-    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-cao`, apiRequest, {
+    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-cao`, { request: apiRequest }, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.authToken}`
@@ -618,12 +618,12 @@ export class BoiDayCaoPopupComponent implements OnInit {
       sosoiday: formData.so_soi_day || 1,
       ngaysanxuat: ngaySanXuat,
       nhasanxuat: nhaSanXuat || '',
-      chieuquanday: formData.chieu_quan_day === 'trái' ? 1 : 2, // 1 = trái, 2 = phải
+      chieuquanday: formData.chieu_quan_day, // true = trái, false = phải
       mayquanday: formData.may_quan_day || '',
       xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
       haidau: this.getSelectedThickness(formData, 'hai_dau'),
-      bd_tt: formData.kt_bung_bd_truoc || 0, // Kích thước bụng bối dây trước
-      chuvi_bd_tt: formData.chu_vi_khuon || 0, // Chu vi bối dây theo thiết kế
+      bd_tt: (formData.kt_bung_bd_truoc || 0).toString(), // Kích thước bụng bối dây trước
+      chuvi_bd_tt: formData.chu_vi_khuon || '0', // Chu vi bối dây theo thiết kế
       dientroRa: formData.dien_tro_ha_ra || 0,
       dientroRb: formData.dien_tro_ha_rb || 0,
       dientroRc: formData.dien_tro_ha_rc || 0,
@@ -696,7 +696,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       loai_may_quay: '',
       kt_bung_bd_truoc: 0,
       bung_bd_sau: 0,
-      chieu_quan_day: 'trái',
+      chieu_quan_day: true,
       may_quan_day: '',
       xung_quanh_day: 2,
       hai_dau_day: 2,

@@ -32,11 +32,10 @@
         </div>
       </div>
 
-      <!-- Form nhập thông tin bối dây cao -->
+      <!-- Form nhập thông tin bối dây cao - Tối ưu và gọn gàng -->
       <div class="form-section">
-        <h3>Thông tin bối dây cao</h3>
-        
-        <div class="form-grid">
+        <div class="form-grid compact-grid">
+          <!-- Dây và nhà sản xuất -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Quy cách dây</mat-label>
             <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm²" (input)="onFormValueChange()">
@@ -58,7 +57,7 @@
 
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Nhà sản xuất</mat-label>
-            <mat-select formControlName="nha_san_xuat" placeholder="Chọn nhà sản xuất" (selectionChange)="onManufacturerChange($event)">
+            <mat-select formControlName="nha_san_xuat" (selectionChange)="onManufacturerChange($event)">
               <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.value">
                 {{ manufacturer.name }}
               </mat-option>
@@ -89,7 +88,7 @@
             </mat-error>
           </mat-form-field>
 
-
+          <!-- Kích thước cơ bản -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Chu vi khuôn (mm)</mat-label>
             <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi khuôn">
@@ -112,21 +111,15 @@
             <mat-error *ngIf="boiDayCaoForm.get('bung_bd_sau')?.hasError('min') && boiDayCaoForm.get('bung_bd_sau')?.touched">
               Bụng bd sau phải lớn hơn hoặc bằng 0
             </mat-error>
-          </mat-form-field>          
-        </div>
-      </div>
-      <!-- Thông số kỹ thuật theo hình -->
-      <div class="form-section">
-        <h3>Thông số kỹ thuật theo hình</h3>
-        
-                 <div class="form-grid">
+          </mat-form-field>
 
+          <!-- Thông số kỹ thuật -->
           <div class="form-field">
             <label class="mat-label">Chiều quấn dây</label>
             <div class="radio-group">
               <mat-radio-group formControlName="chieu_quan_day" (change)="onFormValueChange()">
-                <mat-radio-button value="trái" class="radio-button">Trái</mat-radio-button>
-                <mat-radio-button value="phải" class="radio-button">Phải</mat-radio-button>
+                <mat-radio-button value="true" class="radio-button">Trái</mat-radio-button>
+                <mat-radio-button value="false" class="radio-button">Phải</mat-radio-button>
               </mat-radio-group>
             </div>
           </div>
@@ -212,13 +205,12 @@
             </div>
           </div>
 
+          <!-- Chu vi bối dây hạ trong -->
           <div class="form-field combined-field">
-            <div class="field-label">
-              <span class="text-label">KT bd Hạ trong BV: bangve123</span>
-            </div>
+            <div class="field-label">Chu vi bối dây hạ trong (mm)</div>
             <div class="input-group">
               <mat-form-field appearance="outline" class="small-input">
-                <mat-label>1p</mat-label>
+                <mat-label>Pha 1</mat-label>
                 <input matInput type="number" formControlName="chu_vi_bd_ha_trong_1p" placeholder="Pha 1">
                 <mat-error *ngIf="boiDayCaoForm.get('chu_vi_bd_ha_trong_1p')?.hasError('required') && boiDayCaoForm.get('chu_vi_bd_ha_trong_1p')?.touched">
                   Chu vi bd Hạ trong 1p là bắt buộc
@@ -226,7 +218,7 @@
               </mat-form-field>
               
               <mat-form-field appearance="outline" class="small-input">
-                <mat-label>2p</mat-label>
+                <mat-label>Pha 2</mat-label>
                 <input matInput type="number" formControlName="chu_vi_bd_ha_trong_2p" placeholder="Pha 2">
                 <mat-error *ngIf="boiDayCaoForm.get('chu_vi_bd_ha_trong_2p')?.hasError('required') && boiDayCaoForm.get('chu_vi_bd_ha_trong_2p')?.touched">
                   Chu vi bd Hạ trong 2p là bắt buộc
@@ -234,7 +226,7 @@
               </mat-form-field>
               
               <mat-form-field appearance="outline" class="small-input">
-                <mat-label>3p</mat-label>
+                <mat-label>Pha 3</mat-label>
                 <input matInput type="number" formControlName="chu_vi_bd_ha_trong_3p" placeholder="Pha 3">
                 <mat-error *ngIf="boiDayCaoForm.get('chu_vi_bd_ha_trong_3p')?.hasError('required') && boiDayCaoForm.get('chu_vi_bd_ha_trong_3p')?.touched">
                   Chu vi bd Hạ trong 3p là bắt buộc
@@ -243,44 +235,12 @@
             </div>
           </div>
 
+          <!-- Kích thước bối dây hạ ngoài -->
           <div class="form-field combined-field">
-            <div class="field-label">
-              <span class="text-label">Chu vi bd Hạ trong 1 - 3p</span>
-            </div>
+            <div class="field-label">KT bối dây hạ ngoài (mm)</div>
             <div class="input-group">
               <mat-form-field appearance="outline" class="small-input">
-                <mat-label>1p</mat-label>
-                <input matInput type="number" formControlName="chu_vi_bd_ha_trong_1p" placeholder="Pha 1">
-                <mat-error *ngIf="boiDayCaoForm.get('chu_vi_bd_ha_trong_1p')?.hasError('required') && boiDayCaoForm.get('chu_vi_bd_ha_trong_1p')?.touched">
-                  Chu vi bd Hạ trong 1p là bắt buộc
-                </mat-error>
-              </mat-form-field>
-              
-              <mat-form-field appearance="outline" class="small-input">
-                <mat-label>2p</mat-label>
-                <input matInput type="number" formControlName="chu_vi_bd_ha_trong_2p" placeholder="Pha 2">
-                <mat-error *ngIf="boiDayCaoForm.get('chu_vi_bd_ha_trong_2p')?.hasError('required') && boiDayCaoForm.get('chu_vi_bd_ha_trong_2p')?.touched">
-                  Chu vi bd Hạ trong 2p là bắt buộc
-                </mat-error>
-              </mat-form-field>
-              
-              <mat-form-field appearance="outline" class="small-input">
-                <mat-label>3p</mat-label>
-                <input matInput type="number" formControlName="chu_vi_bd_ha_trong_3p" placeholder="Pha 3">
-                <mat-error *ngIf="boiDayCaoForm.get('chu_vi_bd_ha_trong_3p')?.hasError('required') && boiDayCaoForm.get('chu_vi_bd_ha_trong_3p')?.touched">
-                  Chu vi bd Hạ trong 3p là bắt buộc
-                </mat-error>
-              </mat-form-field>
-            </div>
-          </div>
-
-          <div class="form-field combined-field">
-            <div class="field-label">
-              <span class="text-label">KT bd Hạ ngoài BV: bangve123</span>
-            </div>
-            <div class="input-group">
-              <mat-form-field appearance="outline" class="small-input">
-                <mat-label>1p</mat-label>
+                <mat-label>Pha 1</mat-label>
                 <input matInput type="number" formControlName="kt_bd_ha_ngoai_bv_1p" placeholder="Pha 1">
                 <mat-error *ngIf="boiDayCaoForm.get('kt_bd_ha_ngoai_bv_1p')?.hasError('required') && boiDayCaoForm.get('kt_bd_ha_ngoai_bv_1p')?.touched">
                   KT bd Hạ ngoài BV 1p là bắt buộc
@@ -288,7 +248,7 @@
               </mat-form-field>
               
               <mat-form-field appearance="outline" class="small-input">
-                <mat-label>2p</mat-label>
+                <mat-label>Pha 2</mat-label>
                 <input matInput type="number" formControlName="kt_bd_ha_ngoai_bv_2p" placeholder="Pha 2">
                 <mat-error *ngIf="boiDayCaoForm.get('kt_bd_ha_ngoai_bv_2p')?.hasError('required') && boiDayCaoForm.get('kt_bd_ha_ngoai_bv_2p')?.touched">
                   KT bd Hạ ngoài BV 2p là bắt buộc
@@ -296,7 +256,7 @@
               </mat-form-field>
               
               <mat-form-field appearance="outline" class="small-input">
-                <mat-label>3p</mat-label>
+                <mat-label>Pha 3</mat-label>
                 <input matInput type="number" formControlName="kt_bd_ha_ngoai_bv_3p" placeholder="Pha 3">
                 <mat-error *ngIf="boiDayCaoForm.get('kt_bd_ha_ngoai_bv_3p')?.hasError('required') && boiDayCaoForm.get('kt_bd_ha_ngoai_bv_3p')?.touched">
                   KT bd Hạ ngoài BV 3p là bắt buộc
@@ -305,10 +265,9 @@
             </div>
           </div>
 
+          <!-- Điện trở hạ -->
           <div class="form-field combined-field">
-            <div class="field-label">
-              <span class="text-label">Điện trở hạ:</span>
-            </div>
+            <div class="field-label">Điện trở hạ (Ω)</div>
             <div class="input-group">
               <mat-form-field appearance="outline" class="small-input">
                 <mat-label>Ra</mat-label>
@@ -336,25 +295,23 @@
             </div>
           </div>
 
-                     <div class="form-field combined-field">
-             <div class="field-label">
-               <span class="text-label">Độ lệch điện trở giữa các pha</span>
-             </div>
-             <div class="input-group">
-               <mat-form-field appearance="outline" class="small-input">
-                 <mat-label>(%)</mat-label>
-                 <input matInput type="number" formControlName="do_lech_dien_tro_giua_cac_pha" placeholder="Nhập độ lệch" max="2" min="0" step="0.1">
-                 <mat-error *ngIf="boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.hasError('required') && boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.touched">
-                   Độ lệch điện trở giữa các pha là bắt buộc
-                 </mat-error>
-                 <mat-error *ngIf="boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.hasError('max') && boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.touched">
-                   Độ lệch điện trở phải nhỏ hơn hoặc bằng 2%
-                 </mat-error>
-               </mat-form-field>
-               
-               <span class="tc-note">(TC: <= 2%)</span>
-             </div>
-           </div>
+          <!-- Độ lệch điện trở -->
+          <div class="form-field with-note">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Độ lệch điện trở giữa các pha (%)</mat-label>
+              <input matInput type="number" formControlName="do_lech_dien_tro_giua_cac_pha"
+                     placeholder="Nhập độ lệch" max="2" min="0" step="0.1">
+              <mat-error *ngIf="boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.hasError('required') 
+                                && boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.touched">
+                Độ lệch điện trở giữa các pha là bắt buộc
+              </mat-error>
+              <mat-error *ngIf="boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.hasError('max') 
+                                && boiDayCaoForm.get('do_lech_dien_tro_giua_cac_pha')?.touched">
+                Độ lệch điện trở phải nhỏ hơn hoặc bằng 2%
+              </mat-error>
+            </mat-form-field>
+            <span class="tc-note">(TC: ≤ 2%)</span>
+          </div>
         </div>
       </div>
 
