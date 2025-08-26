@@ -29,7 +29,7 @@ export interface WindingData {
   cu_ep_cuaso_bd?: number;
   phuong_phap_ep?: string;
   kt_ngoai_bd_sau_ep?: string;
-  trang_thai: number; // 0: new, 1: completed, 2: in progress
+  trang_thai: number; // STATUS.NEW (0): mới, STATUS.COMPLETED (3): hoàn thành, STATUS.PROCESSING (1): đang xử lý
   //user_update?: string;
   created_at: Date;
   // Additional fields for display

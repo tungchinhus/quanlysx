@@ -47,12 +47,7 @@
                   <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-button">
                     <mat-icon>more_vert</mat-icon>
                   </button>
-                  <mat-menu #menu="matMenu">
-                    <button mat-menu-item (click)="openDialog('Xem chi tiết: ' + element.kyhieuquanday)">
-                      <mat-icon>visibility</mat-icon>
-                      <span>Xem chi tiết</span>
-                    </button>
-                    
+                  <mat-menu #menu="matMenu">                    
                     <!-- Hiển thị nút gia công hạ nếu user có quyền và trạng thái phù hợp -->
                     <button mat-menu-item 
                             *ngIf="canShowGiaCongHa(element)" 

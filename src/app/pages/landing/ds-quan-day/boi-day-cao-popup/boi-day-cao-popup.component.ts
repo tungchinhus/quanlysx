@@ -9,6 +9,7 @@ import { QuanDayData } from '../ds-quan-day.component';
 import { Constant } from 'src/app/constant/constant';
 import { DialogComponent } from 'src/app/shared/dialogs/dialog/dialog.component';
 import { KcsQualityService, KcsQualityCheckFailure } from 'src/app/shared/services/kcs-quality.service';
+import { STATUS } from 'src/app/shared/enums/common.enum';
 
 export interface BoiDayCaoData {
   id?: number;
@@ -627,7 +628,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       dientroRb: formData.dien_tro_ha_rb || 0,
       dientroRc: formData.dien_tro_ha_rc || 0,
       //user_update: this.currentUser?.username || this.currentUser?.email || 'Unknown',
-      trang_thai: 1 // 1 = đang làm, 2 = hoàn thành
+              trang_thai: STATUS.PROCESSING // STATUS.PROCESSING = đang làm, STATUS.COMPLETED = hoàn thành
     };
     
     console.log('mapToApiRequest: Mapped API request:', apiRequest);

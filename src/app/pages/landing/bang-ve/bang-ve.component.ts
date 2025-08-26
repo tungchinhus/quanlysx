@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BangVeData } from '../ds-bangve/ds-bangve.component';
+import { STATUS } from 'src/app/shared/enums/common.enum';
 
 @Component({
   selector: 'app-bang-ve',
@@ -34,7 +35,7 @@ export class BangVeComponent implements OnInit {
       bd_ep: [''],
       bung_bd: ['', Validators.pattern(/^[0-9]*$/)],
       user_create: [{ value: 'Current User', disabled: true }],
-      trang_thai: [0],
+      trang_thai: [STATUS.NEW],
       created_at: [{ value: new Date().toISOString().slice(0, 16), disabled: true }]
     });
 
@@ -50,7 +51,7 @@ export class BangVeComponent implements OnInit {
       this.bangVeForm.patchValue({
         user_create: 'Current User',
         created_at: new Date().toISOString().slice(0, 16),
-        trang_thai: 0 // Đảm bảo trang_thai luôn là 0 cho bảng vẽ mới
+        trang_thai: STATUS.NEW // Đảm bảo trang_thai luôn là STATUS.NEW cho bảng vẽ mới
       });
       
       // Đảm bảo kyhieubangve không bị disabled
@@ -62,8 +63,8 @@ export class BangVeComponent implements OnInit {
       // Đảm bảo form được enable trong chế độ add
       if (this.data.mode === 'add') {
         this.bangVeForm.enable();
-        // Đảm bảo trang_thai được set lại là 0 sau khi enable
-        this.bangVeForm.patchValue({ trang_thai: 0 });
+        // Đảm bảo trang_thai được set lại là STATUS.NEW sau khi enable
+        this.bangVeForm.patchValue({ trang_thai: STATUS.NEW });
       }
     }
     
@@ -81,7 +82,7 @@ export class BangVeComponent implements OnInit {
       const newBangVe = { 
         ...formData, 
         id: null,
-        trang_thai: 0 // Đảm bảo trang_thai luôn là 0 cho bảng vẽ mới
+        trang_thai: STATUS.NEW // Đảm bảo trang_thai luôn là STATUS.NEW cho bảng vẽ mới
       };
       console.log('Sending data to parent:', newBangVe);
       this.dialogRef.close(newBangVe); // Đóng dialog và trả về dữ liệu mới

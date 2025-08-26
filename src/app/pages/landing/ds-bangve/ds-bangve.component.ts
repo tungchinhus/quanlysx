@@ -12,6 +12,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
+import { STATUS } from 'src/app/shared/enums/common.enum';
 
 export interface BangVeData {
   id: number;
@@ -897,7 +898,7 @@ export class DsBangveComponent implements OnInit {
       bd_ep: drawingData.bd_ep,
       bung_bd: drawingData.bung_bd,
       user_create: currentUsername,
-      trang_thai: 0, // Bảng vẽ mới có trang_thai = 0
+              trang_thai: STATUS.NEW, // Bảng vẽ mới có trang_thai = 0
       created_at: new Date().toISOString(),
       username: currentUsername,
       email: userInfo?.email || '',
@@ -1000,7 +1001,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'admin',
-        trang_thai: 1,
+        trang_thai: STATUS.PROCESSING,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -1038,7 +1039,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'user2',
-        trang_thai: 1,
+        trang_thai: STATUS.PROCESSING,
         username: 'boidaycao',
         email: 'quandaycao1@thibidi.com',
         role_name: 'user',
@@ -1065,7 +1066,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'admin',
-        trang_thai: 2,
+        trang_thai: STATUS.PROCESSED,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -1087,7 +1088,7 @@ export class DsBangveComponent implements OnInit {
         bd_ep: 'OK',
         bung_bd: 1,
         user_create: 'user1',
-        trang_thai: 2,
+        trang_thai: STATUS.PROCESSED,
         username: 'boidayha',
         email: 'quandayha1@thibidi.com',
         role_name: 'user',
@@ -1414,7 +1415,7 @@ export class DsBangveComponent implements OnInit {
 
   // Method mới: Cập nhật trạng thái bảng vẽ thành "đang gia công" (1)
   private updateDrawingStatusToInProgress(drawingId: number): void {
-    console.log(`🔄 [updateDrawingStatusToInProgress] Updating drawing ${drawingId} to trang_thai = 1 in frontend`);
+          console.log(`🔄 [updateDrawingStatusToInProgress] Updating drawing ${drawingId} to trang_thai = ${STATUS.PROCESSING} in frontend`);
     
     // Tìm bảng vẽ trong danh sách mới
     const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
@@ -1422,12 +1423,12 @@ export class DsBangveComponent implements OnInit {
       const drawing = this.drawings[drawingIndex];
       console.log(`🔄 [updateDrawingStatusToInProgress] Found drawing in new drawings list:`, drawing);
       
-      drawing.trang_thai = 1;
+      drawing.trang_thai = STATUS.PROCESSING;
       
       // Cập nhật filtered lists
       const filteredIndex = this.filteredDrawings.findIndex(d => d.id === drawingId);
       if (filteredIndex !== -1) {
-        this.filteredDrawings[filteredIndex].trang_thai = 1;
+        this.filteredDrawings[filteredIndex].trang_thai = STATUS.PROCESSING;
       }
       
       // Chuyển bảng vẽ từ danh sách mới sang danh sách đang gia công
@@ -1458,13 +1459,13 @@ export class DsBangveComponent implements OnInit {
                    this.processedDrawings.find(d => d.id === drawingId);
     
     if (drawing) {
-      // Tạo bản sao của drawing với trang_thai = 1
+      // Tạo bản sao của drawing với trang_thai = ${STATUS.PROCESSING}
       const updatedDrawing: BangVeData = {
         ...drawing,
-        trang_thai: 1
+        trang_thai: STATUS.PROCESSING
       };
       
-      console.log(`🔄 [updateDrawingStatusToInProgressInBackend] Updating drawing ${drawingId} to trang_thai = 1`);
+      console.log(`🔄 [updateDrawingStatusToInProgressInBackend] Updating drawing ${drawingId} to trang_thai = ${STATUS.PROCESSING}`);
       console.log('Updated drawing data:', updatedDrawing);
       
       // Gọi API UpdateDrawing để cập nhật backend
@@ -1512,7 +1513,7 @@ export class DsBangveComponent implements OnInit {
       console.warn(`  - Current trang_thai: ${inNewList.trang_thai}`);
       
       // Nếu vẫn ở tab mới, thử chuyển sang tab đang gia công
-      if (inNewList.trang_thai === 1) {
+      if (inNewList.trang_thai === STATUS.PROCESSING) {
         console.log(`🔄 [verifyDrawingStatusUpdate] Moving drawing ${drawingId} from new to in-progress...`);
         this.moveDrawingToInProgress(drawingId);
       }
@@ -1537,7 +1538,7 @@ export class DsBangveComponent implements OnInit {
       const drawing = this.drawings[drawingIndex];
       
       // Cập nhật trạng thái
-      drawing.trang_thai = 1;
+      drawing.trang_thai = STATUS.PROCESSING;
       
       // Chuyển từ danh sách mới sang danh sách đang gia công
       this.drawings.splice(drawingIndex, 1);
@@ -1576,7 +1577,7 @@ export class DsBangveComponent implements OnInit {
     
     // Kiểm tra bảng vẽ đang gia công
     if (this.inProgressDrawings.length > 0) {
-      console.log('🔍 [logBoidayInfo] In-progress drawings (trang_thai = 1):');
+      console.log(`🔍 [logBoidayInfo] In-progress drawings (trang_thai = ${STATUS.PROCESSING}):`);
       this.inProgressDrawings.forEach((drawing, index) => {
         console.log(`  ${index + 1}. ID: ${drawing.id}, Ký hiệu: ${drawing.kyhieubangve}, Trạng thái: ${drawing.trang_thai}`);
         // Log thông tin về boiday nếu có
@@ -2175,8 +2176,8 @@ export class DsBangveComponent implements OnInit {
     console.log('=== Testing Filter Logic ===');
     const mockData = [
       { id: 1, kyhieubangve: 'BV-001', user_create: 'user1', trang_thai: null, assigned_users: [{ user_id: 'user1', permission_type: 'read' }, { user_id: 'user2', permission_type: 'read' }] },
-      { id: 2, kyhieubangve: 'BV-002', user_create: 'user2', trang_thai: 1, assigned_users: [{ user_id: 'user2', permission_type: 'read' }] },
-      { id: 3, kyhieubangve: 'BV-003', user_create: 'manager1', trang_thai: 2, assigned_users: [{ user_id: 'user3', permission_type: 'read' }] }
+      { id: 2, kyhieubangve: 'BV-002', user_create: 'user2', trang_thai: STATUS.PROCESSING, assigned_users: [{ user_id: 'user2', permission_type: 'read' }] },
+      { id: 3, kyhieubangve: 'BV-003', user_create: 'manager1', trang_thai: STATUS.PROCESSED, assigned_users: [{ user_id: 'user3', permission_type: 'read' }] }
     ];
     console.log('Mock data for testing:', mockData);
     

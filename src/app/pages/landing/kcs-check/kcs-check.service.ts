@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay, catchError, map } from 'rxjs/operators';
 import { AuthServices } from 'src/app/shared/services/authen/auth.service';
+import { STATUS } from 'src/app/shared/enums/common.enum';
 
 // New interfaces based on API specification
 export interface BoiDayHaPendingResponse {
@@ -277,8 +278,8 @@ export class KcsCheckService {
         user_id: "user123",
         bangve_id: 1,
         bd_ha_id: 1,
-        trang_thai_bv: 1,
-        trang_thai_bd_ha: 2,
+        trang_thai_bv: STATUS.PROCESSING,
+        trang_thai_bd_ha: STATUS.PROCESSED,
         assigned_at: "2025-01-20T10:00:00Z",
         assigned_by_user_id: "admin123",
         bangve: {
@@ -294,7 +295,7 @@ export class KcsCheckService {
           bd_ep: 550,
           bung_bd: 33,
           user_create: "totruongquanday@thibidi.com",
-          trang_thai: 0,
+          trang_thai: STATUS.NEW,
           created_at: "2025-08-20T00:00:00Z",
           isActive: true
         },
@@ -322,7 +323,7 @@ export class KcsCheckService {
           dientroRc: 0,
           dolechdientro: 0,
           user_update: "user123",
-          trang_thai: 2,
+          trang_thai: STATUS.PROCESSED,
           khau_sx: "boidayha"
         },
         user: {
@@ -374,22 +375,25 @@ export class KcsCheckService {
 
   // Method để map trạng thái từ number (dựa vào API response thực tế)
   private mapTrangThaiFromNumber(apiTrangThai: number | null): 'pending' | 'approved' | 'rejected' {
-    // Theo yêu cầu nghiệp vụ:
-    // 1 = "đang xử lý" (pending)
-    // 2 = "hoàn thành, chờ duyệt" (pending)
-    // 3 = "từ chối" (rejected)
+    // Theo yêu cầu nghiệp vụ sử dụng STATUS enum:
+    // STATUS.NEW (0) hoặc NULL: là mới → pending
+    // STATUS.PROCESSING (1): đang xử lý → pending
+    // STATUS.PROCESSED (2): đã xử lý → pending
+    // STATUS.COMPLETED (3): hoàn thành (dùng cho KCS) → approved
     
     if (apiTrangThai === null || apiTrangThai === undefined) {
       return 'pending';
     }
     
     switch (apiTrangThai) {
-      case 1:
+      case STATUS.NEW:
+        return 'pending'; // 0 = mới
+      case STATUS.PROCESSING:
         return 'pending'; // 1 = đang xử lý
-      case 2:
-        return 'pending'; // 2 = hoàn thành, chờ duyệt
-      case 3:
-        return 'rejected'; // 3 = từ chối
+      case STATUS.PROCESSED:
+        return 'pending'; // 2 = đã xử lý
+      case STATUS.COMPLETED:
+        return 'approved'; // 3 = hoàn thành (dùng cho KCS)
       default:
         return 'pending';
     }
@@ -464,7 +468,7 @@ export class KcsCheckService {
         nha_san_xuat: item.nguoigiacong || item.NguoiGiaCong || item.nha_san_xuat || '',
         // Sử dụng ngaygiacong làm ngay_san_xuat (theo API response thực tế)
         ngay_san_xuat: item.ngaygiacong ? new Date(item.ngaygiacong) : new Date(),
-        trang_thai: this.mapTrangThaiFromNumber(item.trang_thai ?? item.TrangThai ?? 1)
+        trang_thai: this.mapTrangThaiFromNumber(item.trang_thai ?? item.TrangThai ?? STATUS.PROCESSING)
       };
     });
   }
@@ -561,7 +565,7 @@ export class KcsCheckService {
         bung_bd: item.ngaysanxuat ? new Date(item.ngaysanxuat).getTime() : 0,
         // Sử dụng nguoigiacong làm ngay_hoan_thanh (theo API response thực tế)
         ngay_hoan_thanh: item.nguoigiacong ? new Date(item.nguoigiacong) : new Date(),
-        trang_thai: this.mapTrangThaiFromNumber(item.trang_thai ?? item.TrangThai ?? 1)
+        trang_thai: this.mapTrangThaiFromNumber(item.trang_thai ?? item.TrangThai ?? STATUS.PROCESSING)
       };
     });
   }
