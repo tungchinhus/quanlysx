@@ -27,7 +27,7 @@
       mat-raised-button 
       color="primary" 
       (click)="onSubmit()" 
-      [disabled]="isLoading"
+      [disabled]="isLoading || !approveForm.valid"
       class="submit-button">
       <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
       <span *ngIf="!isLoading">Duyệt KCS</span>

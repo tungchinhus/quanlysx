@@ -1,12 +1,14 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { KcsCheckService } from '../kcs-check.service';
+import { AuthServices } from 'src/app/shared/services/authen/auth.service';
 
 export interface ApproveDialogData {
   itemId: number;
   itemName: string;
   itemType: string;
+  // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
 }
 
 @Component({
@@ -22,21 +24,43 @@ export class ApproveDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ApproveDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ApproveDialogData,
-    private kcsService: KcsCheckService
+    private kcsService: KcsCheckService,
+    private authService: AuthServices
   ) {
+    // Lấy thông tin người dùng hiện tại
+    const currentUser = this.authService.getUserInfoFromStorage();
+    const inspectorName = currentUser?.username || 
+                         currentUser?.email || 
+                         localStorage.getItem('email') || 
+                         'Unknown';
+    
     this.approveForm = this.fb.group({
-      notes: ['Đạt tiêu chuẩn chất lượng KCS'],
-      qualityScore: [5],
-      inspectorName: [''],
-      inspectionDate: [new Date()]
+      notes: ['Đạt tiêu chuẩn chất lượng KCS', [Validators.required]],
+      qualityScore: [5, [Validators.required, Validators.min(1), Validators.max(10)]],
+      inspectorName: [inspectorName, [Validators.required]],
+      inspectionDate: [new Date(), [Validators.required]]
     });
   }
 
   ngOnInit(): void {
     // Form is already initialized in constructor
+    console.log('ApproveDialog initialized with data:', this.data);
+    console.log('Form value:', this.approveForm.value);
+    console.log('Form valid:', this.approveForm.valid);
   }
 
   onSubmit(): void {
+    if (!this.approveForm.valid) {
+      console.error('Form is invalid:', this.approveForm.errors);
+      console.error('Form validation errors:', {
+        notes: this.approveForm.get('notes')?.errors,
+        qualityScore: this.approveForm.get('qualityScore')?.errors,
+        inspectorName: this.approveForm.get('inspectorName')?.errors,
+        inspectionDate: this.approveForm.get('inspectionDate')?.errors
+      });
+      return;
+    }
+    
     this.isLoading = true;
     
     const formData = this.approveForm.value;
@@ -45,15 +69,19 @@ export class ApproveDialogComponent implements OnInit {
       notes: formData.notes,
       qualityScore: formData.qualityScore,
       inspectorName: formData.inspectorName,
-      inspectionDate: formData.inspectionDate,
+      inspectionDate: formData.inspectionDate instanceof Date ? formData.inspectionDate.toISOString() : formData.inspectionDate,
       approvedAt: new Date().toISOString(),
       itemType: this.data.itemType
+      // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
     };
 
+    console.log('Submitting approval with data:', approvalData);
+    
     // Call service to approve item
     this.kcsService.approveItem(this.data.itemType, this.data.itemId, approvalData)
       .subscribe({
         next: (response) => {
+          console.log('Approve response received:', response);
           if (response.IsSuccess) {
             this.dialogRef.close({
               IsSuccess: true,

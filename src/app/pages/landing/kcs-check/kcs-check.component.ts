@@ -7,7 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { CommonService } from '../../../shared/services/common.service';
 import { AuthServices } from '../../../shared/services/authen/auth.service';
-import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
+import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, BoiDayCaoPendingResponse, BoiDayCaoPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
 import { RejectDialogComponent, RejectDialogData } from './reject-dialog/reject-dialog.component';
 
@@ -172,9 +172,22 @@ export class KcsCheckComponent implements OnInit {
 
   loadBoiDayCaoData(): void {
     this.isLoading = true;
-    this.kcsService.getBoiDayCaoData().subscribe({
-      next: (data) => {
-        this.boiDayCaoDataSource.data = data;
+    
+    // Use new API method for pending items
+    this.kcsService.getBoiDayCaoPending().subscribe({
+      next: (response: BoiDayCaoPendingResponse) => {
+        if (response.IsSuccess) {
+          // Convert to legacy format for backward compatibility
+          const legacyData = this.kcsService.convertBoiDayCaoToLegacyFormat(response.Data);
+          this.boiDayCaoDataSource.data = legacyData;
+          this.totalCount = response.TotalCount;
+          this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+          
+          console.log(`Loaded ${legacyData.length} BoiDayCao pending items`);
+        } else {
+          console.error('Failed to load BoiDayCao data:', response.Message);
+          this.thongbao(response.Message || 'Lỗi khi tải dữ liệu', 'Đóng', 'error');
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -241,22 +254,44 @@ export class KcsCheckComponent implements OnInit {
   }
 
   filterBoiDayCaoData(): void {
-    let filteredData = this.boiDayCaoDataSource.data;
+    // For BoiDayCao, use the new search API
+    this.searchBoiDayCaoData();
+  }
 
-    if (this.searchBangVeCao) {
-      filteredData = filteredData.filter(item => 
-        item.tenbangve?.toLowerCase().includes(this.searchBangVeCao.toLowerCase())
-      );
-    }
+  searchBoiDayCaoData(): void {
+    this.isLoading = true;
+    
+    const searchCriteria: SearchCriteria = {
+      SearchByDrawingName: this.searchBangVeCao || undefined,
+      SearchByWindingSymbolOrTBKT: this.searchKeywordCao || undefined,
+      PageNumber: this.currentPage,
+      PageSize: this.pageSize
+    };
 
-    if (this.searchKeywordCao) {
-      filteredData = filteredData.filter(item => 
-        item.kyhieuquanday?.toLowerCase().includes(this.searchKeywordCao.toLowerCase()) ||
-        item.tbkt?.toLowerCase().includes(this.searchKeywordCao.toLowerCase())
-      );
-    }
-
-    this.boiDayCaoDataSource.data = filteredData;
+    this.kcsService.searchBoiDayCaoPending(searchCriteria).subscribe({
+      next: (response: BoiDayCaoPendingSearchResponse) => {
+        if (response.IsSuccess) {
+          // Convert to legacy format for backward compatibility
+          const legacyData = this.kcsService.convertBoiDayCaoToLegacyFormat(response.Data);
+          this.boiDayCaoDataSource.data = legacyData;
+          this.totalCount = response.TotalCount;
+          this.totalPages = response.TotalPages;
+          this.currentPage = response.PageNumber;
+          this.pageSize = response.PageSize;
+          
+          console.log(`Search results: ${legacyData.length} items found`);
+        } else {
+          console.error('Search failed:', response.Message);
+          this.thongbao(response.Message || 'Lỗi khi tìm kiếm', 'Đóng', 'error');
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error searching BoiDayCao data:', error);
+        this.thongbao('Lỗi khi tìm kiếm', 'Đóng', 'error');
+        this.isLoading = false;
+      }
+    });
   }
 
   filterEpBoiDayData(): void {
@@ -317,6 +352,8 @@ export class KcsCheckComponent implements OnInit {
     
     if (this.currentTab === 'boiDayHa') {
       this.searchBoiDayHaData();
+    } else if (this.currentTab === 'boiDayCao') {
+      this.searchBoiDayCaoData();
     }
   }
 
@@ -330,9 +367,10 @@ export class KcsCheckComponent implements OnInit {
     console.log('Opening approve dialog for:', element);
     
     const dialogData: ApproveDialogData = {
-      itemId: element.id,
+      itemId: Number(element.id),
       itemName: element.kyhieuquanday,
       itemType: this.currentTab
+      // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
     };
 
     const dialogRef = this.dialog.open(ApproveDialogComponent, {
@@ -356,9 +394,10 @@ export class KcsCheckComponent implements OnInit {
     console.log('Opening reject dialog for:', element);
     
     const dialogData: RejectDialogData = {
-      itemId: element.id,
+      itemId: Number(element.id),
       itemName: element.kyhieuquanday,
       itemType: this.currentTab
+      // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
     };
 
     const dialogRef = this.dialog.open(RejectDialogComponent, {

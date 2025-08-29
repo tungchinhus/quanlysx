@@ -7,6 +7,7 @@ export interface RejectDialogData {
   itemId: number;
   itemName: string;
   itemType: string;
+  // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
 }
 
 @Component({
@@ -43,6 +44,7 @@ export class RejectDialogComponent implements OnInit {
         ghiChu: formData.ghiChu,
         rejectedAt: new Date().toISOString(),
         itemType: this.data.itemType
+        // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
       };
 
       // Call service to reject item

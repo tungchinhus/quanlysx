@@ -55,6 +55,57 @@
       }
     }
 
+    .approve-form {
+      .form-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+
+        .full-width {
+          width: 100%;
+        }
+
+        .half-width {
+          flex: 1;
+        }
+      }
+
+      .mat-form-field {
+        width: 100%;
+        
+        .mat-form-field-wrapper {
+          .mat-form-field-outline {
+            .mat-form-field-outline-start,
+            .mat-form-field-outline-gap,
+            .mat-form-field-outline-end {
+              border-color: #ddd;
+            }
+          }
+
+          .mat-form-field-outline-thick {
+            .mat-form-field-outline-start,
+            .mat-form-field-outline-gap,
+            .mat-form-field-outline-end {
+              border-color: #2e7d32;
+            }
+          }
+        }
+
+        .mat-form-field-label {
+          color: #666;
+        }
+
+        .mat-input-element {
+          color: #333;
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 80px;
+        }
+      }
+    }
+
     .approval-summary {
       text-align: center;
       padding: 24px;

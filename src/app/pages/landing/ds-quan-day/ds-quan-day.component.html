@@ -136,12 +136,12 @@
                   <button mat-icon-button [matMenuTriggerFor]="menuCompleted" class="action-menu-button">
                     <mat-icon>more_vert</mat-icon>
                   </button>
-                  <mat-menu #menuCompleted="matMenu">
-                    <button mat-menu-item (click)="openDialog('Xem chi tiết: ' + element.kyhieuquanday)">
+                  <mat-menu #menuCompleted="matMenu">                    
+                    <button mat-menu-item disabled (click)="openDialog('Xem chi tiết: ' + element.kyhieuquanday)">
                       <mat-icon>visibility</mat-icon>
                       <span>Xem chi tiết</span>
                     </button>
-                    <button mat-menu-item (click)="openDialog('Xuất báo cáo: ' + element.kyhieuquanday)">
+                    <button mat-menu-item disabled (click)="openDialog('Xuất báo cáo: ' + element.kyhieuquanday)">
                       <mat-icon>download</mat-icon>
                       <span>Xuất báo cáo</span>
                     </button>

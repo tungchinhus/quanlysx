@@ -122,17 +122,24 @@ export interface BoiDayCaoApiRequest {
   sosoiday: number;
   ngaysanxuat: string; // ISO date string
   nhasanxuat: string;
+  chuvikhuon: number;
+  kt_bung_bd: number;
   chieuquanday: boolean; // Changed from number to boolean
   mayquanday: string;
   xungquanh: number;
   haidau: number;
+  kt_boiday_trong: string;
+  chuvi_bd_trong: number;
+  kt_bd_ngoai: string;
   bd_tt: string; // Changed from number to string - API expects string
   chuvi_bd_tt: string; // Changed from number to string - API expects string
   dientroRa: number;
   dientroRb: number;
   dientroRc: number;
+  dolechdientro: number;
   //user_update: string;
   trang_thai: number;
+  khau_sx: string;
 }
 
 @Component({
@@ -525,7 +532,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
     this.isLoading = true;
 
     // Gọi API để lưu dữ liệu
-    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-cao`, { request: apiRequest }, {
+    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-cao`, apiRequest, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.authToken}`
@@ -618,17 +625,24 @@ export class BoiDayCaoPopupComponent implements OnInit {
       sosoiday: formData.so_soi_day || 1,
       ngaysanxuat: ngaySanXuat,
       nhasanxuat: nhaSanXuat || '',
+      chuvikhuon: formData.chu_vi_khuon || 0,
+      kt_bung_bd: formData.kt_bung_bd_truoc || 0,
       chieuquanday: formData.chieu_quan_day, // true = trái, false = phải
       mayquanday: formData.may_quan_day || '',
       xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
       haidau: this.getSelectedThickness(formData, 'hai_dau'),
+      kt_boiday_trong: formData.kt_bd_ha_trong_bv || '',
+      chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p || 0,
+      kt_bd_ngoai: formData.kt_bd_ha_ngoai_bv || '',
       bd_tt: (formData.kt_bung_bd_truoc || 0).toString(), // Kích thước bụng bối dây trước
       chuvi_bd_tt: formData.chu_vi_khuon || '0', // Chu vi bối dây theo thiết kế
       dientroRa: formData.dien_tro_ha_ra || 0,
       dientroRb: formData.dien_tro_ha_rb || 0,
       dientroRc: formData.dien_tro_ha_rc || 0,
+      dolechdientro: formData.do_lech_dien_tro_giua_cac_pha || 0,
       //user_update: this.currentUser?.username || this.currentUser?.email || 'Unknown',
-              trang_thai: STATUS.PROCESSING // STATUS.PROCESSING = đang làm, STATUS.COMPLETED = hoàn thành
+      trang_thai: STATUS.PROCESSING, // STATUS.PROCESSING = đang làm, STATUS.COMPLETED = hoàn thành
+      khau_sx: 'boidaycao' // Khâu sản xuất: bối dây cao
     };
     
     console.log('mapToApiRequest: Mapped API request:', apiRequest);
