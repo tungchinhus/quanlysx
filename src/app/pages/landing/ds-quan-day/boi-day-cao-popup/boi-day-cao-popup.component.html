@@ -118,8 +118,8 @@
             <label class="mat-label">Chiều quấn dây</label>
             <div class="radio-group">
               <mat-radio-group formControlName="chieu_quan_day" (change)="onFormValueChange()">
-                <mat-radio-button value="true" class="radio-button">Trái</mat-radio-button>
-                <mat-radio-button value="false" class="radio-button">Phải</mat-radio-button>
+                <mat-radio-button [value]="true" class="radio-button">Trái</mat-radio-button>
+                <mat-radio-button [value]="false" class="radio-button">Phải</mat-radio-button>
               </mat-radio-group>
             </div>
           </div>

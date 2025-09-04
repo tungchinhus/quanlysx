@@ -158,8 +158,9 @@
 
 <div *ngIf="isLoginFormOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" (click)="closeLoginForm()">
     <mat-card class="w-full max-w-md p-4 rounded-lg shadow-lg login-form-container" (click)="$event.stopPropagation()">
-        <mat-card-header class="flex flex-col items-center justify-center h-12 bg-green-100 rounded-t-lg -mx-4 -mt-4 mb-4">
-            <mat-card-title class="text-lg text-center font-semibold text-gray-800">
+        <mat-card-header class="flex items-center justify-between h-16 bg-green-100 rounded-t-lg -mx-4 -mt-4 mb-4 px-4">
+            <div class="flex-1"></div>
+            <mat-card-title class="text-lg text-center font-semibold text-gray-800 flex-1">
                 {{ isRegisterFormVisible ? 'Đăng ký' : 'Đăng nhập' }}
             </mat-card-title>
         </mat-card-header>
@@ -219,12 +220,6 @@
                 </button>
             </div>
 
-            <div class="text-center text-sm mt-2">
-                <button mat-button color="accent" (click)="toggleForm()" class="text-blue-500 hover:underline">
-                    {{ isRegisterFormVisible ? 'Bạn đã có tài khoản? Đăng nhập' : 'Bạn chưa có tài khoản? Đăng ký ngay' }}
-                </button>
-            </div>
-
             <div #googleLoginButtonRef id="google-login-button" class="w-full flex justify-center"></div>
 
             <div *ngIf="loginError || registerError"
@@ -235,12 +230,6 @@
                 </span>
             </div>
         </mat-card-content>
-        <mat-card-actions align="end">
-            <button mat-button (click)="closeLoginForm()"
-                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-                Hủy
-            </button>
-        </mat-card-actions>
     </mat-card>
 </div>
 

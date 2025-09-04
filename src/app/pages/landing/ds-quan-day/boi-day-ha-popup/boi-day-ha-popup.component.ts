@@ -156,7 +156,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       chu_vi_khuon: [0, [Validators.min(0)]],
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: [false],
+      chieu_quan_day: [true],
       may_quan_day: [''],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
